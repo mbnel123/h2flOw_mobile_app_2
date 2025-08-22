@@ -1,0 +1,306 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Dark Mode CSS Variables & Smooth Transitions */
+  :root {
+    /* Light mode colors */
+    --color-bg-primary: #ffffff;
+    --color-bg-secondary: #f9fafb;
+    --color-bg-tertiary: #f3f4f6;
+    --color-text-primary: #111827;
+    --color-text-secondary: #6b7280;
+    --color-border: #e5e7eb;
+    
+    /* Transition variables */
+    --transition-theme: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s ease;
+    --transition-medium: all 0.3s ease;
+    --transition-slow: all 0.5s ease;
+  }
+
+  /* Dark mode colors */
+  .dark {
+    --color-bg-primary: #111827;
+    --color-bg-secondary: #1f2937;
+    --color-bg-tertiary: #374151;
+    --color-text-primary: #f9fafb;
+    --color-text-secondary: #9ca3af;
+    --color-border: #374151;
+    
+    color-scheme: dark;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    transition: var(--transition-theme);
+  }
+
+  * {
+    box-sizing: border-box;
+    transition: background-color 0.3s ease, 
+                color 0.3s ease, 
+                border-color 0.3s ease,
+                box-shadow 0.3s ease;
+  }
+
+  /* Dark mode scrollbar */
+  .dark ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    background: #1f2937;
+    border-radius: 4px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 4px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
+
+  /* Light mode scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+
+  /* Dark mode selection */
+  .dark ::selection {
+    background: rgba(59, 130, 246, 0.3);
+  }
+
+  ::selection {
+    background: rgba(59, 130, 246, 0.2);
+  }
+
+  /* Focus styles for dark mode */
+  .dark *:focus {
+    outline-color: #60a5fa;
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5);
+  }
+
+  *:focus {
+    outline-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+  }
+
+  /* Dark mode input styles */
+  .dark input[type="text"],
+  .dark input[type="email"],
+  .dark input[type="password"],
+  .dark input[type="number"],
+  .dark textarea,
+  .dark select {
+    background-color: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+
+  .dark input[type="text"]:focus,
+  .dark input[type="email"]:focus,
+  .dark input[type="password"]:focus,
+  .dark input[type="number"]:focus,
+  .dark textarea:focus,
+  .dark select:focus {
+    background-color: #4b5563;
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 1px #60a5fa;
+  }
+
+  /* Dark mode placeholder styles */
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: #9ca3af;
+  }
+}
+
+@layer components {
+  .gradient-primary {
+    background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+  }
+  
+  .gradient-water {
+    background: linear-gradient(135deg, #7DD3FC 0%, #38BDF8 50%, #0EA5E9 100%);
+  }
+
+  /* Dark mode gradients */
+  .dark .gradient-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  }
+
+  .dark .gradient-water {
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+  }
+
+  /* Custom gradient backgrounds for dark mode */
+  .bg-gradient-dark {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+
+  .bg-gradient-dark-blue {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  }
+
+  .bg-gradient-dark-purple {
+    background: linear-gradient(135deg, #581c87 0%, #7c3aed 100%);
+  }
+
+  /* Dark mode button hover effects */
+  .dark .btn-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  }
+
+  .dark .btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  }
+
+  /* Dark mode card shadows */
+  .dark .card-shadow {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 
+                0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  }
+
+  .card-shadow {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+                0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Animation for theme switching */
+  .theme-transition {
+    animation: theme-fade 0.3s ease-in-out;
+  }
+
+  /* Dark mode specific component styles */
+  .dark .loading-skeleton {
+    background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+  }
+
+  .loading-skeleton {
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+  }
+
+  /* Dark mode progress bars */
+  .dark .progress-bar {
+    background-color: #374151;
+  }
+
+  .dark .progress-fill {
+    background: linear-gradient(90deg, #60a5fa 0%, #3b82f6 100%);
+  }
+
+  .progress-bar {
+    background-color: #e5e7eb;
+  }
+
+  .progress-fill {
+    background: linear-gradient(90deg, #38bdf8 0%, #0ea5e9 100%);
+  }
+
+  /* Dark mode modal overlays */
+  .dark .modal-overlay {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+
+  .modal-overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  /* Dark mode notification styles */
+  .dark .notification {
+    background-color: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+  }
+
+  .notification {
+    background-color: #ffffff;
+    border-color: #e5e7eb;
+    color: #111827;
+  }
+
+  /* Dark mode success animation backgrounds */
+  .dark .success-animation {
+    background: radial-gradient(circle at center, rgba(59, 130, 246, 0.1) 0%, rgba(0, 0, 0, 0.8) 70%);
+  }
+
+  .success-animation {
+    background: radial-gradient(circle at center, rgba(59, 130, 246, 0.05) 0%, rgba(0, 0, 0, 0.5) 70%);
+  }
+}
+
+@layer utilities {
+  .transition-theme {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  }
+
+  .dark-shadow {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  }
+
+  @keyframes theme-fade {
+    0% { opacity: 0.8; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Reduced motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .dark {
+      --color-bg-primary: #000000;
+      --color-text-primary: #ffffff;
+      --color-border: #ffffff;
+    }
+    
+    :root {
+      --color-bg-primary: #ffffff;
+      --color-text-primary: #000000;
+      --color-border: #000000;
+    }
+  }
+}
