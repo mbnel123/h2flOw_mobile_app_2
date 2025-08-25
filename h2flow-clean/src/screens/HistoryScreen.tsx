@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { User as FirebaseUser } from 'firebase/auth';
 import { onAuthStateChange, logout } from '../firebase/authService';
 import { useHistoryData } from '../hooks/useHistoryData';
@@ -19,36 +19,34 @@ import { Fast, FastStreak } from '../firebase/databaseService';
 // Define colors for light and dark mode
 const colors = {
   light: {
-    primary: '#3B82F6',
+    primary: '#7DD3FC', // Babyblauw
+    secondary: '#38BDF8',
     background: '#FFFFFF',
-    text: '#111827',
+    backgroundSecondary: '#F8F9FA',
+    text: '#000000',
     textSecondary: '#6B7280',
-    card: '#F9FAFB',
     border: '#E5E7EB',
-    success: '#10B981',
-    warning: '#F59E0B',
-    danger: '#EF4444',
-    info: '#3B82F6',
-    gradient: ['#F9FAFB', '#F3F4F6', '#F9FAFB']
+    success: '#059669',
+    warning: '#D97706',
+    danger: '#DC2626',
   },
   dark: {
-    primary: '#3B82F6',
-    background: '#111827',
-    text: '#F9FAFB',
+    primary: '#7DD3FC', // Babyblauw
+    secondary: '#38BDF8',
+    background: '#000000',
+    backgroundSecondary: '#1F1F1F',
+    text: '#FFFFFF',
     textSecondary: '#9CA3AF',
-    card: '#1F2937',
     border: '#374151',
-    success: '#10B981',
-    warning: '#F59E0B',
-    danger: '#EF4444',
-    info: '#3B82F6',
-    gradient: ['#111827', '#1F2937', '#111827']
+    success: '#059669',
+    warning: '#D97706',
+    danger: '#DC2626',
   }
 };
 
 // Card component for consistent styling
 const Card = ({ children, style, colors }: { children: React.ReactNode; style?: any; colors: any }) => (
-  <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }, style]}>
+  <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.border }, style]}>
     {children}
   </View>
 );
@@ -58,19 +56,19 @@ const StatCard = ({
   title, 
   value, 
   subtitle, 
-  emoji,
+  icon,
   colors
 }: { 
   title: string; 
   value: string; 
   subtitle: string; 
-  emoji: string;
+  icon: string;
   colors: any;
 }) => {
   return (
     <Card colors={colors} style={styles.statCard}>
       <View style={styles.statHeader}>
-        <Text style={styles.emoji}>{emoji}</Text>
+        <Ionicons name={icon as any} size={20} color={colors.primary} />
         <Text style={[styles.statTitle, { color: colors.textSecondary }]}>{title}</Text>
       </View>
       <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
@@ -128,7 +126,7 @@ const UserProfileSection = ({
   <Card colors={colors} style={styles.profileCard}>
     <View style={styles.profileContent}>
       <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-        <Text style={styles.avatarEmoji}>👤</Text>
+        <Ionicons name="person" size={24} color="white" />
       </View>
       <View style={styles.profileInfo}>
         <Text style={[styles.profileName, { color: colors.text }]}>
@@ -142,7 +140,7 @@ const UserProfileSection = ({
         </Text>
         {fastingStreak && (
           <Text style={[styles.streakText, { color: colors.warning }]}>
-            🔥 Current streak: {fastingStreak.currentStreak} days (Best: {fastingStreak.longestStreak})
+            <Ionicons name="flame" size={14} color={colors.warning} /> Current streak: {fastingStreak.currentStreak} days (Best: {fastingStreak.longestStreak})
           </Text>
         )}
       </View>
@@ -153,12 +151,15 @@ const UserProfileSection = ({
 // Fasting Patterns Section
 const FastingPatternsSection = ({ stats, colors }: { stats: any; colors: any }) => (
   <View style={styles.section}>
-    <Text style={[styles.sectionTitle, { color: colors.text }]}>📈 Your Fasting Patterns</Text>
+    <View style={styles.sectionHeader}>
+      <Ionicons name="stats-chart" size={24} color={colors.text} />
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Fasting Patterns</Text>
+    </View>
     
     <View style={styles.patternsGrid}>
       <Card colors={colors} style={styles.patternCard}>
         <View style={styles.patternHeader}>
-          <Text style={styles.emoji}>📅</Text>
+          <Ionicons name="calendar" size={20} color={colors.success} />
           <Text style={[styles.patternTitle, { color: colors.success }]}>This Year</Text>
         </View>
         <Text style={[styles.patternValue, { color: colors.text }]}>{stats.fastsPerYear}</Text>
@@ -167,15 +168,12 @@ const FastingPatternsSection = ({ stats, colors }: { stats: any; colors: any }) 
           {Math.round(stats.hoursPerYear)}h
         </Text>
         <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Total hours</Text>
-        <Text style={[styles.patternDetail, { color: colors.textSecondary }]}>
-          Average: {stats.fastsPerYear > 0 ? Math.round(stats.hoursPerYear / stats.fastsPerYear) : 0}h per fast
-        </Text>
       </Card>
 
       <Card colors={colors} style={styles.patternCard}>
         <View style={styles.patternHeader}>
-          <Text style={styles.emoji}>📅</Text>
-          <Text style={[styles.patternTitle, { color: colors.info }]}>This Month</Text>
+          <Ionicons name="calendar" size={20} color={colors.primary} />
+          <Text style={[styles.patternTitle, { color: colors.primary }]}>This Month</Text>
         </View>
         <Text style={[styles.patternValue, { color: colors.text }]}>{stats.fastsPerMonth}</Text>
         <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Total fasts</Text>
@@ -183,27 +181,21 @@ const FastingPatternsSection = ({ stats, colors }: { stats: any; colors: any }) 
           {Math.round(stats.hoursPerMonth)}h
         </Text>
         <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Total hours</Text>
-        <Text style={[styles.patternDetail, { color: colors.textSecondary }]}>
-          Projected yearly: {Math.round(stats.fastsPerMonth * 12)} fasts
-        </Text>
       </Card>
 
       <Card colors={colors} style={styles.patternCard}>
         <View style={styles.patternHeader}>
-          <Text style={styles.emoji}>📊</Text>
-          <Text style={[styles.patternTitle, { color: colors.primary }]}>All Time Averages</Text>
+          <Ionicons name="analytics" size={20} color={colors.info} />
+          <Text style={[styles.patternTitle, { color: colors.info }]}>Averages</Text>
         </View>
         <Text style={[styles.patternValue, { color: colors.text }]}>
           {Math.round(stats.averageDuration)}h
         </Text>
-        <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Average duration</Text>
+        <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Avg duration</Text>
         <Text style={[styles.patternValueSmall, { color: colors.text }]}>
           {stats.completionRate}%
         </Text>
         <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Success rate</Text>
-        <Text style={[styles.patternDetail, { color: colors.textSecondary }]}>
-          {stats.accountAgeDays > 0 ? Math.round((stats.totalFasts / stats.accountAgeDays) * 30) : 0} fasts/month avg
-        </Text>
       </Card>
     </View>
   </View>
@@ -214,9 +206,12 @@ const FastHistoryList = ({ fastHistory, colors }: { fastHistory: Fast[]; colors:
   if (fastHistory.length === 0) {
     return (
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>📅 Recent Fasts</Text>
+        <View style={styles.sectionHeader}>
+          <Ionicons name="list" size={24} color={colors.text} />
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Fasts</Text>
+        </View>
         <Card colors={colors} style={styles.emptyCard}>
-          <Text style={{ fontSize: 32, marginBottom: 16 }}>📊</Text>
+          <Ionicons name="stats-chart" size={32} color={colors.textSecondary} />
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
             No fasting history yet. Start your first fast to see your progress!
           </Text>
@@ -227,7 +222,10 @@ const FastHistoryList = ({ fastHistory, colors }: { fastHistory: Fast[]; colors:
 
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>📅 Recent Fasts</Text>
+      <View style={styles.sectionHeader}>
+        <Ionicons name="list" size={24} color={colors.text} />
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Fasts</Text>
+      </View>
       <View style={styles.fastList}>
         {fastHistory.slice(0, 10).map(fast => (
           <Card key={fast.id} colors={colors} style={styles.fastCard}>
@@ -242,74 +240,41 @@ const FastHistoryList = ({ fastHistory, colors }: { fastHistory: Fast[]; colors:
                     `${colors.success}20` : 
                     fast.status === 'stopped_early' ? 
                     `${colors.warning}20` : 
-                    `${colors.info}20`
+                    `${colors.primary}20`
                 }
               ]}>
+                <Ionicons 
+                  name={fast.status === 'completed' ? 'checkmark-circle' : 
+                         fast.status === 'stopped_early' ? 'time' : 'refresh-circle'} 
+                  size={14} 
+                  color={fast.status === 'completed' ? colors.success : 
+                         fast.status === 'stopped_early' ? colors.warning : colors.primary} 
+                />
                 <Text style={[
                   styles.statusText,
                   { 
-                    color: fast.status === 'completed' ? 
-                      colors.success : 
-                      fast.status === 'stopped_early' ? 
-                      colors.warning : 
-                      colors.info
+                    color: fast.status === 'completed' ? colors.success : 
+                           fast.status === 'stopped_early' ? colors.warning : colors.primary
                   }
                 ]}>
-                  {fast.status === 'completed' ? '✓ Completed' : 
-                   fast.status === 'stopped_early' ? '⏱️ Stopped Early' : '🔄 Active'}
+                  {fast.status === 'completed' ? 'Completed' : 
+                   fast.status === 'stopped_early' ? 'Stopped Early' : 'Active'}
                 </Text>
               </View>
             </View>
             
             <View style={styles.fastDetails}>
               <View style={styles.fastDetail}>
-                <Text style={[styles.fastDetailLabel, { color: colors.textSecondary }]}>Date:</Text>
+                <Ionicons name="calendar" size={14} color={colors.textSecondary} />
                 <Text style={[styles.fastDetailValue, { color: colors.text }]}>
                   {new Date(fast.startTime).toLocaleDateString('nl-NL')}
                 </Text>
               </View>
               <View style={styles.fastDetail}>
-                <Text style={[styles.fastDetailLabel, { color: colors.textSecondary }]}>Duration:</Text>
+                <Ionicons name="time" size={14} color={colors.textSecondary} />
                 <Text style={[styles.fastDetailValue, { color: colors.text }]}>
                   {Number(fast.actualDuration || fast.plannedDuration).toFixed(2)} hours
                 </Text>
-              </View>
-            </View>
-            
-            {/* Enhanced phase information */}
-            <View style={styles.fastBenefits}>
-              <Text style={[styles.benefitsTitle, { color: colors.textSecondary }]}>
-                Biological benefits achieved:
-              </Text>
-              <View style={styles.benefitsList}>
-                {Number(fast.actualDuration || fast.plannedDuration) >= 12 && (
-                  <View style={[styles.benefitBadge, { backgroundColor: `${colors.info}20` }]}>
-                    <Text style={[styles.benefitText, { color: colors.info }]}>
-                      Ketosis ({Number(Math.max(0, Number(fast.actualDuration || fast.plannedDuration) - 12)).toFixed(2)}h)
-                    </Text>
-                  </View>
-                )}
-                {Number(fast.actualDuration || fast.plannedDuration) >= 24 && (
-                  <View style={[styles.benefitBadge, { backgroundColor: `${colors.success}20` }]}>
-                    <Text style={[styles.benefitText, { color: colors.success }]}>
-                      Autophagy ({Number(Math.max(0, Number(fast.actualDuration || fast.plannedDuration) - 24)).toFixed(2)}h)
-                    </Text>
-                  </View>
-                )}
-                {Number(fast.actualDuration || fast.plannedDuration) >= 48 && (
-                  <View style={[styles.benefitBadge, { backgroundColor: `${colors.primary}20` }]}>
-                    <Text style={[styles.benefitText, { color: colors.primary }]}>
-                      Deep Autophagy
-                    </Text>
-                  </View>
-                )}
-                {Number(fast.actualDuration || fast.plannedDuration) >= 72 && (
-                  <View style={[styles.benefitBadge, { backgroundColor: `${colors.warning}20` }]}>
-                    <Text style={[styles.benefitText, { color: colors.warning }]}>
-                      Immune Reset
-                    </Text>
-                  </View>
-                )}
               </View>
             </View>
           </Card>
@@ -356,7 +321,7 @@ const HistoryScreen: React.FC = () => {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.authContainer}>
-          <Text style={{ fontSize: 32, marginBottom: 16 }}>🔒</Text>
+          <Ionicons name="lock-closed" size={32} color={theme.textSecondary} />
           <Text style={[styles.authText, { color: theme.textSecondary }]}>
             Please log in to view your profile
           </Text>
@@ -375,13 +340,14 @@ const HistoryScreen: React.FC = () => {
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: theme.border }]}>
         <View style={styles.headerContent}>
+          <Ionicons name="person-circle" size={24} color={theme.text} />
           <Text style={[styles.headerTitle, { color: theme.text }]}>Personal Dashboard</Text>
         </View>
         <TouchableOpacity
           onPress={handleLogout}
-          style={[styles.logoutButton, { backgroundColor: `${theme.danger}20` }]}
+          style={[styles.logoutButton, { borderColor: theme.danger }]}
         >
-          <Text style={styles.emoji}>🚪</Text>
+          <Ionicons name="log-out" size={16} color={theme.danger} />
           <Text style={[styles.logoutText, { color: theme.danger }]}>Logout</Text>
         </TouchableOpacity>
       </View>
@@ -389,6 +355,7 @@ const HistoryScreen: React.FC = () => {
       {/* Error Display */}
       {error && (
         <View style={[styles.errorContainer, { backgroundColor: `${theme.danger}20`, borderBottomColor: theme.border }]}>
+          <Ionicons name="warning" size={16} color={theme.danger} />
           <Text style={[styles.errorText, { color: theme.danger }]}>{error}</Text>
           <TouchableOpacity onPress={() => setError(null)}>
             <Text style={[styles.dismissText, { color: theme.danger }]}>Dismiss</Text>
@@ -419,48 +386,51 @@ const HistoryScreen: React.FC = () => {
 
         {/* Basic Stats Grid */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>📊 Lifetime Stats</Text>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="stats-chart" size={24} color={theme.text} />
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Lifetime Stats</Text>
+          </View>
           <View style={styles.statsGrid}>
             <StatCard
               title="Total Fasts"
               value={stats.totalFasts.toString()}
               subtitle={`${stats.thisWeekFasts} this week`}
-              emoji="📈"
+              icon="bar-chart"
               colors={theme}
             />
             <StatCard
               title="Total Hours"
               value={Number(stats.totalHours).toFixed(0)}
               subtitle={`${Number(stats.totalHours / 24).toFixed(1)} days`}
-              emoji="⏰"
+              icon="time"
               colors={theme}
             />
             <StatCard
               title="Average Duration"
               value={Number(stats.averageDuration).toFixed(1)}
               subtitle="hours per fast"
-              emoji="📊"
+              icon="analytics"
               colors={theme}
             />
             <StatCard
               title="Longest Fast"
               value={Number(stats.longestFast).toFixed(1)}
               subtitle="hours"
-              emoji="🏆"
+              icon="trophy"
               colors={theme}
             />
             <StatCard
               title="Success Rate"
               value={`${stats.completionRate}%`}
               subtitle="completed fasts"
-              emoji="✅"
+              icon="checkmark-circle"
               colors={theme}
             />
             <StatCard
               title="Ketosis Hours"
               value={Number(stats.ketosisHours).toFixed(0)}
               subtitle="12+ hour fasts"
-              emoji="⚡"
+              icon="flash"
               colors={theme}
             />
           </View>
@@ -483,6 +453,7 @@ const styles = StyleSheet.create({
   authText: {
     fontSize: 16,
     textAlign: 'center',
+    marginTop: 12,
   },
   header: {
     flexDirection: 'row',
@@ -495,6 +466,7 @@ const styles = StyleSheet.create({
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   headerTitle: {
     fontSize: 20,
@@ -506,6 +478,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
+    borderWidth: 1,
     gap: 4,
   },
   logoutText: {
@@ -513,15 +486,18 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 12,
     borderBottomWidth: 1,
+    gap: 8,
   },
   errorText: {
     fontSize: 14,
+    flex: 1,
   },
   dismissText: {
     fontSize: 12,
-    marginTop: 4,
     textDecorationLine: 'underline',
   },
   content: {
@@ -549,9 +525,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 16,
   },
-  avatarEmoji: {
-    fontSize: 24,
-  },
   profileInfo: {
     flex: 1,
   },
@@ -571,14 +544,22 @@ const styles = StyleSheet.create({
   streakText: {
     fontSize: 12,
     fontWeight: '500',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   section: {
     marginBottom: 24,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 8,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 16,
   },
   patternsGrid: {
     gap: 12,
@@ -590,11 +571,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
+    gap: 8,
   },
   patternTitle: {
     fontSize: 14,
     fontWeight: '500',
-    marginLeft: 8,
   },
   patternValue: {
     fontSize: 24,
@@ -611,10 +592,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 4,
   },
-  patternDetail: {
-    fontSize: 11,
-    marginTop: 8,
-  },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -629,11 +606,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
+    gap: 8,
   },
   statTitle: {
     fontSize: 12,
     fontWeight: '500',
-    marginLeft: 8,
   },
   statValue: {
     fontSize: 20,
@@ -642,9 +619,6 @@ const styles = StyleSheet.create({
   },
   statSubtitle: {
     fontSize: 11,
-  },
-  emoji: {
-    fontSize: 16,
   },
   fastList: {
     gap: 12,
@@ -663,9 +637,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+    gap: 4,
   },
   statusText: {
     fontSize: 12,
@@ -674,46 +651,21 @@ const styles = StyleSheet.create({
   fastDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
   },
   fastDetail: {
-    flex: 1,
-  },
-  fastDetailLabel: {
-    fontSize: 12,
-    marginBottom: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   fastDetailValue: {
     fontSize: 14,
-    fontWeight: '500',
-  },
-  fastBenefits: {
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.1)',
-    paddingTop: 12,
-  },
-  benefitsTitle: {
-    fontSize: 12,
-    marginBottom: 8,
-  },
-  benefitsList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  benefitBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  benefitText: {
-    fontSize: 11,
     fontWeight: '500',
   },
   emptyCard: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,
+    gap: 16,
   },
   emptyText: {
     textAlign: 'center',
