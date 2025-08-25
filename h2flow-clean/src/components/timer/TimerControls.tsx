@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Play, Square } from 'lucide-react-native';
 import { FastTemplate } from '../services/templateService';
 
@@ -11,6 +11,7 @@ interface TimerControlsProps {
   recentTemplates: FastTemplate[];
   showCelebrations: boolean;
   showStopConfirmation: boolean;
+  targetHours: number;
   onStartFast: () => void;
   onResumeFast: () => void;
   onPauseFast: () => void;
@@ -27,6 +28,7 @@ const TimerControls: React.FC<TimerControlsProps> = ({
   startTime,
   loading,
   isOnline,
+  targetHours,
   showStopConfirmation,
   onStartFast,
   onResumeFast,
@@ -35,44 +37,46 @@ const TimerControls: React.FC<TimerControlsProps> = ({
   onCancelStop,
   onShowTemplateSelector,
 }) => {
+  const screenWidth = Dimensions.get('window').width;
+
   return (
     <View style={{ padding: 16 }}>
       {/* Controls */}
       {!isActive ? (
         startTime ? (
           // Timer is paused - show Resume and Stop
-          <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+          <View style={{ gap: 12 }}>
             <TouchableOpacity
               onPress={onResumeFast}
               disabled={loading || !isOnline}
-              style={styles.primaryBtn}
+              style={[styles.primaryBtn, { width: screenWidth - 48 }]}
             >
-              <Play size={20} color="white" />
-              <Text style={styles.btnText}>Resume Fast</Text>
+              <Play size={24} color="white" />
+              <Text style={styles.btnText}>Resume {targetHours}h Fast</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onStopConfirmation}
               disabled={loading || !isOnline}
-              style={styles.dangerBtn}
+              style={[styles.dangerBtn, { width: screenWidth - 48 }]}
             >
-              <Square size={18} color="white" />
-              <Text style={styles.btnText}>Stop</Text>
+              <Square size={20} color="white" />
+              <Text style={styles.btnText}>Stop Fast</Text>
             </TouchableOpacity>
           </View>
         ) : (
           // No timer running - show Start and Templates
-          <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+          <View style={{ gap: 12 }}>
             <TouchableOpacity
               onPress={onStartFast}
               disabled={loading || !isOnline}
-              style={styles.primaryBtn}
+              style={[styles.primaryBtn, { width: screenWidth - 48 }]}
             >
-              <Play size={20} color="white" />
-              <Text style={styles.btnText}>Start Fast</Text>
+              <Play size={24} color="white" />
+              <Text style={styles.btnText}>Start {targetHours}h Fast</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onShowTemplateSelector}
-              style={styles.secondaryBtn}
+              style={[styles.secondaryBtn, { width: screenWidth - 48 }]}
             >
               <Text style={styles.btnText}>📋 Templates</Text>
             </TouchableOpacity>
@@ -83,7 +87,7 @@ const TimerControls: React.FC<TimerControlsProps> = ({
         <View style={{ alignItems: 'center' }}>
           <TouchableOpacity
             onPress={onStopConfirmation}
-            style={[styles.successBtn, { paddingHorizontal: 40 }]}
+            style={[styles.successBtn, { width: screenWidth - 48 }]}
           >
             <Text style={styles.btnText}>🍎 Break Fast</Text>
           </TouchableOpacity>
@@ -115,47 +119,74 @@ const TimerControls: React.FC<TimerControlsProps> = ({
 
 const styles = StyleSheet.create({
   primaryBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#7DD3FC', // Licht babyblauw
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    margin: 6,
+    justifyContent: 'center',
+    padding: 20,
+    borderRadius: 16,
+    marginHorizontal: 6,
   },
   secondaryBtn: {
-    backgroundColor: '#6B7280',
+    backgroundColor: '#7DD3FC', // Licht babyblauw
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    margin: 6,
+    justifyContent: 'center',
+    padding: 20,
+    borderRadius: 16,
+    marginHorizontal: 6,
   },
   dangerBtn: {
     backgroundColor: '#DC2626',
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    margin: 6,
+    justifyContent: 'center',
+    padding: 20,
+    borderRadius: 16,
+    marginHorizontal: 6,
   },
   successBtn: {
     backgroundColor: '#059669',
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    margin: 6,
+    justifyContent: 'center',
+    padding: 20,
+    borderRadius: 16,
+    marginHorizontal: 6,
   },
-  btnText: { color: 'white', marginLeft: 6, fontWeight: '600' },
+  btnText: { 
+    color: 'white', 
+    marginLeft: 8, 
+    fontWeight: '600',
+    fontSize: 16 
+  },
   modalOverlay: {
-    flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0008'
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: '#0008'
   },
   modalBox: {
-    backgroundColor: 'white', padding: 24, borderRadius: 16, width: '80%'
+    backgroundColor: 'white', 
+    padding: 24, 
+    borderRadius: 16, 
+    width: '80%'
   },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 8, color: '#111827' },
-  modalText: { color: '#374151', marginBottom: 16 },
-  modalBtns: { flexDirection: 'row', justifyContent: 'flex-end' }
+  modalTitle: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    marginBottom: 8, 
+    color: '#111827' 
+  },
+  modalText: { 
+    color: '#374151', 
+    marginBottom: 16 
+  },
+  modalBtns: { 
+    flexDirection: 'row', 
+    justifyContent: 'flex-end',
+    gap: 12
+  }
 });
 
 export default TimerControls;
