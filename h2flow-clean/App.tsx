@@ -164,8 +164,8 @@ export default function App() {
             >
               <Tab.Screen name="Timer" component={TimerScreen} />
               <Tab.Screen name="Water" component={WaterScreen} />
-              <Tab.Screen name="History" component={HistoryScreen} />
               <Tab.Screen name="Info" component={InfoScreen} />
+              <Tab.Screen name="History" component={HistoryScreen} />
             </Tab.Navigator>
           </NavigationContainer>
         );
