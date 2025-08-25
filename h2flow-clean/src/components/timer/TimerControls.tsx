@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import { Play, Square } from 'lucide-react-native';
+import { Play, Pause, Square } from 'lucide-react-native';
 import { FastTemplate } from '../services/templateService';
 
 interface TimerControlsProps {
@@ -32,24 +32,26 @@ const TimerControls: React.FC<TimerControlsProps> = ({
   showStopConfirmation,
   onStartFast,
   onResumeFast,
+  onPauseFast,
   onStopConfirmation,
   onConfirmStop,
   onCancelStop,
   onShowTemplateSelector,
 }) => {
   const screenWidth = Dimensions.get('window').width;
+  const buttonWidth = (screenWidth - 48) * 0.9; // 90% van schermbreedte
 
   return (
-    <View style={{ padding: 16 }}>
+    <View style={{ padding: 16, alignItems: 'center' }}>
       {/* Controls */}
       {!isActive ? (
         startTime ? (
           // Timer is paused - show Resume and Stop
-          <View style={{ gap: 12 }}>
+          <View style={{ alignItems: 'center', gap: 12, width: '100%' }}>
             <TouchableOpacity
               onPress={onResumeFast}
               disabled={loading || !isOnline}
-              style={[styles.primaryBtn, { width: screenWidth - 48 }]}
+              style={[styles.primaryBtn, { width: buttonWidth }]}
             >
               <Play size={24} color="white" />
               <Text style={styles.btnText}>Resume {targetHours}h Fast</Text>
@@ -57,7 +59,7 @@ const TimerControls: React.FC<TimerControlsProps> = ({
             <TouchableOpacity
               onPress={onStopConfirmation}
               disabled={loading || !isOnline}
-              style={[styles.dangerBtn, { width: screenWidth - 48 }]}
+              style={[styles.dangerBtn, { width: buttonWidth }]}
             >
               <Square size={20} color="white" />
               <Text style={styles.btnText}>Stop Fast</Text>
@@ -65,32 +67,41 @@ const TimerControls: React.FC<TimerControlsProps> = ({
           </View>
         ) : (
           // No timer running - show Start and Templates
-          <View style={{ gap: 12 }}>
+          <View style={{ alignItems: 'center', gap: 12, width: '100%' }}>
             <TouchableOpacity
               onPress={onStartFast}
               disabled={loading || !isOnline}
-              style={[styles.primaryBtn, { width: screenWidth - 48 }]}
+              style={[styles.primaryBtn, { width: buttonWidth }]}
             >
               <Play size={24} color="white" />
               <Text style={styles.btnText}>Start {targetHours}h Fast</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onShowTemplateSelector}
-              style={[styles.secondaryBtn, { width: screenWidth - 48 }]}
+              style={[styles.secondaryBtn, { width: buttonWidth }]}
             >
               <Text style={styles.btnText}>📋 Templates</Text>
             </TouchableOpacity>
           </View>
         )
       ) : (
-        // Timer is active - show only Break Fast button (no pause)
-        <View style={{ alignItems: 'center' }}>
-          <TouchableOpacity
-            onPress={onStopConfirmation}
-            style={[styles.successBtn, { width: screenWidth - 48 }]}
-          >
-            <Text style={styles.btnText}>🍎 Break Fast</Text>
-          </TouchableOpacity>
+        // Timer is active - show Pause and Break Fast
+        <View style={{ alignItems: 'center', gap: 12, width: '100%' }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12 }}>
+            <TouchableOpacity
+              onPress={onPauseFast}
+              style={[styles.secondaryBtn, { flex: 1 }]}
+            >
+              <Pause size={20} color="white" />
+              <Text style={styles.btnText}>Pause</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={onStopConfirmation}
+              style={[styles.successBtn, { flex: 1 }]}
+            >
+              <Text style={styles.btnText}>🍎 Break Fast</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -125,16 +136,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     borderRadius: 16,
-    marginHorizontal: 6,
   },
   secondaryBtn: {
     backgroundColor: '#7DD3FC', // Licht babyblauw
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: 16,
     borderRadius: 16,
-    marginHorizontal: 6,
   },
   dangerBtn: {
     backgroundColor: '#DC2626',
@@ -143,16 +152,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     borderRadius: 16,
-    marginHorizontal: 6,
   },
   successBtn: {
     backgroundColor: '#059669',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: 16,
     borderRadius: 16,
-    marginHorizontal: 6,
   },
   btnText: { 
     color: 'white', 
