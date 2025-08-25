@@ -223,9 +223,7 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
         </View>
       )}
 
-      {/* Main content container */}
-      <View style={styles.mainContent}>
-        {/* Template info - only show when not active */}
+      <View style={styles.contentContainer}>
         {currentTemplate && !isActive && (
           <View style={styles.templateContainer}>
             <TemplateInfo 
@@ -236,7 +234,6 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
           </View>
         )}
 
-        {/* Timer circle */}
         <View style={styles.timerContainer}>
           <CircularProgress 
             progress={getProgress()} 
@@ -246,7 +243,6 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
           />
         </View>
         
-        {/* Phase info - only show when active */}
         {isActive && (
           <View style={styles.phaseContainer}>
             <PhaseInfo 
@@ -255,11 +251,7 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
               elapsedTime={elapsedTime}
               theme={theme}
             />
-            {nextPhaseInfo && (
-              <View style={styles.nextPhaseContainer}>
-                <NextPhaseInfo nextPhase={nextPhaseInfo} theme={theme} />
-              </View>
-            )}
+            {nextPhaseInfo && <NextPhaseInfo nextPhase={nextPhaseInfo} theme={theme} />}
           </View>
         )}
       </View>
@@ -309,64 +301,23 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1 
-  },
-  centerContent: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center' 
-  },
-  lockIcon: { 
-    fontSize: 64, 
-    marginBottom: 16 
-  },
-  lockText: { 
-    fontSize: 16 
-  },
-  errorContainer: { 
-    paddingHorizontal: 16, 
-    paddingVertical: 12, 
-    borderBottomWidth: 1 
-  },
-  errorText: { 
-    fontSize: 14 
-  },
-  dismissText: { 
-    fontSize: 12, 
-    marginTop: 4, 
-    textDecorationLine: 'underline' 
-  },
-  mainContent: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-  templateContainer: { 
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  timerContainer: { 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    flex: 1,
-    minHeight: 350,
-  },
-  phaseContainer: { 
-    width: '100%', 
-    maxWidth: 400, 
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  nextPhaseContainer: {
-    marginTop: 16,
-  },
-  controlsContainer: { 
-    paddingHorizontal: 20, 
-    paddingBottom: 100, 
-    paddingTop: 10,
-    backgroundColor: 'transparent',
-  },
+  container: { flex: 1 },
+  centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  lockIcon: { fontSize: 64, marginBottom: 16 },
+  lockText: { fontSize: 16 },
+  errorContainer: { paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1 },
+  errorText: { fontSize: 14 },
+  dismissText: { fontSize: 12, marginTop: 4, textDecorationLine: 'underline' },
+  contentContainer: { flex: 1, paddingHorizontal: 24 },
+  templateContainer: { marginTop: 20, marginBottom: 20 },
+  timerContainer: { alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: 400 },
+  phaseContainer: { width: '100%', maxWidth: 500, alignSelf: 'center', paddingBottom: 20 },
+  controlsContainer: { paddingHorizontal: 24, paddingBottom: 110, paddingTop: 20 },
+  startContainer: { gap: 16, width: '100%', maxWidth: 400, alignSelf: 'center' },
+  startButton: { padding: 20, borderRadius: 16, alignItems: 'center' },
+  startButtonText: { color: 'white', fontSize: 18, fontWeight: '600' },
+  templateButton: { padding: 20, borderRadius: 16, alignItems: 'center', borderWidth: 2 },
+  templateButtonText: { fontSize: 18, fontWeight: '600' },
 });
 
 export default TimerScreen;
