@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Play, Pause, Square } from 'lucide-react-native';
+import { Play, Square } from 'lucide-react-native';
 import { FastTemplate } from '../services/templateService';
 
 interface TimerControlsProps {
@@ -27,24 +27,20 @@ const TimerControls: React.FC<TimerControlsProps> = ({
   startTime,
   loading,
   isOnline,
-  recentTemplates,
-  showCelebrations,
   showStopConfirmation,
   onStartFast,
   onResumeFast,
-  onPauseFast,
   onStopConfirmation,
   onConfirmStop,
   onCancelStop,
   onShowTemplateSelector,
-  onSelectTemplate,
-  onToggleCelebrations,
 }) => {
   return (
     <View style={{ padding: 16 }}>
       {/* Controls */}
       {!isActive ? (
         startTime ? (
+          // Timer is paused - show Resume and Stop
           <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
             <TouchableOpacity
               onPress={onResumeFast}
@@ -64,6 +60,7 @@ const TimerControls: React.FC<TimerControlsProps> = ({
             </TouchableOpacity>
           </View>
         ) : (
+          // No timer running - show Start and Templates
           <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
             <TouchableOpacity
               onPress={onStartFast}
@@ -82,17 +79,11 @@ const TimerControls: React.FC<TimerControlsProps> = ({
           </View>
         )
       ) : (
-        <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
-          <TouchableOpacity
-            onPress={onPauseFast}
-            style={styles.secondaryBtn}
-          >
-            <Pause size={18} color="white" />
-            <Text style={styles.btnText}>Pause</Text>
-          </TouchableOpacity>
+        // Timer is active - show only Break Fast button (no pause)
+        <View style={{ alignItems: 'center' }}>
           <TouchableOpacity
             onPress={onStopConfirmation}
-            style={styles.successBtn}
+            style={[styles.successBtn, { paddingHorizontal: 40 }]}
           >
             <Text style={styles.btnText}>🍎 Break Fast</Text>
           </TouchableOpacity>
@@ -151,7 +142,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#059669',
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    padding: 16,
     borderRadius: 12,
     margin: 6,
   },
