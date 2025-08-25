@@ -1,6 +1,7 @@
-// src/hooks/useTimerLogic.ts - FIXED INFINITE LOOP
+// src/hooks/useTimerLogic.ts - FIXED NETWORK DETECTION
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { User } from 'firebase/auth';
+import NetInfo from '@react-native-community/netinfo';
 import { 
   startFast, 
   endFast, 
@@ -24,7 +25,7 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
   const [fastingStreak, setFastingStreak] = useState<FastStreak | null>(null);
   const [streakLoading, setStreakLoading] = useState(false);
 
-  // Real-time sync state (simplified)
+  // Real-time sync state - FIXED NETWORK DETECTION
   const [isOnline, setIsOnline] = useState(true);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [syncStatus, setSyncStatus] = useState<'connected' | 'connecting' | 'offline' | 'error'>('connecting');
@@ -345,10 +346,21 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
     };
   }, [isActive, startTime, elapsedTime]);
 
-  // Network status - SET ONCE
+  // FIXED: Network status detection using NetInfo instead of window.addEventListener
   useEffect(() => {
-    setIsOnline(true);
-    setSyncStatus('connected');
+    const unsubscribe = NetInfo.addEventListener(state => {
+      const connected = state.isConnected && state.isInternetReachable;
+      setIsOnline(connected ?? false);
+      
+      if (connected) {
+        setSyncStatus('connected');
+        setLastSyncTime(new Date());
+      } else {
+        setSyncStatus('offline');
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Cleanup
