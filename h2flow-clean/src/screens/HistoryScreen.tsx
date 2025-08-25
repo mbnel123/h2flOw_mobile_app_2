@@ -82,6 +82,43 @@ const StatCard = ({
   );
 };
 
+// Collapsible Section Component
+const CollapsibleSection = ({ 
+  title, 
+  icon, 
+  isExpanded, 
+  onToggle, 
+  children, 
+  colors 
+}: { 
+  title: string; 
+  icon: string; 
+  isExpanded: boolean; 
+  onToggle: () => void; 
+  children: React.ReactNode;
+  colors: any;
+}) => (
+  <View style={styles.section}>
+    <TouchableOpacity 
+      onPress={onToggle}
+      style={styles.sectionHeader}
+      activeOpacity={0.7}
+    >
+      <View style={styles.sectionHeaderLeft}>
+        <Ionicons name={icon as any} size={24} color={colors.text} />
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
+      </View>
+      <Ionicons 
+        name={isExpanded ? 'chevron-up' : 'chevron-down'} 
+        size={24} 
+        color={colors.textSecondary} 
+      />
+    </TouchableOpacity>
+    
+    {isExpanded && children}
+  </View>
+);
+
 // Edit Fast Modal Component
 const EditFastModal = ({ 
   visible, 
@@ -345,99 +382,87 @@ const FastHistoryList = ({
 }) => {
   if (fastHistory.length === 0) {
     return (
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Ionicons name="list" size={24} color={colors.text} />
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Fasts</Text>
-        </View>
-        <Card colors={colors} style={styles.emptyCard}>
-          <Ionicons name="stats-chart" size={32} color={colors.textSecondary} />
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            No fasting history yet. Start your first fast to see your progress!
-          </Text>
-        </Card>
-      </View>
+      <Card colors={colors} style={styles.emptyCard}>
+        <Ionicons name="stats-chart" size={32} color={colors.textSecondary} />
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+          No fasting history yet. Start your first fast to see your progress!
+        </Text>
+      </Card>
     );
   }
 
   return (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <Ionicons name="list" size={24} color={colors.text} />
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Fasts</Text>
-      </View>
-      <View style={styles.fastList}>
-        {fastHistory.slice(0, 10).map(fast => (
-          <TouchableOpacity 
-            key={fast.id} 
-            onPress={() => onEditFast(fast)}
-            activeOpacity={0.7}
-          >
-            <Card colors={colors} style={styles.fastCard}>
-              <View style={styles.fastHeader}>
-                <Text style={[styles.fastTitle, { color: colors.text }]}>
-                  {Number(fast.plannedDuration).toFixed(2)}h Fast
-                </Text>
-                <View style={[
-                  styles.statusBadge,
+    <View style={styles.fastList}>
+      {fastHistory.slice(0, 10).map(fast => (
+        <TouchableOpacity 
+          key={fast.id} 
+          onPress={() => onEditFast(fast)}
+          activeOpacity={0.7}
+        >
+          <Card colors={colors} style={styles.fastCard}>
+            <View style={styles.fastHeader}>
+              <Text style={[styles.fastTitle, { color: colors.text }]}>
+                {Number(fast.plannedDuration).toFixed(2)}h Fast
+              </Text>
+              <View style={[
+                styles.statusBadge,
+                { 
+                  backgroundColor: fast.status === 'completed' ? 
+                    `${colors.success}20` : 
+                    fast.status === 'stopped_early' ? 
+                    `${colors.warning}20` : 
+                    `${colors.primary}20`
+                }
+              ]}>
+                <Ionicons 
+                  name={fast.status === 'completed' ? 'checkmark-circle' : 
+                         fast.status === 'stopped_early' ? 'time' : 'refresh-circle'} 
+                  size={14} 
+                  color={fast.status === 'completed' ? colors.success : 
+                         fast.status === 'stopped_early' ? colors.warning : colors.primary} 
+                />
+                <Text style={[
+                  styles.statusText,
                   { 
-                    backgroundColor: fast.status === 'completed' ? 
-                      `${colors.success}20` : 
-                      fast.status === 'stopped_early' ? 
-                      `${colors.warning}20` : 
-                      `${colors.primary}20`
+                    color: fast.status === 'completed' ? colors.success : 
+                           fast.status === 'stopped_early' ? colors.warning : colors.primary
                   }
                 ]}>
-                  <Ionicons 
-                    name={fast.status === 'completed' ? 'checkmark-circle' : 
-                           fast.status === 'stopped_early' ? 'time' : 'refresh-circle'} 
-                    size={14} 
-                    color={fast.status === 'completed' ? colors.success : 
-                           fast.status === 'stopped_early' ? colors.warning : colors.primary} 
-                  />
-                  <Text style={[
-                    styles.statusText,
-                    { 
-                      color: fast.status === 'completed' ? colors.success : 
-                             fast.status === 'stopped_early' ? colors.warning : colors.primary
-                    }
-                  ]}>
-                    {fast.status === 'completed' ? 'Completed' : 
-                     fast.status === 'stopped_early' ? 'Stopped Early' : 'Active'}
-                  </Text>
-                </View>
+                  {fast.status === 'completed' ? 'Completed' : 
+                   fast.status === 'stopped_early' ? 'Stopped Early' : 'Active'}
+                </Text>
               </View>
-              
-              <View style={styles.fastDetails}>
-                <View style={styles.fastDetail}>
-                  <Ionicons name="calendar" size={14} color={colors.textSecondary} />
-                  <Text style={[styles.fastDetailValue, { color: colors.text }]}>
-                    {new Date(fast.startTime).toLocaleDateString('nl-NL')}
-                  </Text>
-                </View>
-                <View style={styles.fastDetail}>
-                  <Ionicons name="time" size={14} color={colors.textSecondary} />
-                  <Text style={[styles.fastDetailValue, { color: colors.text }]}>
-                    {Number(fast.actualDuration || fast.plannedDuration).toFixed(2)} hours
-                  </Text>
-                </View>
+            </View>
+            
+            <View style={styles.fastDetails}>
+              <View style={styles.fastDetail}>
+                <Ionicons name="calendar" size={14} color={colors.textSecondary} />
+                <Text style={[styles.fastDetailValue, { color: colors.text }]}>
+                  {new Date(fast.startTime).toLocaleDateString('nl-NL')}
+                </Text>
               </View>
-              
-              <View style={styles.fastActions}>
-                <TouchableOpacity 
-                  style={styles.editButton}
-                  onPress={() => onEditFast(fast)}
-                >
-                  <Ionicons name="create" size={14} color={colors.textSecondary} />
-                  <Text style={[styles.editButtonText, { color: colors.textSecondary }]}>
-                    Edit
-                  </Text>
-                </TouchableOpacity>
+              <View style={styles.fastDetail}>
+                <Ionicons name="time" size={14} color={colors.textSecondary} />
+                <Text style={[styles.fastDetailValue, { color: colors.text }]}>
+                  {Number(fast.actualDuration || fast.plannedDuration).toFixed(2)} hours
+                </Text>
               </View>
-            </Card>
-          </TouchableOpacity>
-        ))}
-      </View>
+            </View>
+            
+            <View style={styles.fastActions}>
+              <TouchableOpacity 
+                style={styles.editButton}
+                onPress={() => onEditFast(fast)}
+              >
+                <Ionicons name="create" size={14} color={colors.textSecondary} />
+                <Text style={[styles.editButtonText, { color: colors.textSecondary }]}>
+                  Edit
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Card>
+        </TouchableOpacity>
+      ))}
     </View>
   );
 };
@@ -449,6 +474,11 @@ const HistoryScreen: React.FC = () => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [editingFast, setEditingFast] = useState<Fast | null>(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [expandedSections, setExpandedSections] = useState({
+    recentFasts: true,
+    fastingPatterns: true,
+    lifetimeStats: true
+  });
 
   // Use custom hook for history data
   const {
@@ -510,6 +540,13 @@ const HistoryScreen: React.FC = () => {
     setEditingFast(null);
   };
 
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
   if (!user) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -565,25 +602,81 @@ const HistoryScreen: React.FC = () => {
           colors={theme}
         />
 
-        {/* Fasting Patterns */}
-        <FastingPatternsSection 
-          stats={stats} 
+        {/* Recent Fasts Section - Now at the top and collapsible */}
+        <CollapsibleSection
+          title="Recent Fasts"
+          icon="list"
+          isExpanded={expandedSections.recentFasts}
+          onToggle={() => toggleSection('recentFasts')}
           colors={theme}
-        />
+        >
+          <FastHistoryList 
+            fastHistory={fastHistory} 
+            colors={theme}
+            onEditFast={handleEditFast}
+          />
+        </CollapsibleSection>
 
-        {/* Fast History */}
-        <FastHistoryList 
-          fastHistory={fastHistory} 
+        {/* Fasting Patterns - Now collapsible */}
+        <CollapsibleSection
+          title="Your Fasting Patterns"
+          icon="stats-chart"
+          isExpanded={expandedSections.fastingPatterns}
+          onToggle={() => toggleSection('fastingPatterns')}
           colors={theme}
-          onEditFast={handleEditFast}
-        />
+        >
+          <View style={styles.patternsGrid}>
+            <Card colors={theme} style={styles.patternCard}>
+              <View style={styles.patternHeader}>
+                <Ionicons name="calendar" size={20} color={theme.success} />
+                <Text style={[styles.patternTitle, { color: theme.success }]}>This Year</Text>
+              </View>
+              <Text style={[styles.patternValue, { color: theme.text }]}>{stats.fastsPerYear}</Text>
+              <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Total fasts</Text>
+              <Text style={[styles.patternValueSmall, { color: theme.text }]}>
+                {Math.round(stats.hoursPerYear)}h
+              </Text>
+              <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Total hours</Text>
+            </Card>
 
-        {/* Basic Stats Grid */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="stats-chart" size={24} color={theme.text} />
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>Lifetime Stats</Text>
+            <Card colors={theme} style={styles.patternCard}>
+              <View style={styles.patternHeader}>
+                <Ionicons name="calendar" size={20} color={theme.primary} />
+                <Text style={[styles.patternTitle, { color: theme.primary }]}>This Month</Text>
+              </View>
+              <Text style={[styles.patternValue, { color: theme.text }]}>{stats.fastsPerMonth}</Text>
+              <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Total fasts</Text>
+              <Text style={[styles.patternValueSmall, { color: theme.text }]}>
+                {Math.round(stats.hoursPerMonth)}h
+              </Text>
+              <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Total hours</Text>
+            </Card>
+
+            <Card colors={theme} style={styles.patternCard}>
+              <View style={styles.patternHeader}>
+                <Ionicons name="analytics" size={20} color={theme.info} />
+                <Text style={[styles.patternTitle, { color: theme.info }]}>Averages</Text>
+              </View>
+              <Text style={[styles.patternValue, { color: theme.text }]}>
+                {Math.round(stats.averageDuration)}h
+              </Text>
+              <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Avg duration</Text>
+              <Text style={[styles.patternValueSmall, { color: theme.text }]}>
+                {stats.completionRate}%
+              </Text>
+              <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Success rate</Text>
+            </Card>
           </View>
+        </CollapsibleSection>
+
+        {/* Lifetime Stats - Now collapsible */}
+        <CollapsibleSection
+          title="Lifetime Stats"
+          icon="trophy"
+          isExpanded={expandedSections.lifetimeStats}
+          onToggle={() => toggleSection('lifetimeStats')}
+          colors={theme}
+        >
           <View style={styles.statsGrid}>
             <StatCard
               title="Total Fasts"
@@ -628,7 +721,7 @@ const HistoryScreen: React.FC = () => {
               colors={theme}
             />
           </View>
-        </View>
+        </CollapsibleSection>
       </ScrollView>
 
       {/* Edit Fast Modal */}
@@ -757,8 +850,15 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+    padding: 8,
+    borderRadius: 8,
+  },
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
   sectionTitle: {
@@ -987,7 +1087,7 @@ const styles = StyleSheet.create({
   },
   skeletonButton: {
     width: 80,
-    height: 32,
+    height: 36,
     borderRadius: 8,
   },
   profileSkeleton: {
