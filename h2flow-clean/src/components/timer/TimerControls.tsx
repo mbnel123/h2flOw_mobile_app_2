@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Play, Pause, Square } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { FastTemplate } from '../services/templateService';
 
 interface TimerControlsProps {
@@ -80,7 +81,8 @@ const TimerControls: React.FC<TimerControlsProps> = ({
               onPress={onShowTemplateSelector}
               style={[styles.secondaryBtn, { width: buttonWidth }]}
             >
-              <Text style={styles.btnText}>📋 Templates</Text>
+              <Ionicons name="list" size={20} color="white" />
+              <Text style={styles.btnText}>Templates</Text>
             </TouchableOpacity>
           </View>
         )
@@ -99,7 +101,8 @@ const TimerControls: React.FC<TimerControlsProps> = ({
               onPress={onStopConfirmation}
               style={[styles.successBtn, { flex: 1 }]}
             >
-              <Text style={styles.btnText}>🍎 Break Fast</Text>
+              <Ionicons name="nutrition" size={20} color="white" />
+              <Text style={styles.btnText}>Break Fast</Text>
             </TouchableOpacity>
           </View>
         </View>
