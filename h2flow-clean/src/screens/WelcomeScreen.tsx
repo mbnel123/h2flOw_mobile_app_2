@@ -7,24 +7,27 @@ import {
   StyleSheet,
   useColorScheme,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 const colors = {
   light: {
-    primary: '#3B82F6',
+    primary: '#7DD3FC', // Babyblauw zoals in TimerScreen
+    secondary: '#38BDF8',
     background: '#FFFFFF',
-    text: '#111827',
+    backgroundSecondary: '#F8F9FA',
+    text: '#000000',
     textSecondary: '#6B7280',
-    gradient: ['#EFF6FF', '#DBEAFE', '#EFF6FF']
+    border: '#E5E7EB',
   },
   dark: {
-    primary: '#3B82F6',
-    background: '#111827',
-    text: '#F9FAFB',
+    primary: '#7DD3FC', // Babyblauw zoals in TimerScreen
+    secondary: '#38BDF8',
+    background: '#000000',
+    backgroundSecondary: '#1F1F1F',
+    text: '#FFFFFF',
     textSecondary: '#9CA3AF',
-    gradient: ['#111827', '#1F2937', '#111827']
+    border: '#374151',
   }
 };
 
@@ -38,44 +41,55 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ setCurrentView }) => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <LinearGradient
-        colors={theme.gradient}
-        style={styles.gradient}
-      >
-        <View style={styles.content}>
-          <Text style={styles.emoji}>💧</Text>
-          
-          <Text style={[styles.title, { color: theme.text }]}>
-            H2flOw
-          </Text>
-          
-          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-            Your water fasting companion with science-backed insights
-          </Text>
-          
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.primaryButton, { backgroundColor: theme.primary }]}
-              onPress={() => setCurrentView('auth')}
-            >
-              <Text style={styles.primaryButtonText}>Get Started</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.secondaryButton, { backgroundColor: theme.textSecondary + '20' }]}
-              onPress={() => setCurrentView('info')}
-            >
-              <Text style={[styles.secondaryButtonText, { color: theme.textSecondary }]}>
-                Learn About Fasting
-              </Text>
-            </TouchableOpacity>
-          </View>
-          
-          <Text style={[styles.footerText, { color: theme.textSecondary }]}>
-            Track your journey • Stay safe • See the science
-          </Text>
+      <View style={styles.content}>
+        <View style={styles.iconContainer}>
+          <Ionicons name="water" size={48} color={theme.primary} />
+          <Ionicons name="time" size={48} color={theme.primary} style={styles.secondIcon} />
         </View>
-      </LinearGradient>
+        
+        <Text style={[styles.title, { color: theme.text }]}>
+          H2flOw
+        </Text>
+        
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+          Your water fasting companion with science-backed insights
+        </Text>
+        
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[styles.primaryButton, { backgroundColor: theme.primary }]}
+            onPress={() => setCurrentView('auth')}
+          >
+            <Ionicons name="play" size={20} color="white" />
+            <Text style={styles.primaryButtonText}>Get Started</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.secondaryButton, { borderColor: theme.primary }]}
+            onPress={() => setCurrentView('info')}
+          >
+            <Ionicons name="information-circle" size={20} color={theme.primary} />
+            <Text style={[styles.secondaryButtonText, { color: theme.primary }]}>
+              Learn About Fasting
+            </Text>
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.features}>
+          <View style={styles.feature}>
+            <Ionicons name="timer" size={20} color={theme.primary} />
+            <Text style={[styles.featureText, { color: theme.textSecondary }]}>Track your journey</Text>
+          </View>
+          <View style={styles.feature}>
+            <Ionicons name="shield-checkmark" size={20} color={theme.primary} />
+            <Text style={[styles.featureText, { color: theme.textSecondary }]}>Stay safe</Text>
+          </View>
+          <View style={styles.feature}>
+            <Ionicons name="flask" size={20} color={theme.primary} />
+            <Text style={[styles.featureText, { color: theme.textSecondary }]}>See the science</Text>
+          </View>
+        </View>
+      </View>
     </SafeAreaView>
   );
 };
@@ -84,20 +98,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  gradient: {
+  content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  content: {
-    width: '100%',
-    maxWidth: 400,
     padding: 24,
-    alignItems: 'center',
   },
-  emoji: {
-    fontSize: 64,
+  iconContainer: {
+    flexDirection: 'row',
     marginBottom: 24,
+    position: 'relative',
+  },
+  secondIcon: {
+    position: 'absolute',
+    top: 8,
+    left: 32,
   },
   title: {
     fontSize: 36,
@@ -106,40 +121,60 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: 16,
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 24,
+    maxWidth: 300,
   },
   buttonContainer: {
     width: '100%',
-    gap: 16,
+    maxWidth: 300,
+    gap: 12,
     marginBottom: 32,
   },
   primaryButton: {
     width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 20,
     borderRadius: 16,
-    alignItems: 'center',
+    gap: 8,
   },
   primaryButtonText: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
   },
   secondaryButton: {
     width: '100%',
-    padding: 20,
-    borderRadius: 16,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    padding: 18,
+    borderRadius: 16,
+    borderWidth: 2,
+    gap: 8,
   },
   secondaryButtonText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
   },
-  footerText: {
-    fontSize: 14,
-    textAlign: 'center',
+  features: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 20,
+    maxWidth: 300,
+  },
+  feature: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  featureText: {
+    fontSize: 12,
   },
 });
 
