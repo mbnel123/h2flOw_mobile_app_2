@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import { Play, Pause, Square } from 'lucide-react-native';
+import { Play, Square } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FastTemplate } from '../services/templateService';
 
@@ -33,7 +33,6 @@ const TimerControls: React.FC<TimerControlsProps> = ({
   showStopConfirmation,
   onStartFast,
   onResumeFast,
-  onPauseFast,
   onStopConfirmation,
   onConfirmStop,
   onCancelStop,
@@ -87,24 +86,15 @@ const TimerControls: React.FC<TimerControlsProps> = ({
           </View>
         )
       ) : (
-        // Timer is active - show Pause and Break Fast
-        <View style={{ alignItems: 'center', gap: 12, width: '100%' }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12 }}>
-            <TouchableOpacity
-              onPress={onPauseFast}
-              style={[styles.secondaryBtn, { flex: 1 }]}
-            >
-              <Pause size={20} color="white" />
-              <Text style={styles.btnText}>Pause</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={onStopConfirmation}
-              style={[styles.successBtn, { flex: 1 }]}
-            >
-              <Ionicons name="nutrition" size={20} color="white" />
-              <Text style={styles.btnText}>Break Fast</Text>
-            </TouchableOpacity>
-          </View>
+        // Timer is active - show only Break Fast button (no pause)
+        <View style={{ alignItems: 'center', width: '100%' }}>
+          <TouchableOpacity
+            onPress={onStopConfirmation}
+            style={[styles.successBtn, { width: buttonWidth }]}
+          >
+            <Ionicons name="nutrition-outline" size={20} color="white" />
+            <Text style={styles.btnText}>Break Fast</Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -157,11 +147,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   successBtn: {
-    backgroundColor: '#059669',
+    backgroundColor: '#34D399', // Licht groen
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: 20,
     borderRadius: 16,
   },
   btnText: { 
