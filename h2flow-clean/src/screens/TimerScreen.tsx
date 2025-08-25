@@ -23,7 +23,7 @@ import NextPhaseInfo from '../components/timer/NextPhaseInfo';
 import TemplateInfo from '../components/timer/TemplateInfo';
 import WarningModal from '../components/WarningModal';
 import StopConfirmationModal from '../components/timer/StopConfirmationModal';
-import TemplateSelector from '../components/TemplateSelector';
+import TemplateSelectorScreen from './TemplateSelectorScreen';
 import TimerCelebrations from '../components/SuccessAnimations';
 
 // Theme colors - Updated with baby blue
@@ -161,7 +161,7 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
     return { hours, minutes, nextPhase };
   };
 
-  // ✅ FIX: run only on mount
+  // Run only on mount
   useEffect(() => {
     const unsubscribe = onAuthStateChange((user) => {
       setUser(user);
@@ -336,12 +336,12 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
       />
 
       {showTemplateSelector && user && (
-        <TemplateSelector
+        <TemplateSelectorScreen
           userId={user.uid}
+          visible={showTemplateSelector}
           selectedDuration={targetHours}
           onSelectTemplate={handleSelectTemplate}
           onClose={() => setShowTemplateSelector(false)}
-          theme={theme}
         />
       )}
     </SafeAreaView>
