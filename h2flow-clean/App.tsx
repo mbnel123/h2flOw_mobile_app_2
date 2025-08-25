@@ -122,11 +122,11 @@ export default function App() {
                     case 'Water':
                       iconName = focused ? 'water' : 'water-outline';
                       break;
-                    case 'History':
-                      iconName = focused ? 'bar-chart' : 'bar-chart-outline';
-                      break;
                     case 'Info':
                       iconName = focused ? 'information-circle' : 'information-circle-outline';
+                      break;
+                    case 'History':
+                      iconName = focused ? 'bar-chart' : 'bar-chart-outline';
                       break;
                     default:
                       iconName = 'help-outline';
