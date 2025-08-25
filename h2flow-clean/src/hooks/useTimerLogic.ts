@@ -1,4 +1,4 @@
-// src/hooks/useTimerLogic.ts - FIXED NETWORK DETECTION
+// src/hooks/useTimerLogic.ts
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { User } from 'firebase/auth';
 import NetInfo from '@react-native-community/netinfo';
@@ -25,7 +25,7 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
   const [fastingStreak, setFastingStreak] = useState<FastStreak | null>(null);
   const [streakLoading, setStreakLoading] = useState(false);
 
-  // Real-time sync state - FIXED NETWORK DETECTION
+  // Real-time sync state
   const [isOnline, setIsOnline] = useState(true);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [syncStatus, setSyncStatus] = useState<'connected' | 'connecting' | 'offline' | 'error'>('connecting');
@@ -57,18 +57,30 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
   const isInitialized = useRef(false);
   const currentUserId = useRef<string | null>(null);
 
-  // Load streak data - MEMOIZED
+  // ---- EXTRA: Bereken huidige fase ----
+  const fastingPhases = [
+    { hours: 0, title: "Fast begins" },
+    { hours: 6, title: "Glycogen use" },
+    { hours: 12, title: "Ketosis start" },
+    { hours: 18, title: "Deep ketosis" },
+    { hours: 24, title: "Autophagy" },
+    { hours: 48, title: "Deep autophagy" },
+    { hours: 72, title: "Immune reset" }
+  ];
+
+  const elapsedHours = Math.floor(elapsedTime / 3600);
+  const currentPhase = fastingPhases.reduce((phase, p) => {
+    if (elapsedHours >= p.hours) return p;
+    return phase;
+  }, fastingPhases[0]);
+
+  // ---- Load streak data ----
   const loadStreakData = useCallback(async (userId: string) => {
-    if (streakLoading) return; // Prevent multiple calls
-    
+    if (streakLoading) return;
     setStreakLoading(true);
     try {
       const { streak, error } = await calculateFastingStreak(userId);
-      if (error) {
-        console.error('Failed to load streak:', error);
-      } else {
-        setFastingStreak(streak);
-      }
+      if (!error) setFastingStreak(streak);
     } catch (err) {
       console.error('Error loading streak:', err);
     } finally {
@@ -76,17 +88,16 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
     }
   }, [streakLoading]);
 
-  // Handle real-time updates - MEMOIZED
+  // ---- Handle realtime updates ----
   const handleRealtimeUpdate = useCallback((updatedFast: Fast | null) => {
     const wasActive = currentFast?.status === 'active';
     const nowCompleted = updatedFast?.status === 'completed';
-    
+
     if (!updatedFast) {
-      if (currentFast) {
+      if (currentFast && user) {
         setMultiDeviceActivity('Fast ended on another device');
         setTimeout(() => setMultiDeviceActivity(null), 3000);
-        
-        if (user) loadStreakData(user.uid);
+        loadStreakData(user.uid);
       }
       setCurrentFast(null);
       setIsActive(false);
@@ -99,7 +110,6 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
     setCurrentFast(updatedFast);
 
     if (wasActive && nowCompleted && user) {
-      console.log('🔥 Fast completed, refreshing streak...');
       loadStreakData(user.uid);
     }
 
@@ -107,9 +117,7 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
       setIsActive(true);
       const fastStartTime = new Date(updatedFast.startTime).getTime();
       setStartTime(fastStartTime);
-      const now = Date.now();
-      const elapsedSeconds = Math.floor((now - fastStartTime) / 1000);
-      setElapsedTime(elapsedSeconds);
+      setElapsedTime(Math.floor((Date.now() - fastStartTime) / 1000));
     } else {
       setIsActive(updatedFast.status === 'active');
     }
@@ -119,38 +127,25 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
     setDailyWaterIntake(totalWater);
   }, [currentFast, user, loadStreakData]);
 
-  // Load current fast - MEMOIZED
+  // ---- Load current fast ----
   const loadCurrentFast = useCallback(async (userId: string) => {
-    if (initialLoading === false) return; // Prevent reload
-    
+    if (!initialLoading) return;
     try {
-      setError(null);
       const result = await getCurrentFast(userId);
-      
       if (result.error) {
         setError(`Failed to load data: ${result.error}`);
         setSyncStatus('error');
         return;
       }
-      
       const { fast } = result;
-      
       if (fast) {
         setCurrentFast(fast);
-        
         if (fast.status === 'active') {
           setIsActive(true);
           const fastStartTime = new Date(fast.startTime).getTime();
           setStartTime(fastStartTime);
-          const now = Date.now();
-          const elapsedSeconds = Math.floor((now - fastStartTime) / 1000);
-          setElapsedTime(elapsedSeconds);
-        } else {
-          setIsActive(false);
-          setStartTime(null);
-          setElapsedTime(0);
+          setElapsedTime(Math.floor((Date.now() - fastStartTime) / 1000));
         }
-        
         setTargetHours(fast.plannedDuration);
         const totalWater = fast.waterIntake?.reduce((total, entry) => total + entry.amount, 0) || 0;
         setDailyWaterIntake(totalWater);
@@ -161,10 +156,8 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
         setElapsedTime(0);
         setDailyWaterIntake(0);
       }
-      
       setSyncStatus('connected');
     } catch (err) {
-      console.error('loadCurrentFast error:', err);
       setError('Failed to load fasting data: ' + (err instanceof Error ? err.message : String(err)));
       setSyncStatus('error');
     } finally {
@@ -172,246 +165,29 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
     }
   }, [initialLoading]);
 
-  // Setup real-time sync - MEMOIZED
+  // ---- Setup realtime sync ----
   const setupRealtimeSync = useCallback(async (userId: string) => {
-    // Prevent multiple setups for same user
-    if (currentUserId.current === userId && realtimeUnsubscribe.current) {
-      return;
-    }
-    
+    if (currentUserId.current === userId && realtimeUnsubscribe.current) return;
     try {
       setSyncStatus('connecting');
-      
-      // Cleanup previous listener
-      if (realtimeUnsubscribe.current) {
-        realtimeUnsubscribe.current();
-        realtimeUnsubscribe.current = null;
-      }
-
+      if (realtimeUnsubscribe.current) realtimeUnsubscribe.current();
       await loadCurrentFast(userId);
       await loadStreakData(userId);
-
       const unsubscribe = subscribeToCurrentFast(userId, (updatedFast) => {
         handleRealtimeUpdate(updatedFast);
         setLastSyncTime(new Date());
         setSyncStatus('connected');
       });
-
       realtimeUnsubscribe.current = unsubscribe;
       currentUserId.current = userId;
-      
     } catch (err) {
-      console.error('Failed to setup real-time sync:', err);
       setSyncStatus('error');
     }
   }, [loadCurrentFast, loadStreakData, handleRealtimeUpdate]);
 
-  // Action handlers
+  // ---- Actions ----
   const handleStartFast = async () => {
-    if (!user) {
-      setError('Please log in to start fasting');
-      return;
-    }
-    
+    if (!user) return setError('Please log in to start fasting');
+    if (!isOnline) return setError('Cannot start fast while offline');
     if (!targetHours || targetHours <= 0 || targetHours > 168) {
-      setError('Please set a valid target duration in Settings (1-168 hours)');
-      return;
-    }
-
-    if (!isOnline) {
-      setError('Cannot start fast while offline');
-      return;
-    }
-
-    setShowWarningModal(true);
-  };
-
-  const proceedWithFastStart = async () => {
-    setShowWarningModal(false);
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const result = await startFast(user!.uid, targetHours);
-      
-      if (result.error) {
-        setError(`Failed to start fast: ${result.error}`);
-      } else if (result.id) {
-        setPreviousElapsedTime(0);
-        setShowCelebrations(true);
-        console.log('✅ Fast started successfully');
-      } else {
-        setError('Unexpected response from server');
-      }
-    } catch (err) {
-      setError('Failed to start fast: ' + (err instanceof Error ? err.message : String(err)));
-    }
-    
-    setLoading(false);
-  };
-
-  const pauseFast = async () => {
-    if (!currentFast?.id || !isOnline) return;
-    try {
-      await updateFastStatus(currentFast.id, 'paused');
-    } catch (err) {
-      setError('Failed to pause fast');
-    }
-  };
-
-  const resumeFast = async () => {
-    if (!currentFast?.id || !isOnline) return;
-    try {
-      await updateFastStatus(currentFast.id, 'active');
-    } catch (err) {
-      setError('Failed to resume fast');
-    }
-  };
-
-  const stopFast = async () => {
-    if (!currentFast?.id) return;
-    
-    if (!isOnline) {
-      setError('Cannot stop fast while offline');
-      return;
-    }
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const { error } = await endFast(currentFast.id);
-      if (error) {
-        setError(error);
-      } else {
-        setShowStopConfirmation(false);
-
-        if (user) {
-          console.log('🔥 Fast completed! Refreshing streak...');
-          await loadStreakData(user.uid);
-        }
-      }
-    } catch (err) {
-      setError('Failed to end fast');
-    }
-    
-    setLoading(false);
-  };
-
-  const handleSelectTemplate = (template: FastTemplate) => {
-    setCurrentTemplate(template);
-    setTargetHours(template.duration);
-  };
-
-  // Initialize templates - ONLY ONCE
-  useEffect(() => {
-    const updateRecentTemplates = () => {
-      setRecentTemplates(templateService.getRecentlyUsed(3));
-    };
-    
-    const unsubscribeTemplates = templateService.subscribe(updateRecentTemplates);
-    updateRecentTemplates();
-    
-    return () => unsubscribeTemplates();
-  }, []);
-
-  // Setup real-time sync when user changes - ONLY ONCE PER USER
-  useEffect(() => {
-    if (user && !isInitialized.current) {
-      setupRealtimeSync(user.uid);
-      isInitialized.current = true;
-    }
-    
-    if (!user) {
-      isInitialized.current = false;
-      currentUserId.current = null;
-    }
-  }, [user, setupRealtimeSync]);
-
-  // Timer logic
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
-    if (isActive && startTime) {
-      interval = setInterval(() => {
-        const now = Date.now();
-        const elapsed = Math.floor((now - startTime) / 1000);
-        setPreviousElapsedTime(elapsedTime);
-        setElapsedTime(elapsed);
-      }, 1000);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isActive, startTime, elapsedTime]);
-
-  // FIXED: Network status detection using NetInfo instead of window.addEventListener
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener(state => {
-      const connected = state.isConnected && state.isInternetReachable;
-      setIsOnline(connected ?? false);
-      
-      if (connected) {
-        setSyncStatus('connected');
-        setLastSyncTime(new Date());
-      } else {
-        setSyncStatus('offline');
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      if (realtimeUnsubscribe.current) {
-        realtimeUnsubscribe.current();
-        realtimeUnsubscribe.current = null;
-      }
-    };
-  }, []);
-
-  return {
-    // State
-    currentFast,
-    loading,
-    initialLoading,
-    error,
-    fastingStreak,
-    streakLoading,
-    isOnline,
-    lastSyncTime,
-    syncStatus,
-    multiDeviceActivity,
-    showTemplateSelector,
-    currentTemplate,
-    recentTemplates,
-    isActive,
-    startTime,
-    elapsedTime,
-    targetHours,
-    dailyWaterIntake,
-    showStopConfirmation,
-    showWarningModal,
-    previousElapsedTime,
-    personalRecord,
-    showCelebrations,
-
-    // Actions
-    handleStartFast,
-    proceedWithFastStart,
-    pauseFast,
-    resumeFast,
-    stopFast,
-    handleSelectTemplate,
-    setError,
-    setShowStopConfirmation,
-    setShowTemplateSelector,
-    setShowCelebrations,
-    setCurrentTemplate,
-    setTargetHours,
-    setShowWarningModal
-  };
-};
+      return setError('Please set a valid target du
