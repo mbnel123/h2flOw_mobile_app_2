@@ -6,7 +6,8 @@ import {
   StyleSheet, 
   StatusBar, 
   useColorScheme, 
-  TouchableOpacity 
+  TouchableOpacity,
+  ScrollView
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { User } from 'firebase/auth';
@@ -223,7 +224,11 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
         </View>
       )}
 
-      <View style={styles.contentContainer}>
+      <ScrollView 
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {currentTemplate && !isActive && (
           <View style={styles.templateContainer}>
             <TemplateInfo 
@@ -263,7 +268,7 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
             )}
           </View>
         )}
-      </View>
+      </ScrollView>
 
       {/* Controls at bottom - always visible */}
       <View style={styles.controlsContainer}>
@@ -311,6 +316,12 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  scrollContainer: { flex: 1 },
+  scrollContent: { 
+    flexGrow: 1, 
+    paddingHorizontal: 24,
+    paddingBottom: 20 
+  },
   centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   lockIcon: { fontSize: 64, marginBottom: 16 },
   lockText: { fontSize: 16 },
@@ -319,13 +330,13 @@ const styles = StyleSheet.create({
   dismissText: { fontSize: 12, marginTop: 4, textDecorationLine: 'underline' },
   contentContainer: { flex: 1, paddingHorizontal: 24 },
   templateContainer: { marginTop: 20, marginBottom: 20 },
-  timerContainer: { alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: 400 },
+  timerContainer: { alignItems: 'center', justifyContent: 'center', minHeight: 400, marginVertical: 20 },
   phaseContainer: { 
     width: '100%', 
     maxWidth: 500, 
     alignSelf: 'center', 
-    paddingBottom: 20,
-    gap: 16
+    gap: 16,
+    marginBottom: 20
   },
   nextPhaseContainer: {
     padding: 12,
@@ -340,7 +351,12 @@ const styles = StyleSheet.create({
   nextPhaseTime: {
     fontSize: 12,
   },
-  controlsContainer: { paddingHorizontal: 24, paddingBottom: 110, paddingTop: 20 },
+  controlsContainer: { 
+    paddingHorizontal: 24, 
+    paddingBottom: 24, 
+    paddingTop: 16,
+    backgroundColor: 'transparent'
+  },
   startContainer: { gap: 16, width: '100%', maxWidth: 400, alignSelf: 'center' },
   startButton: { padding: 20, borderRadius: 16, alignItems: 'center' },
   startButtonText: { color: 'white', fontSize: 18, fontWeight: '600' },
