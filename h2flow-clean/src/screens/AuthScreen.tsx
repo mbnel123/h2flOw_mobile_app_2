@@ -12,14 +12,42 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  useColorScheme,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { signUp, signIn } from '../firebase/authService';
+
+const colors = {
+  light: {
+    primary: '#7DD3FC', // Babyblauw
+    secondary: '#38BDF8',
+    background: '#FFFFFF',
+    backgroundSecondary: '#F8F9FA',
+    text: '#000000',
+    textSecondary: '#6B7280',
+    border: '#E5E7EB',
+    danger: '#DC2626',
+  },
+  dark: {
+    primary: '#7DD3FC', // Babyblauw
+    secondary: '#38BDF8',
+    background: '#000000',
+    backgroundSecondary: '#1F1F1F',
+    text: '#FFFFFF',
+    textSecondary: '#9CA3AF',
+    border: '#374151',
+    danger: '#DC2626',
+  }
+};
 
 interface AuthScreenProps {
   setCurrentView: (view: string) => void;
 }
 
 const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
+  const isDark = useColorScheme() === 'dark';
+  const theme = isDark ? colors.dark : colors.light;
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
@@ -71,35 +99,37 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.authContainer}>
+          <View style={[styles.authContainer, { backgroundColor: theme.backgroundSecondary }]}>
             <View style={styles.header}>
-              <Text style={styles.emoji}>💧</Text>
-              <Text style={styles.title}>H2Flow</Text>
-              <Text style={styles.subtitle}>
+              <Ionicons name="water" size={48} color={theme.primary} />
+              <Text style={[styles.title, { color: theme.text }]}>H2Flow</Text>
+              <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                 {isLogin ? 'Welcome back!' : 'Create your account'}
               </Text>
             </View>
 
             <View style={styles.toggleContainer}>
-              <View style={styles.toggleBackground}>
+              <View style={[styles.toggleBackground, { backgroundColor: theme.background }]}>
                 <TouchableOpacity
-                  style={[styles.toggleButton, isLogin && styles.toggleButtonActive]}
+                  style={[styles.toggleButton, isLogin && [styles.toggleButtonActive, { backgroundColor: theme.primary }]]}
                   onPress={() => setIsLogin(true)}
                 >
+                  <Ionicons name="log-in" size={16} color={isLogin ? 'white' : theme.textSecondary} />
                   <Text style={[styles.toggleText, isLogin && styles.toggleTextActive]}>
                     Login
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.toggleButton, !isLogin && styles.toggleButtonActive]}
+                  style={[styles.toggleButton, !isLogin && [styles.toggleButtonActive, { backgroundColor: theme.primary }]]}
                   onPress={() => setIsLogin(false)}
                 >
+                  <Ionicons name="person-add" size={16} color={!isLogin ? 'white' : theme.textSecondary} />
                   <Text style={[styles.toggleText, !isLogin && styles.toggleTextActive]}>
                     Sign Up
                   </Text>
@@ -109,13 +139,17 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
 
             <View style={styles.formContainer}>
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Email</Text>
+                <Text style={[styles.label, { color: theme.text }]}>Email</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { 
+                    backgroundColor: theme.background, 
+                    borderColor: theme.border,
+                    color: theme.text 
+                  }]}
                   value={email}
                   onChangeText={setEmail}
                   placeholder="your.email@example.com"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={theme.textSecondary}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -124,13 +158,17 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Password</Text>
+                <Text style={[styles.label, { color: theme.text }]}>Password</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { 
+                    backgroundColor: theme.background, 
+                    borderColor: theme.border,
+                    color: theme.text 
+                  }]}
                   value={password}
                   onChangeText={setPassword}
                   placeholder="••••••••"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={theme.textSecondary}
                   secureTextEntry
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -139,22 +177,26 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
               </View>
 
               {error && (
-                <View style={styles.errorContainer}>
-                  <Text style={styles.errorText}>{error}</Text>
+                <View style={[styles.errorContainer, { backgroundColor: `${theme.danger}20` }]}>
+                  <Ionicons name="warning" size={16} color={theme.danger} />
+                  <Text style={[styles.errorText, { color: theme.danger }]}>{error}</Text>
                 </View>
               )}
 
               <TouchableOpacity
-                style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+                style={[styles.submitButton, { backgroundColor: theme.primary }, loading && styles.submitButtonDisabled]}
                 onPress={handleSubmit}
                 disabled={loading}
               >
                 {loading ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.submitButtonText}>
-                    {isLogin ? 'Login' : 'Create Account'}
-                  </Text>
+                  <>
+                    <Ionicons name={isLogin ? "log-in" : "person-add"} size={20} color="white" />
+                    <Text style={styles.submitButtonText}>
+                      {isLogin ? 'Login' : 'Create Account'}
+                    </Text>
+                  </>
                 )}
               </TouchableOpacity>
             </View>
@@ -164,7 +206,8 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
               onPress={handleBackToWelcome}
               disabled={loading}
             >
-              <Text style={styles.backButtonText}>← Back to Welcome</Text>
+              <Ionicons name="arrow-back" size={16} color={theme.textSecondary} />
+              <Text style={[styles.backButtonText, { color: theme.textSecondary }]}>Back to Welcome</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -176,7 +219,6 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
   },
   keyboardAvoid: {
     flex: 1,
@@ -187,35 +229,20 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   authContainer: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 24,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
   },
   header: {
     alignItems: 'center',
     marginBottom: 32,
   },
-  emoji: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1F2937',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
     textAlign: 'center',
   },
   toggleContainer: {
@@ -223,19 +250,20 @@ const styles = StyleSheet.create({
   },
   toggleBackground: {
     flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
     borderRadius: 12,
     padding: 4,
   },
   toggleButton: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
-    alignItems: 'center',
+    gap: 8,
   },
   toggleButtonActive: {
-    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -248,10 +276,9 @@ const styles = StyleSheet.create({
   toggleText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#6B7280',
   },
   toggleTextActive: {
-    color: '#2563EB',
+    color: 'white',
   },
   formContainer: {
     marginBottom: 24,
@@ -262,35 +289,33 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#374151',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: '#1F2937',
   },
   errorContainer: {
-    backgroundColor: '#FEF2F2',
-    borderWidth: 1,
-    borderColor: '#FECACA',
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
+    gap: 8,
   },
   errorText: {
-    color: '#DC2626',
     fontSize: 14,
+    flex: 1,
   },
   submitButton: {
-    backgroundColor: '#2563EB',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 12,
     padding: 16,
-    alignItems: 'center',
+    gap: 8,
   },
   submitButtonDisabled: {
     opacity: 0.5,
@@ -301,11 +326,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   backButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     padding: 16,
+    gap: 8,
   },
   backButtonText: {
-    color: '#6B7280',
     fontSize: 14,
   },
 });
