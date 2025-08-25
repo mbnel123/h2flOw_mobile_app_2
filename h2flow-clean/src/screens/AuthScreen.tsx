@@ -27,17 +27,18 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Listen to auth state changes
+  // Listen to auth state changes - alleen voor initial check
   useEffect(() => {
     const unsubscribe = onAuthStateChange((user) => {
       setUser(user);
-      setHasCheckedAuth(true);
+      setIsCheckingAuth(false);
       
-      // Alleen redirecten als de gebruiker bestaat EN we klaar zijn met de initiële check
+      // Alleen redirecten als we net klaar zijn met de initial check
+      // en er een gebruiker is
       if (user) {
-        console.log('User is logged in, redirecting to timer');
+        console.log('User already logged in, redirecting to timer');
         setCurrentView('timer');
       }
     });
@@ -61,8 +62,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
         if (error) {
           setError(error);
         } else if (user) {
-          // Succesvol ingelogd - we worden doorgestuurd via de auth state change listener
-          console.log('Login successful');
+          // Succesvol ingelogd - redirect naar timer
+          console.log('Login successful, redirecting to timer');
+          setCurrentView('timer');
         }
       } else {
         // Sign up
@@ -70,9 +72,10 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
         if (error) {
           setError(error);
         } else if (user) {
-          // Succesvol geregistreerd - we worden doorgestuurd via de auth state change listener
-          console.log('Sign up successful');
+          // Succesvol geregistreerd - redirect naar timer
+          console.log('Sign up successful, redirecting to timer');
           Alert.alert('Success', 'Account created successfully!');
+          setCurrentView('timer');
         }
       }
     } catch (err: any) {
@@ -98,8 +101,13 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
     setCurrentView('timer');
   };
 
+  const handleBackToWelcome = () => {
+    console.log('Going back to welcome screen');
+    setCurrentView('welcome');
+  };
+
   // Toon loading totdat we de auth state hebben gecontroleerd
-  if (!hasCheckedAuth) {
+  if (isCheckingAuth) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -111,6 +119,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
   }
 
   // If user is logged in, show welcome message
+  // Deze situatie zou niet moeten voorkomen omdat we redirecten bij initial check
   if (user) {
     return (
       <SafeAreaView style={styles.container}>
@@ -233,7 +242,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
 
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => setCurrentView('welcome')}
+              onPress={handleBackToWelcome}
               disabled={loading}
             >
               <Text style={styles.backButtonText}>← Back to Welcome</Text>
