@@ -22,7 +22,6 @@ import PhaseInfo from '../components/timer/PhaseInfo';
 import NextPhaseInfo from '../components/timer/NextPhaseInfo';
 import TemplateInfo from '../components/timer/TemplateInfo';
 import WarningModal from '../components/WarningModal';
-import StopConfirmationModal from '../components/timer/StopConfirmationModal';
 import TemplateSelectorScreen from './TemplateSelectorScreen';
 import TimerCelebrations from '../components/SuccessAnimations';
 
@@ -306,10 +305,13 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
             theme={theme}
             recentTemplates={recentTemplates}
             showCelebrations={showCelebrations}
+            showStopConfirmation={showStopConfirmation}
             onStartFast={handleStartFast}
             onResumeFast={resumeFast}
             onPauseFast={pauseFast}
             onStopConfirmation={() => setShowStopConfirmation(true)}
+            onConfirmStop={stopFast}
+            onCancelStop={() => setShowStopConfirmation(false)}
             onShowTemplateSelector={() => setShowTemplateSelector(true)}
             onSelectTemplate={handleSelectTemplate}
             onToggleCelebrations={() => setShowCelebrations(!showCelebrations)}
@@ -322,16 +324,6 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
         onAccept={proceedWithFastStart}
         onCancel={() => setShowWarningModal(false)}
         targetHours={targetHours}
-        theme={theme}
-      />
-
-      <StopConfirmationModal
-        isVisible={showStopConfirmation}
-        onCancel={() => setShowStopConfirmation(false)}
-        onConfirm={stopFast}
-        elapsedTime={elapsedTime}
-        loading={loading}
-        isOnline={true}
         theme={theme}
       />
 
