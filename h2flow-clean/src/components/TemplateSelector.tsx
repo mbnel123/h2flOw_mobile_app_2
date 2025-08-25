@@ -112,7 +112,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 onClick={() => setShowCreateForm(false)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <X size={24} />
+                <AntDesign name="close" size={24} />
               </button>
             </div>
           </div>
@@ -316,7 +316,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                               }}
                               className="p-1 text-gray-400 hover:text-blue-600 transition-colors rounded"
                             >
-                              <Edit3 size={12} />
+                              <Feather name="edit-3" size={12} />
                             </button>
                             <button
                               onClick={(e) => {
@@ -325,7 +325,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                               }}
                               className="p-1 text-gray-400 hover:text-red-600 transition-colors rounded"
                             >
-                              <Trash2 size={12} />
+                              <Feather name="trash-2" size={12} />
                             </button>
                           </>
                         )}
@@ -336,7 +336,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                           }}
                           className="p-1 text-gray-400 hover:text-green-600 transition-colors rounded"
                         >
-                          <Copy size={12} />
+                          <Feather name="copy" size={12} />
                         </button>
                       </div>
                     )}
@@ -349,7 +349,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 
                   {/* Duration */}
                   <div className={`inline-flex items-center px-3 py-1 rounded-lg text-sm font-bold mb-3 border ${getDurationColor(template.duration)}`}>
-                    <Clock size={12} className="mr-1" />
+                    <Feather name="clock" size={12} style={{ marginRight: 4 }} />
                     {template.duration}h
                   </div>
 
@@ -357,14 +357,14 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   <div className="space-y-2">
                     {template.waterGoal && (
                       <div className="flex items-center text-xs text-gray-600">
-                        <Droplets size={12} className="mr-2 text-blue-500 flex-shrink-0" />
+                        <Ionicons name="water" size={12} color="#3B82F6" style={{ marginRight: 8 }} />
                         <span><strong>{template.waterGoal}ml</strong> water</span>
                       </div>
                     )}
                     
                     {template.usageCount > 0 && (
                       <div className="flex items-center text-xs text-gray-600">
-                        <Star size={12} className="mr-2 text-yellow-500 flex-shrink-0" />
+                        <AntDesign name="star" size={12} color="#EAB308" style={{ marginRight: 8 }} />
                         <span>Used <strong>{template.usageCount}</strong>x</span>
                       </div>
                     )}
@@ -401,7 +401,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
               onClick={() => setShowCreateForm(true)}
               className="flex items-center text-blue-600 hover:text-blue-700 transition-colors font-medium"
             >
-              <Plus size={20} className="mr-2" />
+              <AntDesign name="plus" size={20} style={{ marginRight: 8 }} />
               Create Custom Template
             </button>
             
