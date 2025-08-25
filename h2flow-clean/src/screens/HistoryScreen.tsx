@@ -8,14 +8,9 @@ import {
   useColorScheme,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  Share,
-  Clipboard,
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, LogOut, User, TrendingUp, Clock, Award, BarChart3, Zap, Shield, Trophy, Calendar, Share2, Copy } from 'lucide-react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { onAuthStateChange, logout } from '../firebase/authService';
 import { useHistoryData } from '../hooks/useHistoryData';
@@ -51,27 +46,6 @@ const colors = {
   }
 };
 
-// Icon mapping for React Native
-const Icon = ({ name, size, color }: { name: string; size: number; color: string }) => {
-  const icons: Record<string, React.ReactNode> = {
-    'arrow-left': <ArrowLeft size={size} color={color} />,
-    'log-out': <LogOut size={size} color={color} />,
-    'user': <User size={size} color={color} />,
-    'trending-up': <TrendingUp size={size} color={color} />,
-    'clock': <Clock size={size} color={color} />,
-    'award': <Award size={size} color={color} />,
-    'bar-chart-3': <BarChart3 size={size} color={color} />,
-    'zap': <Zap size={size} color={color} />,
-    'shield': <Shield size={size} color={color} />,
-    'trophy': <Trophy size={size} color={color} />,
-    'calendar': <Calendar size={size} color={color} />,
-    'share-2': <Share2 size={size} color={color} />,
-    'copy': <Copy size={size} color={color} />,
-  };
-  
-  return <View>{icons[name] || <Text>?</Text>}</View>;
-};
-
 // Card component for consistent styling
 const Card = ({ children, style, colors }: { children: React.ReactNode; style?: any; colors: any }) => (
   <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }, style]}>
@@ -84,35 +58,22 @@ const StatCard = ({
   title, 
   value, 
   subtitle, 
-  icon, 
-  colors,
-  colorScheme 
+  emoji,
+  colors
 }: { 
   title: string; 
   value: string; 
   subtitle: string; 
-  icon: string;
+  emoji: string;
   colors: any;
-  colorScheme: string;
 }) => {
-  const colorMap: Record<string, string> = {
-    blue: colorScheme === 'dark' ? '#93C5FD' : '#1D4ED8',
-    green: colorScheme === 'dark' ? '#6EE7B7' : '#065F46',
-    red: colorScheme === 'dark' ? '#FCA5A5' : '#B91C1C',
-    purple: colorScheme === 'dark' ? '#D8B4FE' : '#7E22CE',
-    orange: colorScheme === 'dark' ? '#FDBA74' : '#C2410C',
-    yellow: colorScheme === 'dark' ? '#FDE68A' : '#854D0E',
-  };
-
-  const color = colorMap[icon] || colors.text;
-
   return (
     <Card colors={colors} style={styles.statCard}>
       <View style={styles.statHeader}>
-        <Icon name={icon} size={16} color={color} />
-        <Text style={[styles.statTitle, { color }]}>{title}</Text>
+        <Text style={styles.emoji}>{emoji}</Text>
+        <Text style={[styles.statTitle, { color: colors.textSecondary }]}>{title}</Text>
       </View>
-      <Text style={[styles.statValue, { color }]}>{value}</Text>
+      <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
       <Text style={[styles.statSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>
     </Card>
   );
@@ -143,7 +104,6 @@ const HistoryLoadingSkeleton = ({ colors }: { colors: any }) => (
       </Card>
 
       {/* Stats Skeleton */}
-      <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 16 }]}></Text>
       <View style={styles.statsGrid}>
         {[1, 2, 3, 4, 5, 6].map(i => (
           <View key={i} style={[styles.statCardSkeleton, { backgroundColor: colors.border }]} />
@@ -168,7 +128,7 @@ const UserProfileSection = ({
   <Card colors={colors} style={styles.profileCard}>
     <View style={styles.profileContent}>
       <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-        <Icon name="user" size={24} color="#FFFFFF" />
+        <Text style={styles.avatarEmoji}>👤</Text>
       </View>
       <View style={styles.profileInfo}>
         <Text style={[styles.profileName, { color: colors.text }]}>
@@ -198,7 +158,7 @@ const FastingPatternsSection = ({ stats, colors }: { stats: any; colors: any }) 
     <View style={styles.patternsGrid}>
       <Card colors={colors} style={styles.patternCard}>
         <View style={styles.patternHeader}>
-          <Icon name="calendar" size={16} color={colors.success} />
+          <Text style={styles.emoji}>📅</Text>
           <Text style={[styles.patternTitle, { color: colors.success }]}>This Year</Text>
         </View>
         <Text style={[styles.patternValue, { color: colors.text }]}>{stats.fastsPerYear}</Text>
@@ -214,7 +174,7 @@ const FastingPatternsSection = ({ stats, colors }: { stats: any; colors: any }) 
 
       <Card colors={colors} style={styles.patternCard}>
         <View style={styles.patternHeader}>
-          <Icon name="calendar" size={16} color={colors.info} />
+          <Text style={styles.emoji}>📅</Text>
           <Text style={[styles.patternTitle, { color: colors.info }]}>This Month</Text>
         </View>
         <Text style={[styles.patternValue, { color: colors.text }]}>{stats.fastsPerMonth}</Text>
@@ -230,7 +190,7 @@ const FastingPatternsSection = ({ stats, colors }: { stats: any; colors: any }) 
 
       <Card colors={colors} style={styles.patternCard}>
         <View style={styles.patternHeader}>
-          <Icon name="bar-chart-3" size={16} color={colors.primary} />
+          <Text style={styles.emoji}>📊</Text>
           <Text style={[styles.patternTitle, { color: colors.primary }]}>All Time Averages</Text>
         </View>
         <Text style={[styles.patternValue, { color: colors.text }]}>
@@ -421,7 +381,7 @@ const HistoryScreen: React.FC = () => {
           onPress={handleLogout}
           style={[styles.logoutButton, { backgroundColor: `${theme.danger}20` }]}
         >
-          <Icon name="log-out" size={16} color={theme.danger} />
+          <Text style={styles.emoji}>🚪</Text>
           <Text style={[styles.logoutText, { color: theme.danger }]}>Logout</Text>
         </TouchableOpacity>
       </View>
@@ -456,6 +416,55 @@ const HistoryScreen: React.FC = () => {
           fastHistory={fastHistory} 
           colors={theme}
         />
+
+        {/* Basic Stats Grid */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>📊 Lifetime Stats</Text>
+          <View style={styles.statsGrid}>
+            <StatCard
+              title="Total Fasts"
+              value={stats.totalFasts.toString()}
+              subtitle={`${stats.thisWeekFasts} this week`}
+              emoji="📈"
+              colors={theme}
+            />
+            <StatCard
+              title="Total Hours"
+              value={Number(stats.totalHours).toFixed(0)}
+              subtitle={`${Number(stats.totalHours / 24).toFixed(1)} days`}
+              emoji="⏰"
+              colors={theme}
+            />
+            <StatCard
+              title="Average Duration"
+              value={Number(stats.averageDuration).toFixed(1)}
+              subtitle="hours per fast"
+              emoji="📊"
+              colors={theme}
+            />
+            <StatCard
+              title="Longest Fast"
+              value={Number(stats.longestFast).toFixed(1)}
+              subtitle="hours"
+              emoji="🏆"
+              colors={theme}
+            />
+            <StatCard
+              title="Success Rate"
+              value={`${stats.completionRate}%`}
+              subtitle="completed fasts"
+              emoji="✅"
+              colors={theme}
+            />
+            <StatCard
+              title="Ketosis Hours"
+              value={Number(stats.ketosisHours).toFixed(0)}
+              subtitle="12+ hour fasts"
+              emoji="⚡"
+              colors={theme}
+            />
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -497,11 +506,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
+    gap: 4,
   },
   logoutText: {
     fontSize: 14,
     fontWeight: '500',
-    marginLeft: 4,
   },
   errorContainer: {
     padding: 12,
@@ -539,6 +548,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
+  },
+  avatarEmoji: {
+    fontSize: 24,
   },
   profileInfo: {
     flex: 1,
@@ -630,6 +642,9 @@ const styles = StyleSheet.create({
   },
   statSubtitle: {
     fontSize: 11,
+  },
+  emoji: {
+    fontSize: 16,
   },
   fastList: {
     gap: 12,
