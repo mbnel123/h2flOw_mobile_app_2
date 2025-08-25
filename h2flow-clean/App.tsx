@@ -1,9 +1,12 @@
-// App.tsx - AANGEPAST VOOR ALLE SCHERMEN
-import React, { useState } from 'react';
-import { useColorScheme } from 'react-native';
+// App.tsx - AANGEPAST VOOR AUTH STATE MANAGEMENT
+import React, { useState, useEffect } from 'react';
+import { useColorScheme, View, Text, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+
+// Import Firebase auth service
+import { onAuthStateChange, User } from './src/firebase/authService';
 
 // Import alle schermen
 import TimerScreen from './src/screens/TimerScreen';
@@ -12,7 +15,7 @@ import HistoryScreen from './src/screens/HistoryScreen';
 import InfoScreen from './src/screens/InfoScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
-import AuthScreen from './src/screens/AuthScreen'; // Moet je nog maken
+import AuthScreen from './src/screens/AuthScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -46,9 +49,49 @@ export default function App() {
   const [currentView, setCurrentView] = useState('welcome');
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(true);
+  // NIEUW: State voor auth management
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // NIEUW: Luister naar auth state changes
+  useEffect(() => {
+    console.log('🔄 App: Setting up auth state listener');
+    
+    const unsubscribe = onAuthStateChange((currentUser) => {
+      console.log('👤 App: Auth state changed:', currentUser ? 'User logged in' : 'User logged out');
+      setUser(currentUser);
+      setAuthLoading(false);
+
+      // Redirect naar main scherm als gebruiker ingelogd is
+      if (currentUser) {
+        console.log('✅ App: User authenticated, redirecting to main app');
+        setCurrentView('main');
+      } else if (currentView === 'main') {
+        // Als gebruiker uitlogt terwijl ze in main zijn, ga terug naar welcome
+        console.log('🚪 App: User logged out, going back to welcome');
+        setCurrentView('welcome');
+      }
+    });
+
+    // Cleanup functie
+    return () => {
+      console.log('🧹 App: Cleaning up auth listener');
+      unsubscribe();
+    };
+  }, [currentView]);
 
   // Render het juiste scherm gebaseerd op currentView
   const renderCurrentView = () => {
+    // Toon loading indicator tijdens auth check
+    if (authLoading && (currentView === 'auth' || currentView === 'main' || currentView === 'welcome')) {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background }}>
+          <ActivityIndicator size="large" color={theme.primary} />
+          <Text style={{ marginTop: 16, color: theme.text }}>Checking authentication...</Text>
+        </View>
+      );
+    }
+
     switch (currentView) {
       case 'welcome':
         return <WelcomeScreen setCurrentView={setCurrentView} />;
