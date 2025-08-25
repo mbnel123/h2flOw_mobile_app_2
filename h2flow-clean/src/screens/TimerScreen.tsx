@@ -1,4 +1,3 @@
-// src/screens/TimerScreen.tsx - AANGEPAST MET STARTKNOOP
 import React, { useEffect, useRef } from 'react';
 import { 
   View, 
@@ -30,7 +29,7 @@ import TimerCelebrations from '../components/SuccessAnimations';
 // Theme colors - Updated with baby blue
 const colors = {
   light: {
-    primary: '#7DD3FC', // Baby blue instead of dark blue
+    primary: '#7DD3FC',
     secondary: '#38BDF8',
     background: '#FFFFFF',
     backgroundSecondary: '#F8F9FA',
@@ -119,11 +118,8 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
     { hours: 72, title: "Immune Reset", description: "Complete renewal" }
   ];
 
-  // Nieuwe functie voor starten zonder template
   const handleStartWithoutTemplate = () => {
     if (!user) return;
-    
-    // Gebruik standaard template van 16 uur
     const defaultTemplate = {
       id: 'default_16h',
       name: '16h Fast',
@@ -138,11 +134,9 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
       usageCount: 0,
       userId: user.uid
     };
-    
     handleSelectTemplate(defaultTemplate);
   };
 
-  // Helper functions
   const getProgress = () => {
     const targetSeconds = targetHours * 3600;
     return Math.min((elapsedTime / targetSeconds) * 100, 100);
@@ -167,7 +161,7 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
     return { hours, minutes, nextPhase };
   };
 
-  // Auth setup
+  // ✅ FIX: run only on mount
   useEffect(() => {
     const unsubscribe = onAuthStateChange((user) => {
       setUser(user);
@@ -176,51 +170,37 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
       }
     });
     return () => unsubscribe();
-  }, [setCurrentView]);
+  }, []);
 
-  // FIXED: Milestone checking - prevent infinite loops
+  // Milestone check
   useEffect(() => {
-    if (!isActive || !showCelebrations || elapsedTime <= 0) {
-      return;
-    }
-
+    if (!isActive || !showCelebrations || elapsedTime <= 0) return;
     const currentHours = Math.floor(elapsedTime / 3600);
-    
-    // Only check milestones once per hour
     if (currentHours !== lastElapsedHour.current && currentHours > 0) {
       lastElapsedHour.current = currentHours;
-      
       if (!milestonesChecked.current.has(currentHours)) {
-        console.log(`🎯 Checking milestones for hour ${currentHours}`);
         milestonesChecked.current.add(currentHours);
-        
         checkMilestones(currentHours);
         checkGoalCompletion(targetHours, currentHours);
       }
     }
-  }, [isActive, showCelebrations, Math.floor(elapsedTime / 3600)]);
+  }, [isActive, showCelebrations, elapsedTime]);
 
-  // FIXED: Reset tracking - only once per new fast
+  // Reset tracking on new fast
   useEffect(() => {
     const isNewFast = isActive && startTime && elapsedTime < 60;
-    
     if (isNewFast && !trackingInitialized.current) {
-      console.log('🆕 New fast detected, resetting tracking');
       resetTracking();
       milestonesChecked.current.clear();
       lastElapsedHour.current = -1;
       trackingInitialized.current = true;
     }
-    
-    if (!isActive) {
-      trackingInitialized.current = false;
-    }
-  }, [isActive, startTime, elapsedTime < 60]);
+    if (!isActive) trackingInitialized.current = false;
+  }, [isActive, startTime, elapsedTime]);
 
   const currentPhase = getCurrentPhase();
   const nextPhaseInfo = getTimeToNextPhase();
 
-  // Loading state
   if (!user) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -234,9 +214,7 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
     );
   }
 
-  if (initialLoading) {
-    return <TimerLoadingSkeleton theme={theme} />;
-  }
+  if (initialLoading) return <TimerLoadingSkeleton theme={theme} />;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -246,42 +224,26 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
         translucent
       />
 
-      {/* Success Animations */}
       {showCelebrations && (
         <TimerCelebrations
           celebrations={celebrations}
-          onRemoveCelebration={(id) => {
-            removeCelebration(id);
-            console.log('🎉 Celebration completed');
-          }}
+          onRemoveCelebration={(id) => removeCelebration(id)}
         />
       )}
 
-      {/* Error Display */}
       {error && (
         <View style={[styles.errorContainer, { 
           backgroundColor: isDark ? 'rgba(153, 27, 27, 0.2)' : '#FEF2F2',
           borderBottomColor: isDark ? '#DC2626' : '#FECACA'
         }]}>
-          <Text style={[styles.errorText, { 
-            color: isDark ? '#F87171' : '#DC2626' 
-          }]}>
-            {error}
-          </Text>
-          <Text 
-            onPress={() => setError(null)}
-            style={[styles.dismissText, { 
-              color: isDark ? '#FCA5A5' : '#991B1B' 
-            }]}
-          >
+          <Text style={[styles.errorText, { color: isDark ? '#F87171' : '#DC2626' }]}>{error}</Text>
+          <Text onPress={() => setError(null)} style={[styles.dismissText, { color: isDark ? '#FCA5A5' : '#991B1B' }]}>
             Dismiss
           </Text>
         </View>
       )}
 
-      {/* Main Content Area - FIXED LAYOUT */}
       <View style={styles.contentContainer}>
-        {/* Current Template Info */}
         {currentTemplate && !isActive && (
           <View style={styles.templateContainer}>
             <TemplateInfo 
@@ -292,7 +254,6 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
           </View>
         )}
 
-        {/* Circular Progress - CENTERED */}
         <View style={styles.timerContainer}>
           <CircularProgress 
             progress={getProgress()} 
@@ -302,7 +263,6 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
           />
         </View>
         
-        {/* Phase Information */}
         {isActive && (
           <View style={styles.phaseContainer}>
             <PhaseInfo 
@@ -311,21 +271,13 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
               elapsedTime={elapsedTime}
               theme={theme}
             />
-
-            {nextPhaseInfo && (
-              <NextPhaseInfo 
-                nextPhase={nextPhaseInfo} 
-                theme={theme}
-              />
-            )}
+            {nextPhaseInfo && <NextPhaseInfo nextPhase={nextPhaseInfo} theme={theme} />}
           </View>
         )}
       </View>
 
-      {/* Control Buttons - FIXED POSITION */}
       <View style={styles.controlsContainer}>
         {!isActive && !currentTemplate ? (
-          // Start buttons wanneer er geen actieve fasting is en geen template
           <View style={styles.startContainer}>
             <TouchableOpacity
               style={[styles.startButton, { backgroundColor: theme.primary }]}
@@ -336,7 +288,6 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
                 {loading ? 'Starting...' : 'Start 16h Fast'}
               </Text>
             </TouchableOpacity>
-            
             <TouchableOpacity
               style={[styles.templateButton, { borderColor: theme.primary }]}
               onPress={() => setShowTemplateSelector(true)}
@@ -347,7 +298,6 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
             </TouchableOpacity>
           </View>
         ) : (
-          // Normale timer controls wanneer er een actieve fasting of template is
           <TimerControls
             isActive={isActive}
             startTime={startTime}
@@ -367,7 +317,6 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
         )}
       </View>
 
-      {/* Modals */}
       <WarningModal
         isOpen={showWarningModal}
         onAccept={proceedWithFastStart}
@@ -400,86 +349,23 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  centerContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  lockIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  lockText: {
-    fontSize: 16,
-  },
-  errorContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  errorText: {
-    fontSize: 14,
-  },
-  dismissText: {
-    fontSize: 12,
-    marginTop: 4,
-    textDecorationLine: 'underline',
-  },
-  contentContainer: {
-    flex: 1,
-    paddingHorizontal: 24,
-  },
-  templateContainer: {
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  timerContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    minHeight: 400,
-  },
-  phaseContainer: {
-    width: '100%',
-    maxWidth: 500,
-    alignSelf: 'center',
-    paddingBottom: 20,
-  },
-  controlsContainer: {
-    paddingHorizontal: 24,
-    paddingBottom: 110,
-    paddingTop: 20,
-  },
-  // Nieuwe styles voor start buttons
-  startContainer: {
-    gap: 16,
-    width: '100%',
-    maxWidth: 400,
-    alignSelf: 'center',
-  },
-  startButton: {
-    padding: 20,
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  startButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  templateButton: {
-    padding: 20,
-    borderRadius: 16,
-    alignItems: 'center',
-    borderWidth: 2,
-  },
-  templateButtonText: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
+  container: { flex: 1 },
+  centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  lockIcon: { fontSize: 64, marginBottom: 16 },
+  lockText: { fontSize: 16 },
+  errorContainer: { paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1 },
+  errorText: { fontSize: 14 },
+  dismissText: { fontSize: 12, marginTop: 4, textDecorationLine: 'underline' },
+  contentContainer: { flex: 1, paddingHorizontal: 24 },
+  templateContainer: { marginTop: 20, marginBottom: 20 },
+  timerContainer: { alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: 400 },
+  phaseContainer: { width: '100%', maxWidth: 500, alignSelf: 'center', paddingBottom: 20 },
+  controlsContainer: { paddingHorizontal: 24, paddingBottom: 110, paddingTop: 20 },
+  startContainer: { gap: 16, width: '100%', maxWidth: 400, alignSelf: 'center' },
+  startButton: { padding: 20, borderRadius: 16, alignItems: 'center' },
+  startButtonText: { color: 'white', fontSize: 18, fontWeight: '600' },
+  templateButton: { padding: 20, borderRadius: 16, alignItems: 'center', borderWidth: 2 },
+  templateButtonText: { fontSize: 18, fontWeight: '600' },
 });
 
 export default TimerScreen;
