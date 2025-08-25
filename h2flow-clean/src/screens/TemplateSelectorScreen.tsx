@@ -252,7 +252,7 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* Category tabs */}
+        {/* Category tabs - ZONDER Create tab */}
         <View style={styles.categoryTabs}>
           <ScrollView 
             horizontal 
@@ -274,14 +274,6 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                 </TouchableOpacity>
               );
             })}
-            
-            {/* Create Custom Template tab */}
-            <TouchableOpacity
-              style={[styles.categoryBtn, styles.createCategoryBtn]}
-              onPress={() => setShowCreateForm(true)}
-            >
-              <Text style={[styles.categoryText, styles.createCategoryText]}>+ Create</Text>
-            </TouchableOpacity>
           </ScrollView>
         </View>
 
@@ -637,14 +629,6 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontWeight: '500',
   },
-  createCategoryBtn: {
-    backgroundColor: '#10B981',
-    borderColor: '#10B981',
-  },
-  createCategoryText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
   footer: {
     padding: 20,
     borderTopWidth: 1,
@@ -655,20 +639,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 16,
-  },
-  footerBtn: { 
-    flexDirection: 'row', 
-    alignItems: 'center' 
-  },
-  footerBtnText: { 
-    marginLeft: 8, 
-    color: '#2563EB', 
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  footerButtons: {
-    flexDirection: 'row',
-    gap: 12,
   },
   cancelButton: {
     paddingHorizontal: 24,
@@ -788,6 +758,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-});
-
-export default TemplateSelectorScreen;
