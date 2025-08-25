@@ -121,10 +121,10 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
   const handleStartWithoutTemplate = () => {
     if (!user) return;
     const defaultTemplate = {
-      id: 'default_16h',
-      name: '16h Fast',
+      id: 'default_24h',
+      name: `${targetHours}h Fast`,
       icon: '⏰',
-      duration: 16,
+      duration: targetHours,
       category: 'beginner',
       tags: ['default'],
       isDefault: true,
@@ -285,7 +285,7 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
               disabled={loading}
             >
               <Text style={styles.startButtonText}>
-                {loading ? 'Starting...' : 'Start 16h Fast'}
+                {loading ? 'Starting...' : `Start ${targetHours}h Fast`}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
