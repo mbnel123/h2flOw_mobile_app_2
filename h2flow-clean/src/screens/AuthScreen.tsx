@@ -42,8 +42,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
         if (error) {
           setError(error);
         } else {
-          // Succesvol ingelogd - de auth state change in App.tsx zal de redirect afhandelen
-          console.log('Login successful');
+          // Succesvol ingelogd - redirect naar main
+          console.log('✅ Login successful, redirecting to main app');
+          setCurrentView('main');
         }
       } else {
         // Sign up
@@ -51,9 +52,10 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
         if (error) {
           setError(error);
         } else {
-          // Succesvol geregistreerd - de auth state change in App.tsx zal de redirect afhandelen
-          console.log('Sign up successful');
+          // Succesvol geregistreerd - redirect naar main
+          console.log('✅ Sign up successful, redirecting to main app');
           Alert.alert('Success', 'Account created successfully!');
+          setCurrentView('main');
         }
       }
     } catch (err: any) {
