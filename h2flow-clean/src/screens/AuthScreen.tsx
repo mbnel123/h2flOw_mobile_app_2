@@ -1,5 +1,5 @@
 // src/screens/AuthScreen.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -13,38 +13,18 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { User } from 'firebase/auth';
-import { signUp, signIn, logout, onAuthStateChange } from '../firebase/authService';
+import { signUp, signIn } from '../firebase/authService';
 
 interface AuthScreenProps {
   setCurrentView: (view: string) => void;
 }
 
 const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
-  const [user, setUser] = useState<User | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-
-  // Listen to auth state changes - alleen voor initial check
-  useEffect(() => {
-    const unsubscribe = onAuthStateChange((user) => {
-      setUser(user);
-      setIsCheckingAuth(false);
-      
-      // Alleen redirecten als we net klaar zijn met de initial check
-      // en er een gebruiker is
-      if (user) {
-        console.log('User already logged in, redirecting to timer');
-        setCurrentView('timer');
-      }
-    });
-
-    return () => unsubscribe();
-  }, [setCurrentView]);
 
   const handleSubmit = async () => {
     if (!email || !password) {
@@ -58,24 +38,22 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
     try {
       if (isLogin) {
         // Sign in
-        const { user, error } = await signIn(email, password);
+        const { error } = await signIn(email, password);
         if (error) {
           setError(error);
-        } else if (user) {
-          // Succesvol ingelogd - redirect naar timer
-          console.log('Login successful, redirecting to timer');
-          setCurrentView('timer');
+        } else {
+          // Succesvol ingelogd - de auth state change in App.tsx zal de redirect afhandelen
+          console.log('Login successful');
         }
       } else {
         // Sign up
-        const { user, error } = await signUp(email, password);
+        const { error } = await signUp(email, password);
         if (error) {
           setError(error);
-        } else if (user) {
-          // Succesvol geregistreerd - redirect naar timer
-          console.log('Sign up successful, redirecting to timer');
+        } else {
+          // Succesvol geregistreerd - de auth state change in App.tsx zal de redirect afhandelen
+          console.log('Sign up successful');
           Alert.alert('Success', 'Account created successfully!');
-          setCurrentView('timer');
         }
       }
     } catch (err: any) {
@@ -85,72 +63,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
     }
   };
 
-  const handleLogout = async () => {
-    const { error } = await logout();
-    if (error) {
-      setError(error);
-    } else {
-      setUser(null);
-      setEmail('');
-      setPassword('');
-    }
-  };
-
-  const handleStartFasting = () => {
-    console.log('Navigating to timer screen');
-    setCurrentView('timer');
-  };
-
   const handleBackToWelcome = () => {
     console.log('Going back to welcome screen');
     setCurrentView('welcome');
   };
 
-  // Toon loading totdat we de auth state hebben gecontroleerd
-  if (isCheckingAuth) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2563EB" />
-          <Text style={styles.loadingText}>Checking authentication...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // If user is logged in, show welcome message
-  // Deze situatie zou niet moeten voorkomen omdat we redirecten bij initial check
-  if (user) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.welcomeContainer}>
-          <Text style={styles.emoji}>👋</Text>
-          <Text style={styles.welcomeTitle}>Welcome back!</Text>
-          <Text style={styles.userEmail}>
-            Logged in as: <Text style={styles.emailHighlight}>{user.email}</Text>
-          </Text>
-          
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={handleStartFasting}
-            >
-              <Text style={styles.primaryButtonText}>Start Fasting 🚀</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={handleLogout}
-            >
-              <Text style={styles.secondaryButtonText}>Logout</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // Show login/signup form
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -259,15 +176,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    color: '#6B7280',
-  },
   keyboardAvoid: {
     flex: 1,
   },
@@ -289,12 +197,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  welcomeContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
   header: {
     alignItems: 'center',
     marginBottom: 32,
@@ -313,22 +215,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
     textAlign: 'center',
-  },
-  welcomeTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 16,
-  },
-  userEmail: {
-    fontSize: 16,
-    color: '#6B7280',
-    marginBottom: 32,
-    textAlign: 'center',
-  },
-  emailHighlight: {
-    fontWeight: '600',
-    color: '#374151',
   },
   toggleContainer: {
     marginBottom: 24,
@@ -409,32 +295,6 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonContainer: {
-    width: '100%',
-    gap: 16,
-  },
-  primaryButton: {
-    backgroundColor: '#2563EB',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    backgroundColor: '#E5E7EB',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: '#374151',
     fontSize: 16,
     fontWeight: '600',
   },
