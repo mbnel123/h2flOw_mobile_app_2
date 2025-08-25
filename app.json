@@ -63,7 +63,8 @@
             "image": "./assets/splash-dark.png"
           }
         }
-      ]
+      ],
+      "expo-font"
     ],
     "notification": {
       "icon": "./assets/notification-icon.png",

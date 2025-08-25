@@ -1,21 +1,9 @@
-// src/components/timer/TimerControls.tsx
+// src/components/timer/TimerControls.tsx - IMPROVED VERSION
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-
-// Mock icons - replace with actual icon library when available
-const PlayIcon = ({ color }: { color: string }) => <Text style={{ color, fontSize: 20 }}>▶️</Text>;
-const PauseIcon = ({ color }: { color: string }) => <Text style={{ color, fontSize: 20 }}>⏸️</Text>;
-const SquareIcon = ({ color }: { color: string }) => <Text style={{ color, fontSize: 20 }}>⏹️</Text>;
-
-interface FastTemplate {
-  id: string;
-  name: string;
-  duration: number;
-  icon: string;
-  category: string;
-  description?: string;
-}
+import { Ionicons } from '@expo/vector-icons';
+import { FastTemplate } from '../../services/templateService';
 
 interface TimerControlsProps {
   isActive: boolean;
@@ -24,13 +12,15 @@ interface TimerControlsProps {
   isOnline: boolean;
   theme: {
     primary: string;
+    secondary?: string;
     background: string;
     backgroundSecondary: string;
     text: string;
     textSecondary: string;
-    warning: string;
-    error: string;
-    success: string;
+    border: string;
+    error?: string;
+    warning?: string;
+    success?: string;
   };
   recentTemplates: FastTemplate[];
   showCelebrations: boolean;
@@ -57,12 +47,14 @@ const TimerControls: React.FC<TimerControlsProps> = ({
   onStopConfirmation,
   onShowTemplateSelector,
   onSelectTemplate,
-  onToggleCelebrations
+  onToggleCelebrations,
 }) => {
+  const isPaused = startTime !== null && !isActive;
+
   return (
     <View style={styles.container}>
-      {/* Quick Template Access */}
-      {!isActive && recentTemplates.length > 0 && (
+      {/* Recent Templates - Only when not active and not paused */}
+      {!isActive && !isPaused && recentTemplates.length > 0 && (
         <View style={styles.templatesSection}>
           <Text style={[styles.templatesLabel, { color: theme.textSecondary }]}>
             Recent templates:
@@ -71,23 +63,23 @@ const TimerControls: React.FC<TimerControlsProps> = ({
             horizontal 
             showsHorizontalScrollIndicator={false}
             style={styles.templatesScroll}
+            contentContainerStyle={styles.templatesContent}
           >
             {recentTemplates.map((template) => (
               <TouchableOpacity
                 key={template.id}
                 onPress={() => onSelectTemplate(template)}
-                style={[styles.templateButton, { 
+                style={[styles.templateChip, { 
                   backgroundColor: theme.backgroundSecondary,
-                  borderColor: theme.primary + '30'
+                  borderColor: theme.border
                 }]}
                 activeOpacity={0.7}
               >
-                <Text style={styles.templateIcon}>{template.icon}</Text>
-                <Text style={[styles.templateName, { color: theme.text }]}>
-                  {template.name}
-                </Text>
-                <Text style={[styles.templateDuration, { color: theme.textSecondary }]}>
+                <Text style={[styles.templateDuration, { color: theme.text }]}>
                   {template.duration}h
+                </Text>
+                <Text style={[styles.templateName, { color: theme.textSecondary }]} numberOfLines={1}>
+                  {template.name}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -97,131 +89,138 @@ const TimerControls: React.FC<TimerControlsProps> = ({
 
       {/* Main Control Buttons */}
       <View style={styles.mainControls}>
-        {!isActive ? (
-          startTime ? (
-            // Paused state - show Resume and Stop
-            <View style={styles.controlRow}>
-              <TouchableOpacity 
-                onPress={onResumeFast} 
-                disabled={loading || !isOnline}
-                activeOpacity={0.8}
-                style={[styles.resumeButtonContainer, { opacity: (loading || !isOnline) ? 0.5 : 1 }]}
-              >
-                <LinearGradient
-                  colors={['#3B82F6', '#1D4ED8']}
-                  style={styles.resumeButton}
-                >
-                  <PlayIcon color="white" />
-                  <Text style={styles.resumeButtonText}>Resume Fast</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                onPress={onStopConfirmation} 
-                disabled={loading || !isOnline}
-                style={[styles.stopButton, { 
-                  backgroundColor: theme.error,
-                  opacity: (loading || !isOnline) ? 0.5 : 1 
-                }]}
-                activeOpacity={0.8}
-              >
-                <SquareIcon color="white" />
-                <Text style={styles.stopButtonText}>Stop Fast</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            // Not started - show Start and Templates
-            <View style={styles.controlRow}>
-              <TouchableOpacity 
-                onPress={onStartFast} 
-                disabled={loading || !isOnline}
-                activeOpacity={0.8}
-                style={[styles.startButtonContainer, { opacity: (loading || !isOnline) ? 0.5 : 1 }]}
-              >
-                <LinearGradient
-                  colors={['#3B82F6', '#1D4ED8']}
-                  style={styles.startButton}
-                >
-                  <PlayIcon color="white" />
-                  <Text style={styles.startButtonText}>
-                    {loading ? 'Starting...' : 'Start Fast'}
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                onPress={onShowTemplateSelector} 
-                disabled={loading || !isOnline}
-                style={[styles.templatesButton, { 
-                  backgroundColor: '#8B5CF6',
-                  opacity: (loading || !isOnline) ? 0.5 : 1 
-                }]}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.templatesButtonIcon}>📋</Text>
-                <Text style={styles.templatesButtonText}>Templates</Text>
-              </TouchableOpacity>
-            </View>
-          )
-        ) : (
-          // Active state - show Pause and Break Fast
+        {isActive ? (
+          // Active state - Pause and Stop
           <View style={styles.controlRow}>
             <TouchableOpacity 
               onPress={onPauseFast} 
               disabled={loading || !isOnline}
-              style={[styles.pauseButton, { 
-                backgroundColor: theme.warning,
-                opacity: (loading || !isOnline) ? 0.5 : 1 
-              }]}
+              style={[styles.actionButton, styles.pauseButton, { opacity: (loading || !isOnline) ? 0.5 : 1 }]}
               activeOpacity={0.8}
             >
-              <PauseIcon color="white" />
-              <Text style={styles.pauseButtonText}>Pause</Text>
+              <View style={styles.iconContainer}>
+                <Ionicons name="pause-outline" size={28} color="#F59E0B" />
+              </View>
+              <Text style={[styles.buttonText, { color: '#F59E0B' }]}>Pause</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               onPress={onStopConfirmation} 
               disabled={loading || !isOnline}
-              style={[styles.breakFastButton, { 
-                backgroundColor: theme.success,
-                opacity: (loading || !isOnline) ? 0.5 : 1 
-              }]}
+              style={[styles.actionButton, styles.stopButton, { opacity: (loading || !isOnline) ? 0.5 : 1 }]}
               activeOpacity={0.8}
             >
-              <Text style={styles.breakFastIcon}>🍎</Text>
-              <Text style={styles.breakFastText}>Break Fast</Text>
+              <View style={styles.iconContainer}>
+                <Ionicons name="stop-outline" size={28} color="#22C55E" />
+              </View>
+              <Text style={[styles.buttonText, { color: '#22C55E' }]}>Break Fast</Text>
+            </TouchableOpacity>
+          </View>
+        ) : isPaused ? (
+          // Paused state - Resume and Stop
+          <View style={styles.controlRow}>
+            <TouchableOpacity 
+              onPress={onResumeFast} 
+              disabled={loading || !isOnline}
+              style={[styles.primaryButtonContainer, { opacity: (loading || !isOnline) ? 0.5 : 1 }]}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={[theme.primary, theme.secondary || theme.primary]}
+                style={styles.primaryButton}
+              >
+                <Ionicons name="play-outline" size={24} color="#FFFFFF" />
+                <Text style={styles.primaryButtonText}>Resume Fast</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              onPress={onStopConfirmation} 
+              disabled={loading || !isOnline}
+              style={[styles.actionButton, styles.dangerButton, { opacity: (loading || !isOnline) ? 0.5 : 1 }]}
+              activeOpacity={0.8}
+            >
+              <View style={styles.iconContainer}>
+                <Ionicons name="square-outline" size={24} color="#EF4444" />
+              </View>
+              <Text style={[styles.buttonText, { color: '#EF4444' }]}>Stop</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          // Not started - Start and Templates
+          <View style={styles.controlColumn}>
+            <TouchableOpacity 
+              onPress={onStartFast} 
+              disabled={loading || !isOnline}
+              style={[styles.primaryButtonContainer, { opacity: (loading || !isOnline) ? 0.5 : 1 }]}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={[theme.primary, theme.secondary || theme.primary]}
+                style={styles.primaryButton}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Ionicons name="play-outline" size={24} color="#FFFFFF" />
+                )}
+                <Text style={styles.primaryButtonText}>
+                  {loading ? 'Starting...' : 'Start Fast'}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              onPress={onShowTemplateSelector} 
+              disabled={loading || !isOnline}
+              style={[styles.actionButton, styles.secondaryButton, { opacity: (loading || !isOnline) ? 0.5 : 1 }]}
+              activeOpacity={0.8}
+            >
+              <View style={styles.iconContainer}>
+                <Ionicons name="library-outline" size={20} color={theme.text} />
+              </View>
+              <Text style={[styles.buttonText, { color: theme.text }]}>Templates</Text>
             </TouchableOpacity>
           </View>
         )}
       </View>
-      
-      {/* Offline Warning */}
-      {!isOnline && (
-        <View style={styles.offlineWarning}>
-          <Text style={styles.offlineText}>
-            Some features disabled while offline
-          </Text>
-        </View>
-      )}
 
-      {/* Celebration Toggle */}
+      {/* Celebrations Toggle - Only when active */}
       {isActive && (
         <View style={styles.celebrationToggle}>
           <TouchableOpacity
             onPress={onToggleCelebrations}
             style={[styles.celebrationButton, { 
               backgroundColor: showCelebrations 
-                ? theme.primary + '20' 
-                : theme.backgroundSecondary
+                ? theme.primary + '15' 
+                : theme.backgroundSecondary,
+              borderColor: showCelebrations 
+                ? theme.primary 
+                : theme.border
             }]}
             activeOpacity={0.7}
           >
+            <Ionicons 
+              name={showCelebrations ? "notifications-outline" : "notifications-off-outline"} 
+              size={16} 
+              color={showCelebrations ? theme.primary : theme.textSecondary} 
+            />
             <Text style={[styles.celebrationText, { 
               color: showCelebrations ? theme.primary : theme.textSecondary 
             }]}>
-              {showCelebrations ? '🎉 Celebrations ON' : '🔇 Celebrations OFF'}
+              Celebrations {showCelebrations ? 'ON' : 'OFF'}
             </Text>
           </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Offline Warning */}
+      {!isOnline && (
+        <View style={styles.offlineWarning}>
+          <Ionicons name="cloud-offline-outline" size={16} color="#F97316" />
+          <Text style={styles.offlineText}>
+            Some features disabled while offline
+          </Text>
         </View>
       )}
     </View>
@@ -230,207 +229,146 @@ const TimerControls: React.FC<TimerControlsProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 24,
-    paddingBottom: 24,
+    gap: 20,
   },
   templatesSection: {
-    marginBottom: 16,
+    marginBottom: 4,
   },
   templatesLabel: {
     fontSize: 14,
-    marginBottom: 8,
+    fontWeight: '500',
+    marginBottom: 12,
   },
   templatesScroll: {
     flexDirection: 'row',
   },
-  templateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  templatesContent: {
+    gap: 10,
+  },
+  templateChip: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 12,
-    marginRight: 8,
     borderWidth: 1,
-    gap: 8,
-  },
-  templateIcon: {
-    fontSize: 18,
-  },
-  templateName: {
-    fontSize: 14,
-    fontWeight: '600',
+    alignItems: 'center',
+    minWidth: 80,
   },
   templateDuration: {
-    fontSize: 12,
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  templateName: {
+    fontSize: 11,
+    textAlign: 'center',
   },
   mainControls: {
     alignItems: 'center',
   },
   controlRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
     width: '100%',
   },
-  startButtonContainer: {
+  controlColumn: {
+    gap: 16,
+    width: '100%',
+  },
+  primaryButtonContainer: {
     flex: 1,
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#3B82F6',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowColor: '#7DD3FC',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
   },
-  startButton: {
+  primaryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 18,
     gap: 12,
   },
-  startButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  resumeButtonContainer: {
-    flex: 2,
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#3B82F6',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  resumeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 12,
-  },
-  resumeButtonText: {
-    color: 'white',
+  primaryButtonText: {
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
   },
-  templatesButton: {
+  actionButton: {
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 18,
+    paddingHorizontal: 16,
     borderRadius: 16,
+    borderWidth: 2,
     gap: 8,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    minHeight: 80,
   },
-  templatesButtonIcon: {
-    fontSize: 20,
-  },
-  templatesButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '600',
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderColor: '#E5E7EB',
   },
   pauseButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  pauseButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    backgroundColor: '#FEF3C7',
+    borderColor: '#F59E0B',
   },
   stopButton: {
-    flex: 1,
-    flexDirection: 'row',
+    backgroundColor: '#DCFCE7',
+    borderColor: '#22C55E',
+  },
+  dangerButton: {
+    backgroundColor: '#FEE2E2',
+    borderColor: '#EF4444',
+  },
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 4,
   },
-  stopButtonText: {
-    color: 'white',
-    fontSize: 16,
+  buttonText: {
+    fontSize: 15,
     fontWeight: '600',
-  },
-  breakFastButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  breakFastIcon: {
-    fontSize: 18,
-  },
-  breakFastText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  offlineWarning: {
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  offlineText: {
-    fontSize: 12,
-    color: '#F97316',
+    textAlign: 'center',
   },
   celebrationToggle: {
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 4,
   },
   celebrationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 12,
     borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
   },
   celebrationText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  offlineWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 4,
+  },
+  offlineText: {
+    fontSize: 12,
+    color: '#F97316',
   },
 });
 

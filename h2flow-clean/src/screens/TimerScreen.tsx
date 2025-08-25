@@ -1,5 +1,5 @@
-// src/screens/TimerScreen.tsx
-import React, { useEffect } from 'react';
+// src/screens/TimerScreen.tsx - FIXED INFINITE LOOP
+import React, { useEffect, useRef } from 'react';
 import { View, Text, SafeAreaView, StyleSheet, StatusBar, useColorScheme } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { User } from 'firebase/auth';
@@ -10,8 +10,6 @@ import { useMilestoneTracker } from '../components/SuccessAnimations';
 // Import components
 import TimerLoadingSkeleton from '../components/timer/TimerLoadingSkeleton';
 import CircularProgress from '../components/timer/CircularProgress';
-import IntegratedStatsDisplay from '../components/timer/IntegratedStatsDisplay';
-import TimerHeader from '../components/timer/TimerHeader';
 import TimerControls from '../components/timer/TimerControls';
 import PhaseInfo from '../components/timer/PhaseInfo';
 import NextPhaseInfo from '../components/timer/NextPhaseInfo';
@@ -21,23 +19,25 @@ import StopConfirmationModal from '../components/timer/StopConfirmationModal';
 import TemplateSelector from '../components/TemplateSelector';
 import TimerCelebrations from '../components/SuccessAnimations';
 
-// Theme colors
+// Theme colors - Updated with baby blue
 const colors = {
   light: {
-    primary: '#3B82F6',
+    primary: '#7DD3FC', // Baby blue instead of dark blue
+    secondary: '#38BDF8',
     background: '#FFFFFF',
-    backgroundSecondary: '#F9FAFB',
-    text: '#111827',
+    backgroundSecondary: '#F8F9FA',
+    text: '#000000',
     textSecondary: '#6B7280',
     border: '#E5E7EB',
     gradient: ['#F9FAFB', '#F3F4F6', '#F9FAFB'],
     error: '#EF4444',
   },
   dark: {
-    primary: '#3B82F6',
-    background: '#111827',
-    backgroundSecondary: '#1F2937',
-    text: '#F9FAFB',
+    primary: '#7DD3FC',
+    secondary: '#38BDF8',
+    background: '#000000',
+    backgroundSecondary: '#1F1F1F',
+    text: '#FFFFFF',
     textSecondary: '#9CA3AF',
     border: '#374151',
     gradient: ['#111827', '#1F2937', '#111827'],
@@ -54,18 +54,17 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
   const theme = isDark ? colors.dark : colors.light;
   const [user, setUser] = React.useState<User | null>(null);
 
+  // Refs to prevent infinite loops
+  const milestonesChecked = useRef(new Set<number>());
+  const lastElapsedHour = useRef(-1);
+  const trackingInitialized = useRef(false);
+
   // Use custom hook for timer logic
   const {
     currentFast,
     loading,
     initialLoading,
     error,
-    fastingStreak,
-    streakLoading,
-    isOnline,
-    lastSyncTime,
-    syncStatus,
-    multiDeviceActivity,
     showTemplateSelector,
     currentTemplate,
     recentTemplates,
@@ -148,23 +147,44 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
     return () => unsubscribe();
   }, [setCurrentView]);
 
-  // Milestone checking
+  // FIXED: Milestone checking - prevent infinite loops
   useEffect(() => {
-    if (isActive && showCelebrations && elapsedTime > 0) {
-      const currentHours = elapsedTime / 3600;
-      
-      checkMilestones(currentHours);
-      checkGoalCompletion(targetHours, currentHours);
+    if (!isActive || !showCelebrations || elapsedTime <= 0) {
+      return;
     }
-  }, [Math.floor(elapsedTime / 3600), isActive, showCelebrations]);
 
-  // Reset tracking when starting a new fast
+    const currentHours = Math.floor(elapsedTime / 3600);
+    
+    // Only check milestones once per hour
+    if (currentHours !== lastElapsedHour.current && currentHours > 0) {
+      lastElapsedHour.current = currentHours;
+      
+      if (!milestonesChecked.current.has(currentHours)) {
+        console.log(`🎯 Checking milestones for hour ${currentHours}`);
+        milestonesChecked.current.add(currentHours);
+        
+        checkMilestones(currentHours);
+        checkGoalCompletion(targetHours, currentHours);
+      }
+    }
+  }, [isActive, showCelebrations, Math.floor(elapsedTime / 3600)]);
+
+  // FIXED: Reset tracking - only once per new fast
   useEffect(() => {
-    if (isActive && startTime && previousElapsedTime === 0 && elapsedTime < 60) {
+    const isNewFast = isActive && startTime && elapsedTime < 60;
+    
+    if (isNewFast && !trackingInitialized.current) {
       console.log('🆕 New fast detected, resetting tracking');
       resetTracking();
+      milestonesChecked.current.clear();
+      lastElapsedHour.current = -1;
+      trackingInitialized.current = true;
     }
-  }, [isActive, startTime, elapsedTime, previousElapsedTime, resetTracking]);
+    
+    if (!isActive) {
+      trackingInitialized.current = false;
+    }
+  }, [isActive, startTime, elapsedTime < 60]);
 
   const currentPhase = getCurrentPhase();
   const nextPhaseInfo = getTimeToNextPhase();
@@ -188,122 +208,96 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.gradient[0] }]}>
-      <LinearGradient
-        colors={theme.gradient}
-        style={styles.container}
-      >
-        <StatusBar 
-          barStyle={isDark ? 'light-content' : 'dark-content'} 
-          backgroundColor="transparent"
-          translucent
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <StatusBar 
+        barStyle={isDark ? 'light-content' : 'dark-content'} 
+        backgroundColor="transparent"
+        translucent
+      />
+
+      {/* Success Animations */}
+      {showCelebrations && (
+        <TimerCelebrations
+          celebrations={celebrations}
+          onRemoveCelebration={(id) => {
+            removeCelebration(id);
+            console.log('🎉 Celebration completed');
+          }}
         />
+      )}
 
-        {/* Success Animations */}
-        {showCelebrations && (
-          <TimerCelebrations
-            celebrations={celebrations}
-            onRemoveCelebration={(id) => {
-              removeCelebration(id);
-              console.log('🎉 Celebration completed');
-            }}
-          />
-        )}
-
-        {/* Header */}
-        <TimerHeader
-          theme={theme}
-          setCurrentView={setCurrentView}
-          syncStatus={syncStatus}
-          isOnline={isOnline}
-          lastSyncTime={lastSyncTime}
-          multiDeviceActivity={multiDeviceActivity}
-          getProgress={getProgress}
-        />
-
-        {/* Error Display */}
-        {error && (
-          <View style={[styles.errorContainer, { 
-            backgroundColor: isDark ? 'rgba(153, 27, 27, 0.2)' : '#FEF2F2',
-            borderBottomColor: isDark ? '#DC2626' : '#FECACA'
+      {/* Error Display */}
+      {error && (
+        <View style={[styles.errorContainer, { 
+          backgroundColor: isDark ? 'rgba(153, 27, 27, 0.2)' : '#FEF2F2',
+          borderBottomColor: isDark ? '#DC2626' : '#FECACA'
+        }]}>
+          <Text style={[styles.errorText, { 
+            color: isDark ? '#F87171' : '#DC2626' 
           }]}>
-            <Text style={[styles.errorText, { 
-              color: isDark ? '#F87171' : '#DC2626' 
-            }]}>
-              {error}
-            </Text>
-            <Text 
-              onPress={() => setError(null)}
-              style={[styles.dismissText, { 
-                color: isDark ? '#FCA5A5' : '#991B1B' 
-              }]}
-            >
-              Dismiss
-            </Text>
-          </View>
-        )}
+            {error}
+          </Text>
+          <Text 
+            onPress={() => setError(null)}
+            style={[styles.dismissText, { 
+              color: isDark ? '#FCA5A5' : '#991B1B' 
+            }]}
+          >
+            Dismiss
+          </Text>
+        </View>
+      )}
 
-        {/* Main Timer Area */}
-        <View style={styles.mainContent}>
-          {/* Integrated Stats */}
-          {fastingStreak && (
-            <View style={styles.statsContainer}>
-              <IntegratedStatsDisplay 
-                streak={fastingStreak} 
-                loading={streakLoading} 
-                theme={theme}
-                isActive={isActive}
-                elapsedTime={elapsedTime}
-                targetHours={targetHours}
-              />
-            </View>
-          )}
-
-          {/* Current Template Info */}
-          {currentTemplate && !isActive && (
+      {/* Main Content Area - FIXED LAYOUT */}
+      <View style={styles.contentContainer}>
+        {/* Current Template Info */}
+        {currentTemplate && !isActive && (
+          <View style={styles.templateContainer}>
             <TemplateInfo 
               template={currentTemplate}
               onRemove={() => setCurrentTemplate(null)}
               theme={theme}
             />
-          )}
+          </View>
+        )}
 
-          {/* Circular Progress */}
-          <View style={styles.progressContainer}>
-            <CircularProgress 
-              progress={getProgress()} 
+        {/* Circular Progress - CENTERED */}
+        <View style={styles.timerContainer}>
+          <CircularProgress 
+            progress={getProgress()} 
+            elapsedTime={elapsedTime}
+            targetHours={targetHours}
+            theme={theme}
+          />
+        </View>
+        
+        {/* Phase Information */}
+        {isActive && (
+          <View style={styles.phaseContainer}>
+            <PhaseInfo 
+              currentPhase={currentPhase}
+              dailyWaterIntake={dailyWaterIntake}
               elapsedTime={elapsedTime}
-              targetHours={targetHours}
               theme={theme}
             />
-          </View>
-          
-          {/* Phase Information */}
-          {isActive && (
-            <View style={styles.phaseContainer}>
-              <PhaseInfo 
-                currentPhase={currentPhase}
-                dailyWaterIntake={dailyWaterIntake}
-                elapsedTime={elapsedTime}
+
+            {nextPhaseInfo && (
+              <NextPhaseInfo 
+                nextPhase={nextPhaseInfo} 
                 theme={theme}
               />
+            )}
+          </View>
+        )}
+      </View>
 
-              {nextPhaseInfo && (
-                <NextPhaseInfo 
-                  nextPhase={nextPhaseInfo} 
-                  theme={theme}
-                />
-              )}
-            </View>
-          )}
-        </View>
-
-        {/* Control Buttons */}
+      {/* Control Buttons - FIXED POSITION */}
+      <View style={styles.controlsContainer}>
         <TimerControls
           isActive={isActive}
           startTime={startTime}
           loading={loading}
-          isOnline={isOnline}
+          isOnline={true}
           theme={theme}
           recentTemplates={recentTemplates}
           showCelebrations={showCelebrations}
@@ -315,38 +309,36 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
           onSelectTemplate={handleSelectTemplate}
           onToggleCelebrations={() => setShowCelebrations(!showCelebrations)}
         />
+      </View>
 
-        {/* Warning Modal */}
-        <WarningModal
-          isOpen={showWarningModal}
-          onAccept={proceedWithFastStart}
-          onCancel={() => setShowWarningModal(false)}
-          targetHours={targetHours}
+      {/* Modals */}
+      <WarningModal
+        isOpen={showWarningModal}
+        onAccept={proceedWithFastStart}
+        onCancel={() => setShowWarningModal(false)}
+        targetHours={targetHours}
+        theme={theme}
+      />
+
+      <StopConfirmationModal
+        isVisible={showStopConfirmation}
+        onCancel={() => setShowStopConfirmation(false)}
+        onConfirm={stopFast}
+        elapsedTime={elapsedTime}
+        loading={loading}
+        isOnline={true}
+        theme={theme}
+      />
+
+      {showTemplateSelector && user && (
+        <TemplateSelector
+          userId={user.uid}
+          selectedDuration={targetHours}
+          onSelectTemplate={handleSelectTemplate}
+          onClose={() => setShowTemplateSelector(false)}
           theme={theme}
         />
-
-        {/* Stop Confirmation Modal */}
-        <StopConfirmationModal
-          isVisible={showStopConfirmation}
-          onCancel={() => setShowStopConfirmation(false)}
-          onConfirm={stopFast}
-          elapsedTime={elapsedTime}
-          loading={loading}
-          isOnline={isOnline}
-          theme={theme}
-        />
-
-        {/* Template Selector Modal */}
-        {showTemplateSelector && user && (
-          <TemplateSelector
-            userId={user.uid}
-            selectedDuration={targetHours}
-            onSelectTemplate={handleSelectTemplate}
-            onClose={() => setShowTemplateSelector(false)}
-            theme={theme}
-          />
-        )}
-      </LinearGradient>
+      )}
     </SafeAreaView>
   );
 };
@@ -380,24 +372,30 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textDecorationLine: 'underline',
   },
-  mainContent: {
+  contentContainer: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 24,
+  },
+  templateContainer: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  timerContainer: {
     alignItems: 'center',
-  },
-  statsContainer: {
-    width: '100%',
-    maxWidth: 400,
-    marginBottom: 24,
-  },
-  progressContainer: {
-    marginBottom: 32,
+    justifyContent: 'center',
+    flex: 1,
+    minHeight: 400,
   },
   phaseContainer: {
     width: '100%',
     maxWidth: 500,
-    alignItems: 'center',
+    alignSelf: 'center',
+    paddingBottom: 20,
+  },
+  controlsContainer: {
+    paddingHorizontal: 24,
+    paddingBottom: 110, // Space for bigger tab bar
+    paddingTop: 20,
   },
 });
 

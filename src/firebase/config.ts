@@ -1,9 +1,8 @@
-// src/firebase/config.ts - SIMPELE VERSIE ZONDER ASYNCSTORAGE
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-const firebaseConfig = {
+const firebaseSettings = {
   apiKey: "AIzaSyD8v4eIC6mtQWh8cn_l3R2Tg7uCXjwsfik",
   authDomain: "h2-flow.firebaseapp.com",
   projectId: "h2-flow",
@@ -13,18 +12,7 @@ const firebaseConfig = {
   measurementId: "G-E61BHHQ29Y"
 };
 
-// Initialize Firebase App
-let app;
-if (getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApp();
-}
-
-// SIMPELE INITIALIZATION - geen AsyncStorage problemen
+const app = initializeApp(firebaseSettings);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-
-console.log('🔥 Firebase initialized (SIMPLE VERSION)');
-
 export default app;
