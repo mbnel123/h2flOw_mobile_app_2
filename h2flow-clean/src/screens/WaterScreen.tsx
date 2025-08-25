@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Svg, { Circle } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
 import { onAuthStateChange } from '../firebase/authService';
 import { getCurrentFast, addWaterIntake, Fast } from '../firebase/databaseService';
 
@@ -11,19 +12,23 @@ interface WaterEntry { id?: string; amount: number; timestamp: number | Date; }
 
 const colors = {
   light: {
-    primary: '#3B82F6',
+    primary: '#7DD3FC', // Babyblauw zoals in TimerScreen
+    secondary: '#38BDF8',
     background: '#FFFFFF',
-    text: '#111827',
+    backgroundSecondary: '#F8F9FA',
+    text: '#000000',
     textSecondary: '#6B7280',
-    card: '#F3F4F6',
+    border: '#E5E7EB',
     gradient: ['#F9FAFB', '#F3F4F6', '#F9FAFB'] as const,
   },
   dark: {
-    primary: '#3B82F6',
-    background: '#111827',
-    text: '#F9FAFB',
+    primary: '#7DD3FC', // Babyblauw zoals in TimerScreen
+    secondary: '#38BDF8',
+    background: '#000000',
+    backgroundSecondary: '#1F1F1F',
+    text: '#FFFFFF',
     textSecondary: '#9CA3AF',
-    card: '#1F2937',
+    border: '#374151',
     gradient: ['#111827', '#1F2937', '#111827'] as const,
   },
 };
@@ -151,14 +156,18 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const progress = useMemo(() => Math.min(dailyWaterIntake / WATER_GOAL, 1), [dailyWaterIntake]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.gradient[0] }]}>
-      <LinearGradient colors={theme.gradient} style={styles.container}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <Text style={[styles.title, { color: theme.text }]}>💧 Water Tracking</Text>
-          {error && <Text style={{ color: 'red' }}>{error}</Text>}
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <Ionicons name="water" size={32} color={theme.primary} />
+          <Text style={[styles.title, { color: theme.text }]}>Water Tracking</Text>
+        </View>
+        
+        {error && <Text style={[styles.errorText, { color: theme.textSecondary }]}>{error}</Text>}
 
+        <View style={styles.progressContainer}>
           <Svg width={ring.size} height={ring.size}>
-            <Circle cx={ring.cx} cy={ring.cy} r={ring.r} stroke={theme.card} strokeWidth={ring.stroke} fill="none" />
+            <Circle cx={ring.cx} cy={ring.cy} r={ring.r} stroke={theme.backgroundSecondary} strokeWidth={ring.stroke} fill="none" />
             <Circle
               cx={ring.cx} cy={ring.cy} r={ring.r}
               stroke={theme.primary} strokeWidth={ring.stroke} fill="none"
@@ -168,41 +177,146 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
               transform={`rotate(-90 ${ring.cx} ${ring.cy})`}
             />
           </Svg>
-          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{dailyWaterIntake} / {WATER_GOAL} ml</Text>
+          <Text style={[styles.waterAmount, { color: theme.text }]}>{dailyWaterIntake}ml</Text>
+          <Text style={[styles.waterGoal, { color: theme.textSecondary }]}>van de {WATER_GOAL}ml doel</Text>
+        </View>
 
-          <View style={styles.buttonRow}>
-            {[250, 500, 750].map(ml => (
-              <TouchableOpacity key={ml} style={[styles.button, { backgroundColor: theme.primary }]} onPress={() => addWater(ml)} disabled={loading}>
-                <Text style={styles.buttonText}>+{ml}ml</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {lastSaved && <Text style={{ color: theme.textSecondary, marginTop: 10 }}>Laatst opgeslagen: {lastSaved.toLocaleTimeString()}</Text>}
-
-          <View style={{ marginTop: 24 }}>
-            <Text style={[styles.subtitle, { color: theme.text }]}>Herinneringen</Text>
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: remindersEnabled ? theme.primary : theme.card }]}
-              onPress={remindersEnabled ? () => setRemindersEnabled(false) : requestPermission}
+        <View style={styles.buttonRow}>
+          {[250, 500, 750].map(ml => (
+            <TouchableOpacity 
+              key={ml} 
+              style={[styles.waterButton, { backgroundColor: theme.primary }]} 
+              onPress={() => addWater(ml)} 
+              disabled={loading}
             >
-              <Text style={styles.buttonText}>{remindersEnabled ? 'Herinneringen uitzetten' : 'Herinneringen aanzetten'}</Text>
+              <Text style={styles.waterButtonText}>+{ml}ml</Text>
             </TouchableOpacity>
+          ))}
+        </View>
+
+        {lastSaved && (
+          <Text style={[styles.lastSaved, { color: theme.textSecondary }]}>
+            Laatst opgeslagen: {lastSaved.toLocaleTimeString()}
+          </Text>
+        )}
+
+        <View style={styles.remindersSection}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="notifications" size={24} color={theme.text} />
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Herinneringen</Text>
           </View>
-        </ScrollView>
-      </LinearGradient>
+          
+          <TouchableOpacity
+            style={[styles.reminderButton, { 
+              backgroundColor: remindersEnabled ? theme.primary : 'transparent',
+              borderColor: theme.primary,
+              borderWidth: 1
+            }]}
+            onPress={remindersEnabled ? () => setRemindersEnabled(false) : requestPermission}
+          >
+            <Ionicons 
+              name={remindersEnabled ? "notifications" : "notifications-off"} 
+              size={20} 
+              color={remindersEnabled ? 'white' : theme.primary} 
+            />
+            <Text style={[
+              styles.reminderButtonText, 
+              { color: remindersEnabled ? 'white' : theme.primary }
+            ]}>
+              {remindersEnabled ? 'Ingeschakeld' : 'Inschakelen'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' },
-  subtitle: { fontSize: 18, textAlign: 'center', marginVertical: 8 },
-  buttonRow: { flexDirection: 'row', gap: 12, marginTop: 20 },
-  button: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, minWidth: 100, alignItems: 'center', marginHorizontal: 4 },
-  buttonText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
+  container: { 
+    flex: 1,
+  },
+  content: { 
+    flexGrow: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    padding: 24,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  title: { 
+    fontSize: 24, 
+    fontWeight: 'bold', 
+    marginLeft: 12,
+  },
+  errorText: {
+    fontSize: 14,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  progressContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  waterAmount: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 16,
+  },
+  waterGoal: {
+    fontSize: 16,
+    marginTop: 4,
+  },
+  buttonRow: { 
+    flexDirection: 'row', 
+    gap: 16, 
+    marginBottom: 24,
+  },
+  waterButton: { 
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  waterButtonText: { 
+    color: 'white', 
+    fontSize: 16, 
+    fontWeight: '600' 
+  },
+  lastSaved: {
+    fontSize: 14,
+    marginBottom: 32,
+  },
+  remindersSection: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  reminderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    gap: 8,
+  },
+  reminderButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
 
 export default WaterScreen;
