@@ -251,7 +251,16 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
               elapsedTime={elapsedTime}
               theme={theme}
             />
-            {nextPhaseInfo && <NextPhaseInfo nextPhase={nextPhaseInfo} theme={theme} />}
+            {nextPhaseInfo && (
+              <View style={[styles.nextPhaseContainer, { backgroundColor: theme.backgroundSecondary }]}>
+                <Text style={[styles.nextPhaseTitle, { color: theme.text }]}>
+                  Next: {nextPhaseInfo.nextPhase.title}
+                </Text>
+                <Text style={[styles.nextPhaseTime, { color: theme.textSecondary }]}>
+                  in {nextPhaseInfo.hours}h {nextPhaseInfo.minutes}m
+                </Text>
+              </View>
+            )}
           </View>
         )}
       </View>
@@ -263,7 +272,7 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
           startTime={startTime}
           loading={loading}
           isOnline={true}
-          theme={theme}
+          targetHours={targetHours}
           recentTemplates={recentTemplates}
           showCelebrations={showCelebrations}
           showStopConfirmation={showStopConfirmation}
@@ -311,7 +320,26 @@ const styles = StyleSheet.create({
   contentContainer: { flex: 1, paddingHorizontal: 24 },
   templateContainer: { marginTop: 20, marginBottom: 20 },
   timerContainer: { alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: 400 },
-  phaseContainer: { width: '100%', maxWidth: 500, alignSelf: 'center', paddingBottom: 20 },
+  phaseContainer: { 
+    width: '100%', 
+    maxWidth: 500, 
+    alignSelf: 'center', 
+    paddingBottom: 20,
+    gap: 16
+  },
+  nextPhaseContainer: {
+    padding: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  nextPhaseTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  nextPhaseTime: {
+    fontSize: 12,
+  },
   controlsContainer: { paddingHorizontal: 24, paddingBottom: 110, paddingTop: 20 },
   startContainer: { gap: 16, width: '100%', maxWidth: 400, alignSelf: 'center' },
   startButton: { padding: 20, borderRadius: 16, alignItems: 'center' },
