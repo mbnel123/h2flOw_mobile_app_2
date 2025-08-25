@@ -117,25 +117,6 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
     { hours: 72, title: "Immune Reset", description: "Complete renewal" }
   ];
 
-  const handleStartWithoutTemplate = () => {
-    if (!user) return;
-    const defaultTemplate = {
-      id: 'default_24h',
-      name: `${targetHours}h Fast`,
-      icon: '⏰',
-      duration: targetHours,
-      category: 'beginner',
-      tags: ['default'],
-      isDefault: true,
-      isCustom: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      usageCount: 0,
-      userId: user.uid
-    };
-    handleSelectTemplate(defaultTemplate);
-  };
-
   const getProgress = () => {
     const targetSeconds = targetHours * 3600;
     return Math.min((elapsedTime / targetSeconds) * 100, 100);
@@ -276,47 +257,25 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
       </View>
 
       <View style={styles.controlsContainer}>
-        {!isActive && !currentTemplate ? (
-          <View style={styles.startContainer}>
-            <TouchableOpacity
-              style={[styles.startButton, { backgroundColor: theme.primary }]}
-              onPress={handleStartWithoutTemplate}
-              disabled={loading}
-            >
-              <Text style={styles.startButtonText}>
-                {loading ? 'Starting...' : `Start ${targetHours}h Fast`}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.templateButton, { borderColor: theme.primary }]}
-              onPress={() => setShowTemplateSelector(true)}
-            >
-              <Text style={[styles.templateButtonText, { color: theme.primary }]}>
-                Choose Template
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <TimerControls
-            isActive={isActive}
-            startTime={startTime}
-            loading={loading}
-            isOnline={true}
-            theme={theme}
-            recentTemplates={recentTemplates}
-            showCelebrations={showCelebrations}
-            showStopConfirmation={showStopConfirmation}
-            onStartFast={handleStartFast}
-            onResumeFast={resumeFast}
-            onPauseFast={pauseFast}
-            onStopConfirmation={() => setShowStopConfirmation(true)}
-            onConfirmStop={stopFast}
-            onCancelStop={() => setShowStopConfirmation(false)}
-            onShowTemplateSelector={() => setShowTemplateSelector(true)}
-            onSelectTemplate={handleSelectTemplate}
-            onToggleCelebrations={() => setShowCelebrations(!showCelebrations)}
-          />
-        )}
+        <TimerControls
+          isActive={isActive}
+          startTime={startTime}
+          loading={loading}
+          isOnline={true}
+          theme={theme}
+          recentTemplates={recentTemplates}
+          showCelebrations={showCelebrations}
+          showStopConfirmation={showStopConfirmation}
+          onStartFast={handleStartFast}
+          onResumeFast={resumeFast}
+          onPauseFast={pauseFast}
+          onStopConfirmation={() => setShowStopConfirmation(true)}
+          onConfirmStop={stopFast}
+          onCancelStop={() => setShowStopConfirmation(false)}
+          onShowTemplateSelector={() => setShowTemplateSelector(true)}
+          onSelectTemplate={handleSelectTemplate}
+          onToggleCelebrations={() => setShowCelebrations(!showCelebrations)}
+        />
       </View>
 
       <WarningModal
