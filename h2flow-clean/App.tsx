@@ -1,4 +1,4 @@
-// App.tsx - AANGEPAST VOOR AGE VERIFICATION
+// App.tsx - AANGEPAST VOOR THEME PROVIDER
 import React, { useState, useEffect } from 'react';
 import { useColorScheme, View, Text, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
@@ -16,14 +16,18 @@ import InfoScreen from './src/screens/InfoScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import AuthScreen from './src/screens/AuthScreen';
-import AgeVerification from './src/screens/AgeVerification'; // NIEUW: Age verification
+import AgeVerification from './src/screens/AgeVerification';
+import SettingsScreen from './src/screens/SettingsScreen'; // NIEUW: Settings screen
+
+// Import ThemeProvider
+import { ThemeProvider } from './src/contexts/ThemeContext';
 
 const Tab = createBottomTabNavigator();
 
 // Theme colors
 const colors = {
   light: {
-    primary: '#000000',
+    primary: '#7DD3FC',
     background: '#FFFFFF',
     backgroundSecondary: '#F8F9FA',
     text: '#000000',
@@ -33,7 +37,7 @@ const colors = {
     tabBarBorder: '#E5E7EB',
   },
   dark: {
-    primary: '#FFFFFF',
+    primary: '#7DD3FC',
     background: '#000000',
     backgroundSecondary: '#1F1F1F',
     text: '#FFFFFF',
@@ -44,20 +48,18 @@ const colors = {
   }
 };
 
-export default function App() {
+function MainApp() {
   const isDark = useColorScheme() === 'dark';
   const theme = isDark ? colors.dark : colors.light;
-  const [currentView, setCurrentView] = useState('age-verification'); // NIEUW: Start met age verification
+  const [currentView, setCurrentView] = useState('age-verification');
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(true);
-  const [ageVerified, setAgeVerified] = useState(false); // NIEUW: Age verification state
-  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false); // NIEUW: Privacy policy
-  const [showTermsOfService, setShowTermsOfService] = useState(false); // NIEUW: Terms of service
-  // NIEUW: State voor auth management
+  const [ageVerified, setAgeVerified] = useState(false);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showTermsOfService, setShowTermsOfService] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // NIEUW: Luister naar auth state changes
   useEffect(() => {
     console.log('🔄 App: Setting up auth state listener');
     
@@ -66,27 +68,22 @@ export default function App() {
       setUser(currentUser);
       setAuthLoading(false);
 
-      // Redirect naar main scherm als gebruiker ingelogd is
       if (currentUser) {
         console.log('✅ App: User authenticated, redirecting to main app');
         setCurrentView('main');
       } else if (currentView === 'main') {
-        // Als gebruiker uitlogt terwijl ze in main zijn, ga terug naar welcome
         console.log('🚪 App: User logged out, going back to welcome');
         setCurrentView('welcome');
       }
     });
 
-    // Cleanup functie
     return () => {
       console.log('🧹 App: Cleaning up auth listener');
       unsubscribe();
     };
   }, [currentView]);
 
-  // Render het juiste scherm gebaseerd op currentView
   const renderCurrentView = () => {
-    // Toon loading indicator tijdens auth check
     if (authLoading && (currentView === 'auth' || currentView === 'main' || currentView === 'welcome')) {
       return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background }}>
@@ -97,7 +94,7 @@ export default function App() {
     }
 
     switch (currentView) {
-      case 'age-verification': // NIEUW: Age verification screen
+      case 'age-verification':
         return (
           <AgeVerification
             setAgeVerified={setAgeVerified}
@@ -142,6 +139,9 @@ export default function App() {
                     case 'History':
                       iconName = focused ? 'bar-chart' : 'bar-chart-outline';
                       break;
+                    case 'Settings':
+                      iconName = focused ? 'settings' : 'settings-outline';
+                      break;
                     default:
                       iconName = 'help-outline';
                   }
@@ -169,8 +169,8 @@ export default function App() {
                   fontWeight: '500',
                   marginTop: 4,
                 },
-                tabBarActiveTintColor={theme.primary},
-                tabBarInactiveTintColor={theme.textSecondary},
+                tabBarActiveTintColor: theme.primary,
+                tabBarInactiveTintColor: theme.textSecondary,
                 tabBarItemStyle: {
                   paddingVertical: 4,
                 },
@@ -180,6 +180,7 @@ export default function App() {
               <Tab.Screen name="Water" component={WaterScreen} />
               <Tab.Screen name="Info" component={InfoScreen} />
               <Tab.Screen name="History" component={HistoryScreen} />
+              <Tab.Screen name="Settings" component={SettingsScreen} />
             </Tab.Navigator>
           </NavigationContainer>
         );
@@ -189,4 +190,12 @@ export default function App() {
   };
 
   return renderCurrentView();
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <MainApp />
+    </ThemeProvider>
+  );
 }
