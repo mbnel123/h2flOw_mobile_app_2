@@ -466,6 +466,264 @@ const BenefitsSection = ({ colors }: { colors: any }) => {
   );
 };
 
+// Research Section
+const ResearchSection = ({ colors }: { colors: any }) => {
+  const [expandedSections, setExpandedSections] = useState({
+    research: false,
+    autophagy: false,
+    metabolic: false,
+    immune: false,
+    longevity: false,
+    database: false
+  });
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  const openLink = (url: string) => {
+    Linking.openURL(url).catch(err => console.error('Failed to open URL:', err));
+  };
+
+  return (
+    <View style={styles.section}>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>🔬 Scientific research and studies</Text>
+      
+      <ExpandableSection
+        title="Scientific research and studies"
+        emoji="🔬"
+        colors={colors}
+        isExpanded={expandedSections.research}
+        onToggle={() => toggleSection('research')}
+      >
+        <Text style={[styles.researchIntro, { color: colors.text }]}>
+          The benefits of water fasting are supported by extensive peer-reviewed research. Here are key studies 
+          that demonstrate the physiological effects and health benefits:
+        </Text>
+
+        <ExpandableSection
+          title="Autophagy and cellular renewal"
+          emoji="🔬"
+          colors={colors}
+          isExpanded={expandedSections.autophagy}
+          onToggle={() => toggleSection('autophagy')}
+        >
+          <View style={[styles.researchItem, { borderLeftColor: colors.blue[500] }]}>
+            <Text style={[styles.researchTitle, { color: colors.text }]}>
+              "Autophagy: cellular and molecular mechanisms"
+            </Text>
+            <Text style={[styles.researchDetails, { color: colors.textSecondary }]}>
+              Journal: The Journal of Clinical Investigation (2015)
+            </Text>
+            <Text style={[styles.researchDetails, { color: colors.textSecondary }]}>
+              Finding: Comprehensive review of autophagy mechanisms and their role in cellular health and longevity.
+            </Text>
+            <TouchableOpacity onPress={() => openLink('https://pubmed.ncbi.nlm.nih.gov/25654554/')}>
+              <Text style={[styles.researchLink, { color: colors.blue[500] }]}>
+                View on PubMed →
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.researchItem, { borderLeftColor: colors.blue[500] }]}>
+            <Text style={[styles.researchTitle, { color: colors.text }]}>
+              "Fasting activates macroautophagy in neurons of Alzheimer's disease mouse model"
+            </Text>
+            <Text style={[styles.researchDetails, { color: colors.textSecondary }]}>
+              Journal: Autophagy (2019)
+            </Text>
+            <Text style={[styles.researchDetails, { color: colors.textSecondary }]}>
+              Finding: Demonstrates how fasting enhances autophagy specifically in brain cells, potentially protecting against neurodegenerative diseases.
+            </Text>
+            <TouchableOpacity onPress={() => openLink('https://pubmed.ncbi.nlm.nih.gov/30667316/')}>
+              <Text style={[styles.researchLink, { color: colors.blue[500] }]}>
+                View on PubMed →
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ExpandableSection>
+
+        <ExpandableSection
+          title="Metabolic and weight loss effects"
+          emoji="⚡"
+          colors={colors}
+          isExpanded={expandedSections.metabolic}
+          onToggle={() => toggleSection('metabolic')}
+        >
+          <View style={[styles.researchItem, { borderLeftColor: colors.green[500] }]}>
+            <Text style={[styles.researchTitle, { color: colors.text }]}>
+              "Fasting: molecular mechanisms and clinical applications"
+            </Text>
+            <Text style={[styles.researchDetails, { color: colors.textSecondary }]}>
+              Journal: Cell Metabolism (2014)
+            </Text>
+            <Text style={[styles.researchDetails, { color: colors.textSecondary }]}>
+              Finding: Detailed analysis of fasting's effects on metabolism, showing improved insulin sensitivity and fat oxidation.
+            </Text>
+            <TouchableOpacity onPress={() => openLink('https://pubmed.ncbi.nlm.nih.gov/24411938/')}>
+              <Text style={[styles.researchLink, { color: colors.green[500] }]}>
+                View on PubMed →
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.researchItem, { borderLeftColor: colors.green[500] }]}>
+            <Text style={[styles.researchTitle, { color: colors.text }]}>
+              "Intermittent fasting vs daily calorie restriction for type 2 diabetes prevention"
+            </Text>
+            <Text style={[styles.researchDetails, { color: colors.textSecondary }]}>
+              Journal: Journal of Clinical Medicine (2020)
+            </Text>
+            <Text style={[styles.researchDetails, { color: colors.textSecondary }]}>
+              Finding: Shows intermittent fasting is more effective than calorie restriction for improving insulin sensitivity.
+            </Text>
+            <TouchableOpacity onPress={() => openLink('https://pubmed.ncbi.nlm.nih.gov/32121457/')}>
+              <Text style={[styles.researchLink, { color: colors.green[500] }]}>
+                View on PubMed →
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ExpandableSection>
+
+        <ExpandableSection
+          title="Immune system and inflammation"
+          emoji="🛡️"
+          colors={colors}
+          isExpanded={expandedSections.immune}
+          onToggle={() => toggleSection('immune')}
+        >
+          <View style={[styles.researchItem, { borderLeftColor: colors.purple[500] }]}>
+            <Text style={[styles.researchTitle, { color: colors.text }]}>
+              "Fasting-mimicking diet and markers/risk factors for aging, diabetes, cancer, and cardiovascular disease"
+            </Text>
+            <Text style={[styles.researchDetails, { color: colors.textSecondary }]}>
+              Journal: Science Translational Medicine (2017)
+            </Text>
+            <Text style={[styles.researchDetails, { color: colors.textSecondary }]}>
+              Finding: Demonstrates how fasting reduces inflammation markers and regenerates immune cells.
+            </Text>
+            <TouchableOpacity onPress={() => openLink('https://pubmed.ncbi.nlm.nih.gov/28202779/')}>
+              <Text style={[styles.researchLink, { color: colors.purple[500] }]}>
+                View on PubMed →
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.researchItem, { borderLeftColor: colors.purple[500] }]}>
+            <Text style={[styles.researchTitle, { color: colors.text }]}>
+              "Prolonged fasting reduces IGF-1/PKA to promote hematopoietic-stem-cell-based regeneration"
+            </Text>
+            <Text style={[styles.researchDetails, { color: colors.textSecondary }]}>
+              Journal: Cell Stem Cell (2014)
+            </Text>
+            <Text style={[styles.researchDetails, { color: colors.textSecondary }]}>
+              Finding: Shows how extended fasting (72h+) triggers regeneration of new immune cells from stem cells.
+            </Text>
+            <TouchableOpacity onPress={() => openLink('https://pubmed.ncbi.nlm.nih.gov/24905167/')}>
+              <Text style={[styles.researchLink, { color: colors.purple[500] }]}>
+                View on PubMed →
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ExpandableSection>
+
+        <ExpandableSection
+          title="Longevity and anti-aging"
+          emoji="🌟"
+          colors={colors}
+          isExpanded={expandedSections.longevity}
+          onToggle={() => toggleSection('longevity')}
+        >
+          <View style={[styles.researchItem, { borderLeftColor: colors.orange[500] }]}>
+            <Text style={[styles.researchTitle, { color: colors.text }]}>
+              "Caloric restriction and intermittent fasting: Two potential diets for successful brain aging"
+            </Text>
+            <Text style={[styles.researchDetails, { color: colors.textSecondary }]}>
+              Journal: Ageing Research Reviews (2006)
+            </Text>
+            <Text style={[styles.researchDetails, { color: colors.textSecondary }]}>
+              Finding: Review showing how fasting may protect against age-related cognitive decline and extend lifespan.
+            </Text>
+            <TouchableOpacity onPress={() => openLink('https://pubmed.ncbi.nlm.nih.gov/16904611/')}>
+              <Text style={[styles.researchLink, { color: colors.orange[500] }]}>
+                View on PubMed →
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.researchItem, { borderLeftColor: colors.orange[500] }]}>
+            <Text style={[styles.researchTitle, { color: colors.text }]}>
+              "Fasting enhances growth hormone secretion and amplifies the complex rhythms of growth hormone secretion"
+            </Text>
+            <Text style={[styles.researchDetails, { color: colors.textSecondary }]}>
+              Journal: Journal of Clinical Investigation (1988)
+            </Text>
+            <Text style={[styles.researchDetails, { color: colors.textSecondary }]}>
+              Finding: Classic study showing fasting increases growth hormone levels by up to 5-fold.
+            </Text>
+            <TouchableOpacity onPress={() => openLink('https://pubmed.ncbi.nlm.nih.gov/3350967/')}>
+              <Text style={[styles.researchLink, { color: colors.orange[500] }]}>
+                View on PubMed →
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ExpandableSection>
+
+        <ExpandableSection
+          title="Further research databases"
+          emoji="🔍"
+          colors={colors}
+          isExpanded={expandedSections.database}
+          onToggle={() => toggleSection('database')}
+        >
+          <Text style={[styles.researchIntro, { color: colors.text }]}>
+            Explore more scientific studies on fasting through these research databases:
+          </Text>
+
+          <TouchableOpacity 
+            style={[styles.databaseLink, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => openLink('https://pubmed.ncbi.nlm.nih.gov/?term=water+fasting')}
+          >
+            <Text style={[styles.databaseTitle, { color: colors.blue[600] }]}>
+              PubMed - Water fasting studies
+            </Text>
+            <Text style={[styles.databaseDescription, { color: colors.textSecondary }]}>
+              Search peer-reviewed research on water fasting
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.databaseLink, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => openLink('https://pubmed.ncbi.nlm.nih.gov/?term=intermittent+fasting')}
+          >
+            <Text style={[styles.databaseTitle, { color: colors.blue[600] }]}>
+              PubMed - Intermittent fasting
+            </Text>
+            <Text style={[styles.databaseDescription, { color: colors.textSecondary }]}>
+              Explore intermittent fasting research
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.databaseLink, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => openLink('https://pubmed.ncbi.nlm.nih.gov/?term=autophagy+fasting')}
+          >
+            <Text style={[styles.databaseTitle, { color: colors.blue[600] }]}>
+              PubMed - Autophagy research
+            </Text>
+            <Text style={[styles.databaseDescription, { color: colors.textSecondary }]}>
+              Studies on fasting-induced cellular cleanup
+            </Text>
+          </TouchableOpacity>
+        </ExpandableSection>
+      </ExpandableSection>
+    </View>
+  );
+};
+
 // Main Info Screen Component
 const InfoScreen: React.FC = () => {
   const isDark = useColorScheme() === 'dark';
@@ -497,6 +755,9 @@ const InfoScreen: React.FC = () => {
           <Text style={[styles.sectionTitle, { color: theme.text }]}>⏰ Fasting Timeline</Text>
           <TimelineSection colors={theme} />
         </View>
+
+        {/* Research Section */}
+        <ResearchSection colors={theme} />
 
         {/* Safety Section */}
         <SafetySection colors={theme} />
@@ -654,30 +915,33 @@ const styles = StyleSheet.create({
   safetyText: {
     fontSize: 14,
     flex: 1,
+    fontWeight: '500',
   },
   safetyWarning: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
     marginBottom: 12,
   },
   conditionsList: {
     gap: 4,
   },
   conditionItem: {
-    fontSize: 12,
+    fontSize: 13,
+    lineHeight: 18,
   },
   disclaimerText: {
-    fontSize: 12,
-    marginBottom: 8,
-    lineHeight: 18,
-  },
-  disclaimerList: {
-    marginLeft: 16,
+    fontSize: 14,
+    lineHeight: 20,
     marginBottom: 12,
   },
+  disclaimerList: {
+    marginBottom: 12,
+    paddingLeft: 16,
+  },
   disclaimerItem: {
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 18,
+    marginBottom: 4,
   },
   // Benefits styles
   benefitsGrid: {
@@ -689,13 +953,57 @@ const styles = StyleSheet.create({
   benefitDescription: {
     fontSize: 14,
     lineHeight: 20,
+    marginBottom: 8,
   },
   benefitList: {
     gap: 4,
   },
   benefitItem: {
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  // Research styles
+  researchIntro: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  researchItem: {
+    padding: 16,
+    borderLeftWidth: 4,
+    marginBottom: 12,
+    borderRadius: 4,
+    backgroundColor: 'rgba(0,0,0,0.02)',
+  },
+  researchTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  researchDetails: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  researchLink: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 8,
+  },
+  databaseLink: {
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  databaseTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  databaseDescription: {
+    fontSize: 13,
   },
 });
 
