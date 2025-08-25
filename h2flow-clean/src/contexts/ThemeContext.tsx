@@ -1,62 +1,66 @@
-import React, { createContext, useContext, useState } from 'react';
-import { useColorScheme } from 'react-native';
+// src/contexts/ThemeContext.tsx
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useColorScheme, ColorSchemeName } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Theme types
-type Theme = 'light' | 'dark' | 'auto';
+type Theme = 'light' | 'dark' | 'system';
 
 interface ThemeContextType {
   theme: Theme;
-  isDark: boolean;
+  resolvedTheme: 'light' | 'dark';
   setTheme: (theme: Theme) => void;
-  toggleTheme: () => void;
 }
 
-// Theme Context
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-// Theme Provider Component
-interface ThemeProviderProps {
-  children: React.ReactNode;
-  defaultTheme?: Theme;
-}
-
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({
-  children,
-  defaultTheme = 'auto'
-}) => {
-  const [theme, setThemeState] = useState<Theme>(defaultTheme);
+export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const systemTheme = useColorScheme();
+  const [theme, setThemeState] = useState<Theme>('system');
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(systemTheme || 'light');
 
-  // Determine if dark mode should be active
-  const isDark = theme === 'auto' 
-    ? systemTheme === 'dark' 
-    : theme === 'dark';
+  // Load saved theme from storage
+  useEffect(() => {
+    const loadTheme = async () => {
+      try {
+        const savedTheme = await AsyncStorage.getItem('@theme');
+        if (savedTheme) {
+          setThemeState(savedTheme as Theme);
+        }
+      } catch (error) {
+        console.error('Failed to load theme:', error);
+      }
+    };
+    loadTheme();
+  }, []);
 
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-  };
-
-  const toggleTheme = () => {
-    if (theme === 'light') {
-      setTheme('dark');
-    } else if (theme === 'dark') {
-      setTheme('auto');
+  // Update resolved theme based on selection
+  useEffect(() => {
+    if (theme === 'system') {
+      setResolvedTheme(systemTheme || 'light');
     } else {
-      setTheme('light');
+      setResolvedTheme(theme);
+    }
+  }, [theme, systemTheme]);
+
+  const setTheme = async (newTheme: Theme) => {
+    try {
+      setThemeState(newTheme);
+      await AsyncStorage.setItem('@theme', newTheme);
+    } catch (error) {
+      console.error('Failed to save theme:', error);
     }
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, isDark, setTheme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
 };
 
-// Hook to use theme
 export const useTheme = () => {
   const context = useContext(ThemeContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
