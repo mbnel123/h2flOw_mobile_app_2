@@ -9,12 +9,15 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  Modal,
+  TextInput,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { User as FirebaseUser } from 'firebase/auth';
 import { onAuthStateChange, logout } from '../firebase/authService';
 import { useHistoryData } from '../hooks/useHistoryData';
-import { Fast, FastStreak } from '../firebase/databaseService';
+import { Fast, FastStreak, updateFast, deleteFast } from '../firebase/databaseService';
 
 // Define colors for light and dark mode
 const colors = {
@@ -29,6 +32,7 @@ const colors = {
     success: '#059669',
     warning: '#D97706',
     danger: '#DC2626',
+    info: '#3B82F6',
   },
   dark: {
     primary: '#7DD3FC', // Babyblauw
@@ -41,6 +45,7 @@ const colors = {
     success: '#059669',
     warning: '#D97706',
     danger: '#DC2626',
+    info: '#3B82F6',
   }
 };
 
@@ -74,6 +79,133 @@ const StatCard = ({
       <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
       <Text style={[styles.statSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>
     </Card>
+  );
+};
+
+// Edit Fast Modal Component
+const EditFastModal = ({ 
+  visible, 
+  onClose, 
+  fast, 
+  onSave, 
+  onDelete,
+  colors 
+}: { 
+  visible: boolean; 
+  onClose: () => void; 
+  fast: Fast | null; 
+  onSave: (fastId: string, newDuration: number) => void;
+  onDelete: (fastId: string) => void;
+  colors: any;
+}) => {
+  const [duration, setDuration] = useState('');
+
+  useEffect(() => {
+    if (fast) {
+      setDuration(Number(fast.actualDuration || fast.plannedDuration).toFixed(1));
+    }
+  }, [fast]);
+
+  const handleSave = () => {
+    if (!fast) return;
+    
+    const newDuration = parseFloat(duration);
+    if (isNaN(newDuration) || newDuration <= 0) {
+      Alert.alert('Invalid Duration', 'Please enter a valid number of hours.');
+      return;
+    }
+
+    onSave(fast.id, newDuration);
+    onClose();
+  };
+
+  const handleDelete = () => {
+    if (!fast) return;
+    
+    Alert.alert(
+      'Delete Fast',
+      'Are you sure you want to delete this fast? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: () => {
+            onDelete(fast.id);
+            onClose();
+          }
+        }
+      ]
+    );
+  };
+
+  if (!fast) return null;
+
+  return (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Edit Fast</Text>
+            <TouchableOpacity onPress={onClose}>
+              <Ionicons name="close" size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalBody}>
+            <Text style={[styles.modalLabel, { color: colors.text }]}>
+              Start Date: {new Date(fast.startTime).toLocaleDateString('nl-NL')}
+            </Text>
+            
+            <Text style={[styles.modalLabel, { color: colors.text }]}>
+              Duration (hours):
+            </Text>
+            <TextInput
+              style={[styles.input, { 
+                backgroundColor: colors.backgroundSecondary,
+                color: colors.text,
+                borderColor: colors.border 
+              }]}
+              value={duration}
+              onChangeText={setDuration}
+              keyboardType="numeric"
+              placeholder="Enter duration in hours"
+              placeholderTextColor={colors.textSecondary}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.button, styles.deleteButton, { backgroundColor: colors.danger }]}
+                onPress={handleDelete}
+              >
+                <Ionicons name="trash" size={16} color="white" />
+                <Text style={styles.buttonText}>Delete</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.button, styles.cancelButton, { borderColor: colors.border }]}
+                onPress={onClose}
+              >
+                <Text style={[styles.buttonText, { color: colors.text }]}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.button, styles.saveButton, { backgroundColor: colors.success }]}
+                onPress={handleSave}
+              >
+                <Ionicons name="save" size={16} color="white" />
+                <Text style={styles.buttonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 };
 
@@ -202,7 +334,15 @@ const FastingPatternsSection = ({ stats, colors }: { stats: any; colors: any }) 
 );
 
 // Fast History List
-const FastHistoryList = ({ fastHistory, colors }: { fastHistory: Fast[]; colors: any }) => {
+const FastHistoryList = ({ 
+  fastHistory, 
+  colors, 
+  onEditFast 
+}: { 
+  fastHistory: Fast[]; 
+  colors: any;
+  onEditFast: (fast: Fast) => void;
+}) => {
   if (fastHistory.length === 0) {
     return (
       <View style={styles.section}>
@@ -228,56 +368,74 @@ const FastHistoryList = ({ fastHistory, colors }: { fastHistory: Fast[]; colors:
       </View>
       <View style={styles.fastList}>
         {fastHistory.slice(0, 10).map(fast => (
-          <Card key={fast.id} colors={colors} style={styles.fastCard}>
-            <View style={styles.fastHeader}>
-              <Text style={[styles.fastTitle, { color: colors.text }]}>
-                {Number(fast.plannedDuration).toFixed(2)}h Fast
-              </Text>
-              <View style={[
-                styles.statusBadge,
-                { 
-                  backgroundColor: fast.status === 'completed' ? 
-                    `${colors.success}20` : 
-                    fast.status === 'stopped_early' ? 
-                    `${colors.warning}20` : 
-                    `${colors.primary}20`
-                }
-              ]}>
-                <Ionicons 
-                  name={fast.status === 'completed' ? 'checkmark-circle' : 
-                         fast.status === 'stopped_early' ? 'time' : 'refresh-circle'} 
-                  size={14} 
-                  color={fast.status === 'completed' ? colors.success : 
-                         fast.status === 'stopped_early' ? colors.warning : colors.primary} 
-                />
-                <Text style={[
-                  styles.statusText,
+          <TouchableOpacity 
+            key={fast.id} 
+            onPress={() => onEditFast(fast)}
+            activeOpacity={0.7}
+          >
+            <Card colors={colors} style={styles.fastCard}>
+              <View style={styles.fastHeader}>
+                <Text style={[styles.fastTitle, { color: colors.text }]}>
+                  {Number(fast.plannedDuration).toFixed(2)}h Fast
+                </Text>
+                <View style={[
+                  styles.statusBadge,
                   { 
-                    color: fast.status === 'completed' ? colors.success : 
-                           fast.status === 'stopped_early' ? colors.warning : colors.primary
+                    backgroundColor: fast.status === 'completed' ? 
+                      `${colors.success}20` : 
+                      fast.status === 'stopped_early' ? 
+                      `${colors.warning}20` : 
+                      `${colors.primary}20`
                   }
                 ]}>
-                  {fast.status === 'completed' ? 'Completed' : 
-                   fast.status === 'stopped_early' ? 'Stopped Early' : 'Active'}
-                </Text>
+                  <Ionicons 
+                    name={fast.status === 'completed' ? 'checkmark-circle' : 
+                           fast.status === 'stopped_early' ? 'time' : 'refresh-circle'} 
+                    size={14} 
+                    color={fast.status === 'completed' ? colors.success : 
+                           fast.status === 'stopped_early' ? colors.warning : colors.primary} 
+                  />
+                  <Text style={[
+                    styles.statusText,
+                    { 
+                      color: fast.status === 'completed' ? colors.success : 
+                             fast.status === 'stopped_early' ? colors.warning : colors.primary
+                    }
+                  ]}>
+                    {fast.status === 'completed' ? 'Completed' : 
+                     fast.status === 'stopped_early' ? 'Stopped Early' : 'Active'}
+                  </Text>
+                </View>
               </View>
-            </View>
-            
-            <View style={styles.fastDetails}>
-              <View style={styles.fastDetail}>
-                <Ionicons name="calendar" size={14} color={colors.textSecondary} />
-                <Text style={[styles.fastDetailValue, { color: colors.text }]}>
-                  {new Date(fast.startTime).toLocaleDateString('nl-NL')}
-                </Text>
+              
+              <View style={styles.fastDetails}>
+                <View style={styles.fastDetail}>
+                  <Ionicons name="calendar" size={14} color={colors.textSecondary} />
+                  <Text style={[styles.fastDetailValue, { color: colors.text }]}>
+                    {new Date(fast.startTime).toLocaleDateString('nl-NL')}
+                  </Text>
+                </View>
+                <View style={styles.fastDetail}>
+                  <Ionicons name="time" size={14} color={colors.textSecondary} />
+                  <Text style={[styles.fastDetailValue, { color: colors.text }]}>
+                    {Number(fast.actualDuration || fast.plannedDuration).toFixed(2)} hours
+                  </Text>
+                </View>
               </View>
-              <View style={styles.fastDetail}>
-                <Ionicons name="time" size={14} color={colors.textSecondary} />
-                <Text style={[styles.fastDetailValue, { color: colors.text }]}>
-                  {Number(fast.actualDuration || fast.plannedDuration).toFixed(2)} hours
-                </Text>
+              
+              <View style={styles.fastActions}>
+                <TouchableOpacity 
+                  style={styles.editButton}
+                  onPress={() => onEditFast(fast)}
+                >
+                  <Ionicons name="create" size={14} color={colors.textSecondary} />
+                  <Text style={[styles.editButtonText, { color: colors.textSecondary }]}>
+                    Edit
+                  </Text>
+                </TouchableOpacity>
               </View>
-            </View>
-          </Card>
+            </Card>
+          </TouchableOpacity>
         ))}
       </View>
     </View>
@@ -289,6 +447,8 @@ const HistoryScreen: React.FC = () => {
   const isDark = useColorScheme() === 'dark';
   const theme = isDark ? colors.dark : colors.light;
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [editingFast, setEditingFast] = useState<Fast | null>(null);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
   // Use custom hook for history data
   const {
@@ -297,7 +457,8 @@ const HistoryScreen: React.FC = () => {
     loading,
     error,
     stats,
-    setError
+    setError,
+    refreshData
   } = useHistoryData(user);
 
   // Listen to auth state
@@ -315,6 +476,38 @@ const HistoryScreen: React.FC = () => {
     } catch (error) {
       console.error('Logout error:', error);
     }
+  };
+
+  const handleEditFast = (fast: Fast) => {
+    setEditingFast(fast);
+    setIsEditModalVisible(true);
+  };
+
+  const handleSaveFast = async (fastId: string, newDuration: number) => {
+    try {
+      await updateFast(fastId, newDuration);
+      refreshData(); // Refresh data to show updated values
+      Alert.alert('Success', 'Fast duration updated successfully!');
+    } catch (error) {
+      console.error('Error updating fast:', error);
+      Alert.alert('Error', 'Failed to update fast duration. Please try again.');
+    }
+  };
+
+  const handleDeleteFast = async (fastId: string) => {
+    try {
+      await deleteFast(fastId);
+      refreshData(); // Refresh data to show updated values
+      Alert.alert('Success', 'Fast deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting fast:', error);
+      Alert.alert('Error', 'Failed to delete fast. Please try again.');
+    }
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalVisible(false);
+    setEditingFast(null);
   };
 
   if (!user) {
@@ -382,6 +575,7 @@ const HistoryScreen: React.FC = () => {
         <FastHistoryList 
           fastHistory={fastHistory} 
           colors={theme}
+          onEditFast={handleEditFast}
         />
 
         {/* Basic Stats Grid */}
@@ -436,6 +630,16 @@ const HistoryScreen: React.FC = () => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Edit Fast Modal */}
+      <EditFastModal
+        visible={isEditModalVisible}
+        onClose={closeEditModal}
+        fast={editingFast}
+        onSave={handleSaveFast}
+        onDelete={handleDeleteFast}
+        colors={theme}
+      />
     </SafeAreaView>
   );
 };
@@ -651,6 +855,7 @@ const styles = StyleSheet.create({
   fastDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 12,
   },
   fastDetail: {
     flexDirection: 'row',
@@ -661,6 +866,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  fastActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 6,
+    gap: 4,
+  },
+  editButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
   emptyCard: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -669,6 +889,72 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: 'center',
+    fontSize: 14,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    borderRadius: 16,
+    padding: 20,
+    maxWidth: 400,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  modalBody: {
+    gap: 16,
+  },
+  modalLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginTop: 20,
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 8,
+    gap: 8,
+    flex: 1,
+  },
+  deleteButton: {
+    backgroundColor: '#DC2626',
+  },
+  cancelButton: {
+    borderWidth: 1,
+  },
+  saveButton: {
+    backgroundColor: '#059669',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: '600',
     fontSize: 14,
   },
   // Skeleton styles
