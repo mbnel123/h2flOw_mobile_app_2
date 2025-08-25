@@ -12,25 +12,28 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
-// Define colors for light and dark mode
+// Define colors for light and dark mode - aangepast voor consistentie met de rest van de app
 const colors = {
   light: {
-    primary: '#3B82F6',
+    primary: '#7DD3FC',
+    secondary: '#38BDF8',
     background: '#FFFFFF',
-    text: '#111827',
+    backgroundSecondary: '#F8F9FA',
+    text: '#000000',
     textSecondary: '#6B7280',
-    card: '#F9FAFB',
+    card: '#F8F9FA',
     border: '#E5E7EB',
     success: '#10B981',
     warning: '#F59E0B',
     danger: '#EF4444',
-    info: '#3B82F6',
+    info: '#7DD3FC',
     blue: {
       50: '#EFF6FF',
       100: '#DBEAFE',
-      500: '#3B82F6',
-      600: '#2563EB',
+      500: '#7DD3FC',
+      600: '#38BDF8',
     },
     green: {
       50: '#ECFDF5',
@@ -59,21 +62,23 @@ const colors = {
     gradient: ['#F9FAFB', '#F3F4F6', '#F9FAFB']
   },
   dark: {
-    primary: '#3B82F6',
-    background: '#111827',
-    text: '#F9FAFB',
+    primary: '#7DD3FC',
+    secondary: '#38BDF8',
+    background: '#000000',
+    backgroundSecondary: '#1F1F1F',
+    text: '#FFFFFF',
     textSecondary: '#9CA3AF',
-    card: '#1F2937',
+    card: '#1F1F1F',
     border: '#374151',
     success: '#10B981',
     warning: '#F59E0B',
     danger: '#EF4444',
-    info: '#3B82F6',
+    info: '#7DD3FC',
     blue: {
       50: '#1E3A8A',
       100: '#1E40AF',
-      500: '#3B82F6',
-      600: '#2563EB',
+      500: '#7DD3FC',
+      600: '#38BDF8',
     },
     green: {
       50: '#064E3B',
@@ -113,14 +118,14 @@ const Card = ({ children, style, colors }: { children: React.ReactNode; style?: 
 // Expandable section component
 const ExpandableSection = ({ 
   title, 
-  emoji, 
+  iconName, 
   children, 
   colors,
   isExpanded,
   onToggle 
 }: { 
   title: string; 
-  emoji: string;
+  iconName: keyof typeof Ionicons.glyphMap;
   children: React.ReactNode; 
   colors: any;
   isExpanded: boolean;
@@ -129,15 +134,17 @@ const ExpandableSection = ({
   <Card colors={colors} style={styles.expandableCard}>
     <TouchableOpacity onPress={onToggle} style={styles.expandableHeader}>
       <View style={styles.expandableTitle}>
-        <Text style={styles.emojiLarge}>{emoji}</Text>
+        <Ionicons name={iconName} size={24} color={colors.primary} />
         <Text style={[styles.expandableTitleText, { color: colors.text }]}>{title}</Text>
       </View>
-      <Text style={[styles.chevron, { color: colors.textSecondary }]}>
-        {isExpanded ? '▲' : '▼'}
-      </Text>
+      <Ionicons 
+        name={isExpanded ? 'chevron-up' : 'chevron-down'} 
+        size={20} 
+        color={colors.textSecondary} 
+      />
     </TouchableOpacity>
     {isExpanded && (
-      <View style={styles.expandableContent}>
+      <View style={[styles.expandableContent, { borderTopColor: colors.border }]}>
         {children}
       </View>
     )}
@@ -161,16 +168,16 @@ const TimelineSection = ({ colors }: { colors: any }) => {
   return (
     <ExpandableSection
       title="What happens during your fast"
-      emoji="⏰"
+      iconName="time-outline"
       colors={colors}
       isExpanded={isExpanded}
       onToggle={() => setIsExpanded(!isExpanded)}
     >
       <View style={styles.timelineContent}>
         {fastingPhases.map((phase, index) => (
-          <View key={index} style={[styles.timelineItem, { backgroundColor: colors.card }]}>
-            <View style={styles.timelineHours}>
-              <Text style={[styles.timelineHoursText, { color: colors.blue[500] }]}>{phase.hours}h</Text>
+          <View key={index} style={[styles.timelineItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.timelineHours, { backgroundColor: colors.blue[50] }]}>
+              <Text style={[styles.timelineHoursText, { color: colors.blue[600] }]}>{phase.hours}h</Text>
             </View>
             <View style={styles.timelineInfo}>
               <Text style={[styles.timelineTitle, { color: colors.text }]}>{phase.title}</Text>
@@ -178,7 +185,7 @@ const TimelineSection = ({ colors }: { colors: any }) => {
               <View style={styles.timelineProcesses}>
                 {phase.processes.map((process, i) => (
                   <View key={i} style={styles.processItem}>
-                    <View style={[styles.processDot, { backgroundColor: colors.blue[500] }]} />
+                    <View style={[styles.processDot, { backgroundColor: colors.primary }]} />
                     <Text style={[styles.processText, { color: colors.textSecondary }]}>{process}</Text>
                   </View>
                 ))}
@@ -209,31 +216,34 @@ const SafetySection = ({ colors }: { colors: any }) => {
 
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>🛡️ Health and safety information</Text>
+      <View style={styles.sectionHeader}>
+        <Ionicons name="shield-checkmark-outline" size={24} color={colors.primary} />
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Health and safety information</Text>
+      </View>
       
       <View style={styles.safetyGrid}>
         <ExpandableSection
           title="General safety guidelines"
-          emoji="💡"
+          iconName="bulb-outline"
           colors={colors}
           isExpanded={expandedSections.safety}
           onToggle={() => toggleSection('safety')}
         >
           <View style={[styles.safetyContent, { backgroundColor: colors.blue[50], borderColor: colors.blue[100] }]}>
             <View style={[styles.safetyTip, { backgroundColor: colors.background }]}>
-              <Text style={styles.emoji}>💡</Text>
+              <Ionicons name="time-outline" size={20} color={colors.blue[600]} />
               <Text style={[styles.safetyText, { color: colors.blue[600] }]}>Start with shorter fasts (12-24h) before attempting longer ones</Text>
             </View>
             <View style={[styles.safetyTip, { backgroundColor: colors.background }]}>
-              <Text style={styles.emoji}>💧</Text>
+              <Ionicons name="water-outline" size={20} color={colors.blue[600]} />
               <Text style={[styles.safetyText, { color: colors.blue[600] }]}>Stay well hydrated - drink 2-3 liters of water daily</Text>
             </View>
             <View style={[styles.safetyTip, { backgroundColor: colors.background }]}>
-              <Text style={styles.emoji}>👂</Text>
+              <Ionicons name="ear-outline" size={20} color={colors.blue[600]} />
               <Text style={[styles.safetyText, { color: colors.blue[600] }]}>Listen to your body and stop if you feel unwell</Text>
             </View>
             <View style={[styles.safetyTip, { backgroundColor: colors.background }]}>
-              <Text style={styles.emoji}>📱</Text>
+              <Ionicons name="phone-portrait-outline" size={20} color={colors.blue[600]} />
               <Text style={[styles.safetyText, { color: colors.blue[600] }]}>This app is for tracking purposes only - not medical advice</Text>
             </View>
           </View>
@@ -241,7 +251,7 @@ const SafetySection = ({ colors }: { colors: any }) => {
 
         <ExpandableSection
           title="When to consult a healthcare provider first"
-          emoji="🏥"
+          iconName="medical-outline"
           colors={colors}
           isExpanded={expandedSections.conditions}
           onToggle={() => toggleSection('conditions')}
@@ -272,7 +282,7 @@ const SafetySection = ({ colors }: { colors: any }) => {
 
         <ExpandableSection
           title="When to stop fasting"
-          emoji="⚠️"
+          iconName="warning-outline"
           colors={colors}
           isExpanded={expandedSections.warnings}
           onToggle={() => toggleSection('warnings')}
@@ -302,7 +312,7 @@ const SafetySection = ({ colors }: { colors: any }) => {
 
         <ExpandableSection
           title="App disclaimer"
-          emoji="📄"
+          iconName="document-text-outline"
           colors={colors}
           isExpanded={expandedSections.disclaimer}
           onToggle={() => toggleSection('disclaimer')}
@@ -352,7 +362,7 @@ const BenefitsSection = ({ colors }: { colors: any }) => {
   const benefits = [
     {
       key: 'autophagy',
-      emoji: '🔄',
+      iconName: 'refresh-outline',
       title: 'Autophagy - Cellular renewal',
       description: 'Your cells activate their internal "recycling program," breaking down and removing damaged proteins, organelles, and cellular debris.',
       items: [
@@ -365,7 +375,7 @@ const BenefitsSection = ({ colors }: { colors: any }) => {
     },
     {
       key: 'cognitive',
-      emoji: '🧠',
+      iconName: 'brain-outline',
       title: 'Enhanced cognitive function',
       description: 'Ketones produced during fasting provide superior brain fuel, leading to:',
       items: [
@@ -379,7 +389,7 @@ const BenefitsSection = ({ colors }: { colors: any }) => {
     },
     {
       key: 'metabolic',
-      emoji: '💚',
+      iconName: 'heart-outline',
       title: 'Metabolic optimization',
       description: 'Fasting fundamentally rewires your metabolism for efficiency:',
       items: [
@@ -393,7 +403,7 @@ const BenefitsSection = ({ colors }: { colors: any }) => {
     },
     {
       key: 'immune',
-      emoji: '🛡️',
+      iconName: 'shield-checkmark-outline',
       title: 'Immune system reset',
       description: 'Extended fasting triggers stem cell regeneration and immune renewal:',
       items: [
@@ -407,7 +417,7 @@ const BenefitsSection = ({ colors }: { colors: any }) => {
     },
     {
       key: 'cardiovascular',
-      emoji: '❤️',
+      iconName: 'pulse-outline',
       title: 'Cardiovascular health',
       description: 'Fasting provides powerful cardioprotective benefits:',
       items: [
@@ -421,7 +431,7 @@ const BenefitsSection = ({ colors }: { colors: any }) => {
     },
     {
       key: 'longevity',
-      emoji: '🌟',
+      iconName: 'star-outline',
       title: 'Longevity and anti-aging',
       description: 'Fasting activates multiple longevity pathways:',
       items: [
@@ -437,14 +447,17 @@ const BenefitsSection = ({ colors }: { colors: any }) => {
 
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>🌟 Comprehensive health benefits</Text>
+      <View style={styles.sectionHeader}>
+        <Ionicons name="star-outline" size={24} color={colors.primary} />
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Comprehensive health benefits</Text>
+      </View>
       
       <View style={styles.benefitsGrid}>
         {benefits.map(benefit => (
           <ExpandableSection
             key={benefit.key}
             title={benefit.title}
-            emoji={benefit.emoji}
+            iconName={benefit.iconName}
             colors={colors}
             isExpanded={expandedSections[benefit.key as keyof typeof expandedSections]}
             onToggle={() => toggleSection(benefit.key as keyof typeof expandedSections)}
@@ -490,11 +503,14 @@ const ResearchSection = ({ colors }: { colors: any }) => {
 
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>🔬 Scientific research and studies</Text>
+      <View style={styles.sectionHeader}>
+        <Ionicons name="search-outline" size={24} color={colors.primary} />
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Scientific research and studies</Text>
+      </View>
       
       <ExpandableSection
         title="Scientific research and studies"
-        emoji="🔬"
+        iconName="search-outline"
         colors={colors}
         isExpanded={expandedSections.research}
         onToggle={() => toggleSection('research')}
@@ -506,12 +522,12 @@ const ResearchSection = ({ colors }: { colors: any }) => {
 
         <ExpandableSection
           title="Autophagy and cellular renewal"
-          emoji="🔬"
+          iconName="refresh-outline"
           colors={colors}
           isExpanded={expandedSections.autophagy}
           onToggle={() => toggleSection('autophagy')}
         >
-          <View style={[styles.researchItem, { borderLeftColor: colors.blue[500] }]}>
+          <View style={[styles.researchItem, { borderLeftColor: colors.primary }]}>
             <Text style={[styles.researchTitle, { color: colors.text }]}>
               "Autophagy: cellular and molecular mechanisms"
             </Text>
@@ -522,13 +538,13 @@ const ResearchSection = ({ colors }: { colors: any }) => {
               Finding: Comprehensive review of autophagy mechanisms and their role in cellular health and longevity.
             </Text>
             <TouchableOpacity onPress={() => openLink('https://pubmed.ncbi.nlm.nih.gov/25654554/')}>
-              <Text style={[styles.researchLink, { color: colors.blue[500] }]}>
+              <Text style={[styles.researchLink, { color: colors.primary }]}>
                 View on PubMed →
               </Text>
             </TouchableOpacity>
           </View>
 
-          <View style={[styles.researchItem, { borderLeftColor: colors.blue[500] }]}>
+          <View style={[styles.researchItem, { borderLeftColor: colors.primary }]}>
             <Text style={[styles.researchTitle, { color: colors.text }]}>
               "Fasting activates macroautophagy in neurons of Alzheimer's disease mouse model"
             </Text>
@@ -539,7 +555,7 @@ const ResearchSection = ({ colors }: { colors: any }) => {
               Finding: Demonstrates how fasting enhances autophagy specifically in brain cells, potentially protecting against neurodegenerative diseases.
             </Text>
             <TouchableOpacity onPress={() => openLink('https://pubmed.ncbi.nlm.nih.gov/30667316/')}>
-              <Text style={[styles.researchLink, { color: colors.blue[500] }]}>
+              <Text style={[styles.researchLink, { color: colors.primary }]}>
                 View on PubMed →
               </Text>
             </TouchableOpacity>
@@ -548,7 +564,7 @@ const ResearchSection = ({ colors }: { colors: any }) => {
 
         <ExpandableSection
           title="Metabolic and weight loss effects"
-          emoji="⚡"
+          iconName="flash-outline"
           colors={colors}
           isExpanded={expandedSections.metabolic}
           onToggle={() => toggleSection('metabolic')}
@@ -590,7 +606,7 @@ const ResearchSection = ({ colors }: { colors: any }) => {
 
         <ExpandableSection
           title="Immune system and inflammation"
-          emoji="🛡️"
+          iconName="shield-checkmark-outline"
           colors={colors}
           isExpanded={expandedSections.immune}
           onToggle={() => toggleSection('immune')}
@@ -632,7 +648,7 @@ const ResearchSection = ({ colors }: { colors: any }) => {
 
         <ExpandableSection
           title="Longevity and anti-aging"
-          emoji="🌟"
+          iconName="star-outline"
           colors={colors}
           isExpanded={expandedSections.longevity}
           onToggle={() => toggleSection('longevity')}
@@ -674,7 +690,7 @@ const ResearchSection = ({ colors }: { colors: any }) => {
 
         <ExpandableSection
           title="Further research databases"
-          emoji="🔍"
+          iconName="library-outline"
           colors={colors}
           isExpanded={expandedSections.database}
           onToggle={() => toggleSection('database')}
@@ -687,7 +703,7 @@ const ResearchSection = ({ colors }: { colors: any }) => {
             style={[styles.databaseLink, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => openLink('https://pubmed.ncbi.nlm.nih.gov/?term=water+fasting')}
           >
-            <Text style={[styles.databaseTitle, { color: colors.blue[600] }]}>
+            <Text style={[styles.databaseTitle, { color: colors.primary }]}>
               PubMed - Water fasting studies
             </Text>
             <Text style={[styles.databaseDescription, { color: colors.textSecondary }]}>
@@ -699,7 +715,7 @@ const ResearchSection = ({ colors }: { colors: any }) => {
             style={[styles.databaseLink, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => openLink('https://pubmed.ncbi.nlm.nih.gov/?term=intermittent+fasting')}
           >
-            <Text style={[styles.databaseTitle, { color: colors.blue[600] }]}>
+            <Text style={[styles.databaseTitle, { color: colors.primary }]}>
               PubMed - Intermittent fasting
             </Text>
             <Text style={[styles.databaseDescription, { color: colors.textSecondary }]}>
@@ -711,7 +727,7 @@ const ResearchSection = ({ colors }: { colors: any }) => {
             style={[styles.databaseLink, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => openLink('https://pubmed.ncbi.nlm.nih.gov/?term=autophagy+fasting')}
           >
-            <Text style={[styles.databaseTitle, { color: colors.blue[600] }]}>
+            <Text style={[styles.databaseTitle, { color: colors.primary }]}>
               PubMed - Autophagy research
             </Text>
             <Text style={[styles.databaseDescription, { color: colors.textSecondary }]}>
@@ -733,6 +749,7 @@ const InfoScreen: React.FC = () => {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: theme.border }]}>
+        <Ionicons name="information-circle-outline" size={24} color={theme.primary} />
         <Text style={[styles.headerTitle, { color: theme.text }]}>Fasting Benefits & Science</Text>
       </View>
 
@@ -752,7 +769,10 @@ const InfoScreen: React.FC = () => {
 
         {/* Timeline Section */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>⏰ Fasting Timeline</Text>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="time-outline" size={24} color={theme.primary} />
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Fasting Timeline</Text>
+          </View>
           <TimelineSection colors={theme} />
         </View>
 
@@ -774,11 +794,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
-    textAlign: 'center',
   },
   content: {
     flex: 1,
@@ -805,10 +828,15 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 8,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 16,
   },
   expandableCard: {
     marginBottom: 12,
@@ -823,28 +851,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    gap: 12,
   },
   expandableTitleText: {
     fontSize: 16,
     fontWeight: '600',
-    marginLeft: 12,
     flex: 1,
   },
   expandableContent: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.1)',
-  },
-  chevron: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  emoji: {
-    fontSize: 20,
-  },
-  emojiLarge: {
-    fontSize: 24,
   },
   // Timeline styles
   timelineContent: {
@@ -855,10 +872,11 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
   },
   timelineHours: {
     width: 50,
+    height: 50,
+    borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -900,48 +918,46 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   safetyContent: {
-    padding: 16,
+    padding: 12,
     borderRadius: 8,
     borderWidth: 1,
+    gap: 8,
   },
   safetyTip: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderRadius: 6,
-    marginBottom: 8,
+    borderRadius: 8,
     gap: 12,
   },
   safetyText: {
     fontSize: 14,
     flex: 1,
-    fontWeight: '500',
   },
   safetyWarning: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   conditionsList: {
     gap: 4,
   },
   conditionItem: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
   },
   disclaimerText: {
     fontSize: 14,
+    marginBottom: 8,
     lineHeight: 20,
-    marginBottom: 12,
   },
   disclaimerList: {
     marginBottom: 12,
-    paddingLeft: 16,
+    paddingLeft: 12,
   },
   disclaimerItem: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
     marginBottom: 4,
+    lineHeight: 18,
   },
   // Benefits styles
   benefitsGrid: {
@@ -959,7 +975,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   benefitItem: {
-    fontSize: 13,
+    fontSize: 12,
     lineHeight: 18,
   },
   // Research styles
@@ -969,41 +985,39 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   researchItem: {
-    padding: 16,
-    borderLeftWidth: 4,
+    padding: 12,
     marginBottom: 12,
+    borderLeftWidth: 3,
     borderRadius: 4,
-    backgroundColor: 'rgba(0,0,0,0.02)',
   },
   researchTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
-    marginBottom: 8,
-    lineHeight: 20,
+    marginBottom: 4,
   },
   researchDetails: {
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 8,
+    fontSize: 12,
+    marginBottom: 4,
+    lineHeight: 16,
   },
   researchLink: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginTop: 8,
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
   },
   databaseLink: {
-    padding: 16,
+    padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   databaseTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     marginBottom: 4,
   },
   databaseDescription: {
-    fontSize: 13,
+    fontSize: 12,
   },
 });
 
