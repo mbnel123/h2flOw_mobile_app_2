@@ -4,14 +4,12 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
-// FIREBASE INITIALIZATION - Add this FIRST before other imports
-//import './src/firebase/config';
-
 // Import screens
 import TimerScreen from './src/screens/TimerScreen';
 import WaterScreen from './src/screens/WaterScreen'; 
 import HistoryScreen from './src/screens/HistoryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import InfoScreen from './src/screens/InfoScreen'; // Add this import
 
 const Tab = createBottomTabNavigator();
 
@@ -61,6 +59,9 @@ export default function App() {
               case 'History':
                 iconName = focused ? 'bar-chart' : 'bar-chart-outline';
                 break;
+              case 'Info':
+                iconName = focused ? 'information-circle' : 'information-circle-outline';
+                break;
               case 'Settings':
                 iconName = focused ? 'person' : 'person-outline';
                 break;
@@ -101,6 +102,7 @@ export default function App() {
         <Tab.Screen name="Timer" component={TimerScreen} />
         <Tab.Screen name="Water" component={WaterScreen} />
         <Tab.Screen name="History" component={HistoryScreen} />
+        <Tab.Screen name="Info" component={InfoScreen} />
         <Tab.Screen name="Settings" component={SettingsScreen} />
       </Tab.Navigator>
     </NavigationContainer>
