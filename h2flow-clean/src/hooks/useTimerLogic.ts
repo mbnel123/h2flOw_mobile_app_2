@@ -190,4 +190,154 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
     if (!user) return setError('Please log in to start fasting');
     if (!isOnline) return setError('Cannot start fast while offline');
     if (!targetHours || targetHours <= 0 || targetHours > 168) {
-      return setError('Please set a valid target du
+      return setError('Please set a valid target duration (1-168h)');
+    }
+    setShowWarningModal(true);
+  };
+
+  const proceedWithFastStart = async () => {
+    setShowWarningModal(false);
+    setLoading(true);
+    try {
+      const result = await startFast(user!.uid, targetHours);
+      if (result.error) setError(`Failed to start fast: ${result.error}`);
+      else {
+        setPreviousElapsedTime(0);
+        setShowCelebrations(true);
+      }
+    } catch (err) {
+      setError('Failed to start fast');
+    }
+    setLoading(false);
+  };
+
+  const pauseFast = async () => {
+    if (!currentFast?.id || !isOnline) return;
+    try { await updateFastStatus(currentFast.id, 'paused'); }
+    catch { setError('Failed to pause fast'); }
+  };
+
+  const resumeFast = async () => {
+    if (!currentFast?.id || !isOnline) return;
+    try { await updateFastStatus(currentFast.id, 'active'); }
+    catch { setError('Failed to resume fast'); }
+  };
+
+  const stopFast = async () => {
+    if (!currentFast?.id || !isOnline) return;
+    setLoading(true);
+    try {
+      const { error } = await endFast(currentFast.id);
+      if (error) setError(error);
+      else {
+        setShowStopConfirmation(false);
+        if (user) await loadStreakData(user.uid);
+      }
+    } catch {
+      setError('Failed to end fast');
+    }
+    setLoading(false);
+  };
+
+  const handleSelectTemplate = (template: FastTemplate) => {
+    setCurrentTemplate(template);
+    setTargetHours(template.duration);
+  };
+
+  // ---- Effects ----
+  useEffect(() => {
+    const unsubscribe = templateService.subscribe(() => {
+      setRecentTemplates(templateService.getRecentlyUsed(3));
+    });
+    setRecentTemplates(templateService.getRecentlyUsed(3));
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (user && !isInitialized.current) {
+      setupRealtimeSync(user.uid);
+      isInitialized.current = true;
+    }
+    if (!user) {
+      isInitialized.current = false;
+      currentUserId.current = null;
+    }
+  }, [user, setupRealtimeSync]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isActive && startTime) {
+      interval = setInterval(() => {
+        setPreviousElapsedTime(elapsedTime);
+        setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+      }, 1000);
+    }
+    return () => { if (interval) clearInterval(interval); };
+  }, [isActive, startTime, elapsedTime]);
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      const connected = state.isConnected && state.isInternetReachable;
+      setIsOnline(connected ?? false);
+      setSyncStatus(connected ? 'connected' : 'offline');
+      if (connected) setLastSyncTime(new Date());
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (realtimeUnsubscribe.current) realtimeUnsubscribe.current();
+    };
+  }, []);
+
+  // ---- Expose ----
+  return {
+    // State
+    currentFast,
+    loading,
+    initialLoading,
+    error,
+    fastingStreak,
+    streakLoading,
+    isOnline,
+    lastSyncTime,
+    syncStatus,
+    multiDeviceActivity,
+    showTemplateSelector,
+    currentTemplate,
+    recentTemplates,
+    isActive,
+    startTime,
+    elapsedTime,
+    elapsedHours,
+    targetHours,
+    dailyWaterIntake,
+    showStopConfirmation,
+    showWarningModal,
+    previousElapsedTime,
+    personalRecord,
+    showCelebrations,
+    currentPhase,
+
+    // Actions
+    handleStartFast,
+    proceedWithFastStart,
+    pauseFast,
+    resumeFast,
+    stopFast,
+    handleSelectTemplate,
+    setError,
+    setShowStopConfirmation,
+    setShowTemplateSelector,
+    setShowCelebrations,
+    setCurrentTemplate,
+    setTargetHours,
+    setShowWarningModal,
+
+    // Stop confirm handlers
+    onStopConfirmation: () => setShowStopConfirmation(true),
+    onConfirmStop: stopFast,
+    onCancelStop: () => setShowStopConfirmation(false),
+  };
+};
