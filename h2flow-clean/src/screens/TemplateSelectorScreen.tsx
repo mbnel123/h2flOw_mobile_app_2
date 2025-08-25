@@ -254,21 +254,35 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
 
         {/* Category tabs */}
         <View style={styles.categoryTabs}>
-          {['beginner', 'intermediate', 'advanced', 'custom'].map((category) => {
-            const count = templates.filter((t) => t.category === category).length;
-            const active = selectedCategory === category;
-            return (
-              <TouchableOpacity
-                key={category}
-                style={[styles.categoryBtn, active && styles.categoryBtnActive]}
-                onPress={() => setSelectedCategory(category as any)}
-              >
-                <Text style={[styles.categoryText, active && styles.categoryTextActive]}>
-                  {category.charAt(0).toUpperCase() + category.slice(1)} ({count})
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryScrollView}
+          >
+            {['beginner', 'intermediate', 'advanced', 'custom'].map((category) => {
+              const count = templates.filter((t) => t.category === category).length;
+              const active = selectedCategory === category;
+              return (
+                <TouchableOpacity
+                  key={category}
+                  style={[styles.categoryBtn, active && styles.categoryBtnActive]}
+                  onPress={() => setSelectedCategory(category as any)}
+                >
+                  <Text style={[styles.categoryText, active && styles.categoryTextActive]}>
+                    {category.charAt(0).toUpperCase() + category.slice(1)} ({count})
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+            
+            {/* Create Custom Template tab */}
+            <TouchableOpacity
+              style={[styles.categoryBtn, styles.createCategoryBtn]}
+              onPress={() => setShowCreateForm(true)}
+            >
+              <Text style={[styles.categoryText, styles.createCategoryText]}>+ Create</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
 
         {/* Template list */}
@@ -407,15 +421,7 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
 
         {/* Footer */}
         <View style={styles.footer}>
-          <TouchableOpacity 
-            style={styles.footerBtn} 
-            onPress={() => setShowCreateForm(true)}
-          >
-            <AntDesign name="plus" size={20} color="#2563EB" />
-            <Text style={styles.footerBtnText}>Create Custom Template</Text>
-          </TouchableOpacity>
-          
-          <View style={styles.footerButtons}>
+          <View style={styles.footerContent}>
             <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
@@ -476,10 +482,10 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   categoryTabs: { 
-    flexDirection: 'row', 
-    paddingHorizontal: 20,
     paddingVertical: 16,
-    gap: 8,
+  },
+  categoryScrollView: {
+    paddingHorizontal: 20,
   },
   categoryBtn: {
     paddingHorizontal: 16,
@@ -488,6 +494,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    marginRight: 8,
   },
   categoryBtnActive: { 
     backgroundColor: '#2563EB',
@@ -630,14 +637,24 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontWeight: '500',
   },
+  createCategoryBtn: {
+    backgroundColor: '#10B981',
+    borderColor: '#10B981',
+  },
+  createCategoryText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     padding: 20,
     borderTopWidth: 1,
     borderColor: '#E5E7EB',
     backgroundColor: '#F9FAFB',
+  },
+  footerContent: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
   },
   footerBtn: { 
     flexDirection: 'row', 
