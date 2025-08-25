@@ -11,6 +11,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { User } from 'firebase/auth';
 import { signUp, signIn, logout, onAuthStateChange } from '../firebase/authService';
@@ -26,21 +27,31 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialCheck, setIsInitialCheck] = useState(true);
 
   // Listen to auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChange((user) => {
       setUser(user);
-      // Only redirect if user logs in from this page, not if already logged in
-      if (user && (email || password)) {
+      
+      // Alleen redirecten als de gebruiker net is ingelogd (niet bij initieel laden)
+      if (user && !isInitialCheck) {
+        console.log('User logged in, redirecting to timer');
         setCurrentView('timer');
       }
+      
+      setIsInitialCheck(false);
     });
 
     return () => unsubscribe();
-  }, [setCurrentView, email, password]);
+  }, [setCurrentView, isInitialCheck]);
 
   const handleSubmit = async () => {
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -50,16 +61,23 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
         const { user, error } = await signIn(email, password);
         if (error) {
           setError(error);
+        } else if (user) {
+          // Succesvol ingelogd - we worden doorgestuurd via de auth state change listener
+          console.log('Login successful');
         }
       } else {
         // Sign up
         const { user, error } = await signUp(email, password);
         if (error) {
           setError(error);
+        } else if (user) {
+          // Succesvol geregistreerd - we worden doorgestuurd via de auth state change listener
+          console.log('Sign up successful');
+          Alert.alert('Success', 'Account created successfully!');
         }
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -69,7 +87,16 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
     const { error } = await logout();
     if (error) {
       setError(error);
+    } else {
+      setUser(null);
+      setEmail('');
+      setPassword('');
     }
+  };
+
+  const handleStartFasting = () => {
+    console.log('Navigating to timer screen');
+    setCurrentView('timer');
   };
 
   // If user is logged in, show welcome message
@@ -86,7 +113,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.primaryButton}
-              onPress={() => setCurrentView('timer')}
+              onPress={handleStartFasting}
             >
               <Text style={styles.primaryButtonText}>Start Fasting 🚀</Text>
             </TouchableOpacity>
@@ -153,6 +180,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
+                  editable={!loading}
                 />
               </View>
 
@@ -167,6 +195,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
                   secureTextEntry
                   autoCapitalize="none"
                   autoCorrect={false}
+                  editable={!loading}
                 />
               </View>
 
@@ -194,6 +223,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => setCurrentView('welcome')}
+              disabled={loading}
             >
               <Text style={styles.backButtonText}>← Back to Welcome</Text>
             </TouchableOpacity>
