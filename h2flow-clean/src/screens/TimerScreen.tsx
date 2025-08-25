@@ -1,6 +1,14 @@
-// src/screens/TimerScreen.tsx - FIXED INFINITE LOOP
+// src/screens/TimerScreen.tsx - AANGEPAST MET STARTKNOOP
 import React, { useEffect, useRef } from 'react';
-import { View, Text, SafeAreaView, StyleSheet, StatusBar, useColorScheme } from 'react-native';
+import { 
+  View, 
+  Text, 
+  SafeAreaView, 
+  StyleSheet, 
+  StatusBar, 
+  useColorScheme, 
+  TouchableOpacity 
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { User } from 'firebase/auth';
 import { onAuthStateChange } from '../firebase/authService';
@@ -110,6 +118,29 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
     { hours: 48, title: "Deep Autophagy", description: "Maximum cleansing" },
     { hours: 72, title: "Immune Reset", description: "Complete renewal" }
   ];
+
+  // Nieuwe functie voor starten zonder template
+  const handleStartWithoutTemplate = () => {
+    if (!user) return;
+    
+    // Gebruik standaard template van 16 uur
+    const defaultTemplate = {
+      id: 'default_16h',
+      name: '16h Fast',
+      icon: '⏰',
+      duration: 16,
+      category: 'beginner',
+      tags: ['default'],
+      isDefault: true,
+      isCustom: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      usageCount: 0,
+      userId: user.uid
+    };
+    
+    handleSelectTemplate(defaultTemplate);
+  };
 
   // Helper functions
   const getProgress = () => {
@@ -293,22 +324,47 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
 
       {/* Control Buttons - FIXED POSITION */}
       <View style={styles.controlsContainer}>
-        <TimerControls
-          isActive={isActive}
-          startTime={startTime}
-          loading={loading}
-          isOnline={true}
-          theme={theme}
-          recentTemplates={recentTemplates}
-          showCelebrations={showCelebrations}
-          onStartFast={handleStartFast}
-          onResumeFast={resumeFast}
-          onPauseFast={pauseFast}
-          onStopConfirmation={() => setShowStopConfirmation(true)}
-          onShowTemplateSelector={() => setShowTemplateSelector(true)}
-          onSelectTemplate={handleSelectTemplate}
-          onToggleCelebrations={() => setShowCelebrations(!showCelebrations)}
-        />
+        {!isActive && !currentTemplate ? (
+          // Start buttons wanneer er geen actieve fasting is en geen template
+          <View style={styles.startContainer}>
+            <TouchableOpacity
+              style={[styles.startButton, { backgroundColor: theme.primary }]}
+              onPress={handleStartWithoutTemplate}
+              disabled={loading}
+            >
+              <Text style={styles.startButtonText}>
+                {loading ? 'Starting...' : 'Start 16h Fast'}
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.templateButton, { borderColor: theme.primary }]}
+              onPress={() => setShowTemplateSelector(true)}
+            >
+              <Text style={[styles.templateButtonText, { color: theme.primary }]}>
+                Choose Template
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          // Normale timer controls wanneer er een actieve fasting of template is
+          <TimerControls
+            isActive={isActive}
+            startTime={startTime}
+            loading={loading}
+            isOnline={true}
+            theme={theme}
+            recentTemplates={recentTemplates}
+            showCelebrations={showCelebrations}
+            onStartFast={handleStartFast}
+            onResumeFast={resumeFast}
+            onPauseFast={pauseFast}
+            onStopConfirmation={() => setShowStopConfirmation(true)}
+            onShowTemplateSelector={() => setShowTemplateSelector(true)}
+            onSelectTemplate={handleSelectTemplate}
+            onToggleCelebrations={() => setShowCelebrations(!showCelebrations)}
+          />
+        )}
       </View>
 
       {/* Modals */}
@@ -394,8 +450,35 @@ const styles = StyleSheet.create({
   },
   controlsContainer: {
     paddingHorizontal: 24,
-    paddingBottom: 110, // Space for bigger tab bar
+    paddingBottom: 110,
     paddingTop: 20,
+  },
+  // Nieuwe styles voor start buttons
+  startContainer: {
+    gap: 16,
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
+  },
+  startButton: {
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  startButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  templateButton: {
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 2,
+  },
+  templateButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
 
