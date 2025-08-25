@@ -1,4 +1,4 @@
-// App.tsx - AANGEPAST VOOR AUTH STATE MANAGEMENT
+// App.tsx - AANGEPAST VOOR AGE VERIFICATION
 import React, { useState, useEffect } from 'react';
 import { useColorScheme, View, Text, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
@@ -16,6 +16,7 @@ import InfoScreen from './src/screens/InfoScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import AuthScreen from './src/screens/AuthScreen';
+import AgeVerification from './src/screens/AgeVerification'; // NIEUW: Age verification
 
 const Tab = createBottomTabNavigator();
 
@@ -46,9 +47,12 @@ const colors = {
 export default function App() {
   const isDark = useColorScheme() === 'dark';
   const theme = isDark ? colors.dark : colors.light;
-  const [currentView, setCurrentView] = useState('welcome');
+  const [currentView, setCurrentView] = useState('age-verification'); // NIEUW: Start met age verification
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const [ageVerified, setAgeVerified] = useState(false); // NIEUW: Age verification state
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false); // NIEUW: Privacy policy
+  const [showTermsOfService, setShowTermsOfService] = useState(false); // NIEUW: Terms of service
   // NIEUW: State voor auth management
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -93,6 +97,16 @@ export default function App() {
     }
 
     switch (currentView) {
+      case 'age-verification': // NIEUW: Age verification screen
+        return (
+          <AgeVerification
+            setAgeVerified={setAgeVerified}
+            setCurrentView={setCurrentView}
+            showOnboarding={showOnboarding}
+            setShowPrivacyPolicy={setShowPrivacyPolicy}
+            setShowTermsOfService={setShowTermsOfService}
+          />
+        );
       case 'welcome':
         return <WelcomeScreen setCurrentView={setCurrentView} />;
       case 'onboarding':
@@ -155,8 +169,8 @@ export default function App() {
                   fontWeight: '500',
                   marginTop: 4,
                 },
-                tabBarActiveTintColor: theme.primary,
-                tabBarInactiveTintColor: theme.textSecondary,
+                tabBarActiveTintColor={theme.primary},
+                tabBarInactiveTintColor={theme.textSecondary},
                 tabBarItemStyle: {
                   paddingVertical: 4,
                 },
