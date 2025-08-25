@@ -27,24 +27,23 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isInitialCheck, setIsInitialCheck] = useState(true);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
   // Listen to auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChange((user) => {
       setUser(user);
+      setHasCheckedAuth(true);
       
-      // Alleen redirecten als de gebruiker net is ingelogd (niet bij initieel laden)
-      if (user && !isInitialCheck) {
-        console.log('User logged in, redirecting to timer');
+      // Alleen redirecten als de gebruiker bestaat EN we klaar zijn met de initiële check
+      if (user) {
+        console.log('User is logged in, redirecting to timer');
         setCurrentView('timer');
       }
-      
-      setIsInitialCheck(false);
     });
 
     return () => unsubscribe();
-  }, [setCurrentView, isInitialCheck]);
+  }, [setCurrentView]);
 
   const handleSubmit = async () => {
     if (!email || !password) {
@@ -98,6 +97,18 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
     console.log('Navigating to timer screen');
     setCurrentView('timer');
   };
+
+  // Toon loading totdat we de auth state hebben gecontroleerd
+  if (!hasCheckedAuth) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2563EB" />
+          <Text style={styles.loadingText}>Checking authentication...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // If user is logged in, show welcome message
   if (user) {
@@ -238,6 +249,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    color: '#6B7280',
   },
   keyboardAvoid: {
     flex: 1,
