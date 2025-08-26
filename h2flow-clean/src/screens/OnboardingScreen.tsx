@@ -5,28 +5,12 @@ import {
   Text,
   SafeAreaView,
   StyleSheet,
-  useColorScheme,
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-
-const colors = {
-  light: {
-    primary: '#3B82F6',
-    background: '#FFFFFF',
-    text: '#111827',
-    textSecondary: '#6B7280',
-    gradient: ['#EFF6FF', '#DBEAFE', '#EFF6FF']
-  },
-  dark: {
-    primary: '#3B82F6',
-    background: '#111827',
-    text: '#F9FAFB',
-    textSecondary: '#9CA3AF',
-    gradient: ['#111827', '#1F2937', '#111827']
-  }
-};
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface OnboardingProps {
   onboardingStep: number;
@@ -41,46 +25,62 @@ const OnboardingScreen: React.FC<OnboardingProps> = ({
   setShowOnboarding,
   setCurrentView
 }) => {
-  const isDark = useColorScheme() === 'dark';
-  const theme = isDark ? colors.dark : colors.light;
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  
+  const colors = {
+    primary: '#7DD3FC',
+    background: isDark ? '#000000' : '#FFFFFF',
+    backgroundSecondary: isDark ? '#1F1F1F' : '#F8F9FA',
+    text: isDark ? '#FFFFFF' : '#000000',
+    textSecondary: isDark ? '#9CA3AF' : '#6B7280',
+    border: isDark ? '#374151' : '#E5E7EB',
+    gradient: isDark ? ['#111827', '#1F2937', '#111827'] as const : ['#F9FAFB', '#F3F4F6', '#F9FAFB'] as const,
+  };
 
   const onboardingSteps = [
     {
-      title: "TEST - Welcome to H2flOw! 💧",
+      title: "Welcome to H2Flow! 💧",
       description: "Your comprehensive water fasting companion. Track your fasting journey with science-backed insights.",
-      icon: "🌊"
+      icon: "water"
     },
     {
-      title: "Stay informed and safe ⚠️", 
-      description: "Fasting involves certain risks. Listen to your body, stay hydrated, and be aware of warning signs. Detailed safety information is available in the app. Your wellbeing comes first.",
-      icon: "🏥"
+      title: "Stay informed and safe", 
+      description: "Fasting involves certain risks. Listen to your body, stay hydrated, and be aware of warning signs. Your wellbeing comes first.",
+      icon: "warning"
     },
     {
-      title: "Track your progress 📈",
+      title: "Track your progress",
       description: "Monitor your fasting phases, water intake, and build a history of your fasting journey.",
-      icon: "📊"
+      icon: "bar-chart"
     },
     {
-      title: "Science-based insights 🔬",
+      title: "Science-based insights",
       description: "Learn about autophagy, ketosis, and the biological benefits of fasting with peer-reviewed research.",
-      icon: "🧬"
+      icon: "flask"
     }
   ];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={theme.gradient}
+        colors={colors.gradient}
         style={styles.gradient}
       >
         <View style={styles.content}>
-          <Text style={styles.emoji}>{onboardingSteps[onboardingStep].icon}</Text>
+          <View style={[styles.iconContainer, { backgroundColor: colors.backgroundSecondary }]}>
+            <Ionicons 
+              name={onboardingSteps[onboardingStep].icon as any} 
+              size={48} 
+              color={colors.primary} 
+            />
+          </View>
           
-          <Text style={[styles.title, { color: theme.text }]}>
+          <Text style={[styles.title, { color: colors.text }]}>
             {onboardingSteps[onboardingStep].title}
           </Text>
           
-          <Text style={[styles.description, { color: theme.textSecondary }]}>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>
             {onboardingSteps[onboardingStep].description}
           </Text>
           
@@ -91,7 +91,7 @@ const OnboardingScreen: React.FC<OnboardingProps> = ({
                 style={[
                   styles.dot,
                   {
-                    backgroundColor: index === onboardingStep ? theme.primary : theme.textSecondary + '40'
+                    backgroundColor: index === onboardingStep ? colors.primary : colors.textSecondary + '40'
                   }
                 ]}
               />
@@ -104,7 +104,8 @@ const OnboardingScreen: React.FC<OnboardingProps> = ({
             style={[
               styles.navButton,
               {
-                backgroundColor: onboardingStep === 0 ? theme.textSecondary + '20' : theme.textSecondary + '40'
+                backgroundColor: onboardingStep === 0 ? colors.textSecondary + '20' : colors.textSecondary + '40',
+                borderColor: colors.border
               }
             ]}
             onPress={() => {
@@ -116,7 +117,7 @@ const OnboardingScreen: React.FC<OnboardingProps> = ({
           >
             <Text style={[
               styles.navButtonText,
-              { color: onboardingStep === 0 ? theme.textSecondary : theme.text }
+              { color: onboardingStep === 0 ? colors.textSecondary : colors.text }
             ]}>
               Previous
             </Text>
@@ -124,14 +125,14 @@ const OnboardingScreen: React.FC<OnboardingProps> = ({
           
           {onboardingStep < onboardingSteps.length - 1 ? (
             <TouchableOpacity
-              style={[styles.nextButton, { backgroundColor: theme.primary }]}
+              style={[styles.nextButton, { backgroundColor: colors.primary }]}
               onPress={() => setOnboardingStep(onboardingStep + 1)}
             >
               <Text style={styles.nextButtonText}>Next</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={[styles.nextButton, { backgroundColor: '#10B981' }]}
+              style={[styles.nextButton, { backgroundColor: colors.primary }]}
               onPress={() => {
                 setShowOnboarding(false);
                 setCurrentView('welcome');
@@ -160,22 +161,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
-  emoji: {
-    fontSize: 64,
+  iconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 24,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 16,
     lineHeight: 32,
   },
   description: {
-    fontSize: 18,
+    fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
+    paddingHorizontal: 20,
   },
   progressDots: {
     flexDirection: 'row',
@@ -197,6 +203,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
+    borderWidth: 1,
   },
   navButtonText: {
     fontSize: 16,
