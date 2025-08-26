@@ -15,7 +15,6 @@ import {
   DocumentSnapshot,
   QuerySnapshot
 } from 'firebase/firestore';
-// FIXED: Verwijder .js extensie voor React Native
 import { db } from './config';
 import { errorService } from '../services/errorService';
 
@@ -41,7 +40,7 @@ export interface WaterEntry {
   note?: string;
 }
 
-// 🔥 NEW: Streak interface
+// Streak interface
 export interface FastStreak {
   currentStreak: number;
   longestStreak: number;
@@ -141,69 +140,98 @@ export const endFast = async (fastId: string) => {
   }
 };
 
-// add water intake
+// Add water intake - FIXED VERSION
 export const addWaterIntake = async (fastId: string, amount: number, note?: string) => {
   try {
-    console.log('💧 Database: Adding water intake:', amount, 'ml');
+    console.log('💧 Database: Adding water intake:', amount, 'ml to fast:', fastId);
+    
+    // Validate inputs
+    if (!fastId || !amount || amount <= 0) {
+      return { error: 'Invalid input: fastId and amount are required' };
+    }
     
     const fastRef = doc(db, 'fasts', fastId);
     const fastDoc = await getDoc(fastRef);
     
     if (!fastDoc.exists()) {
+      console.error('❌ Fast document not found:', fastId);
       return { error: 'Fast not found' };
     }
 
     const currentData = fastDoc.data();
-    // Ensure waterIntake is always an array
-    const currentWaterIntake = Array.isArray(currentData.waterIntake) ? currentData.waterIntake : [];
+    console.log('📄 Current fast data:', {
+      id: fastId,
+      status: currentData?.status,
+      waterIntakeLength: currentData?.waterIntake?.length || 0
+    });
     
-    const newWaterEntry: WaterEntry = {
+    // Ensure waterIntake is always an array, handle undefined/null cases
+    let currentWaterIntake: any[] = [];
+    if (currentData?.waterIntake && Array.isArray(currentData.waterIntake)) {
+      currentWaterIntake = currentData.waterIntake;
+    } else if (currentData?.waterIntake) {
+      console.warn('⚠️ waterIntake exists but is not an array:', typeof currentData.waterIntake);
+      currentWaterIntake = [];
+    }
+    
+    const newWaterEntry = {
       id: Date.now().toString(),
-      timestamp: new Date(),
+      timestamp: Timestamp.fromDate(new Date()),
       amount,
-      note
+      note: note || null
     };
 
-    const updatedWaterIntake = [
-      ...currentWaterIntake,
-      {
-        ...newWaterEntry,
-        timestamp: Timestamp.fromDate(newWaterEntry.timestamp)
-      }
-    ];
+    const updatedWaterIntake = [...currentWaterIntake, newWaterEntry];
 
     await updateDoc(fastRef, {
       waterIntake: updatedWaterIntake,
       updatedAt: Timestamp.fromDate(new Date())
     });
 
-    console.log('✅ Database: Water intake added');
+    console.log('✅ Database: Water intake added successfully. New total:', updatedWaterIntake.length);
     return { error: null };
   } catch (error: any) {
     console.error('❌ Database: Error adding water intake:', error);
-    return { error: error.message };
+    console.error('❌ Error details:', {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
+    return { error: `Failed to add water intake: ${error.message}` };
   }
 };
 
-// ... (rest of the file remains the same)
-
-// Get user's current active fast (one-time fetch)
+// Get user's current active fast - SIMPLIFIED VERSION
 export const getCurrentFast = async (userId: string) => {
   try {
     console.log('📥 Database: Getting current fast for user:', userId);
     
-    const q = query(
+    // First try to get active fasts
+    const activeQuery = query(
       collection(db, 'fasts'),
       where('userId', '==', userId),
-      where('status', 'in', ['active', 'paused']),
+      where('status', '==', 'active'),
       orderBy('startTime', 'desc'),
       limit(1)
     );
 
-    const querySnapshot = await getDocs(q);
+    let querySnapshot = await getDocs(activeQuery);
+    
+    // If no active fast, try paused fasts
+    if (querySnapshot.empty) {
+      const pausedQuery = query(
+        collection(db, 'fasts'),
+        where('userId', '==', userId),
+        where('status', '==', 'paused'),
+        orderBy('startTime', 'desc'),
+        limit(1)
+      );
+      querySnapshot = await getDocs(pausedQuery);
+    }
     
     if (querySnapshot.empty) {
-      console.log('🚫 Database: No active fast found');
+      console.log('🚫 Database: No active or paused fast found');
       return { fast: null, error: null };
     }
 
@@ -212,18 +240,28 @@ export const getCurrentFast = async (userId: string) => {
     
     const fast: Fast = {
       id: doc.id,
-      ...data,
+      userId: data.userId,
       startTime: data.startTime.toDate(),
       endTime: data.endTime ? data.endTime.toDate() : undefined,
+      plannedDuration: data.plannedDuration,
+      actualDuration: data.actualDuration,
+      status: data.status,
+      notes: data.notes,
       createdAt: data.createdAt.toDate(),
       updatedAt: data.updatedAt.toDate(),
       waterIntake: data.waterIntake?.map((entry: any) => ({
-        ...entry,
-        timestamp: entry.timestamp.toDate()
+        id: entry.id,
+        timestamp: entry.timestamp.toDate(),
+        amount: entry.amount,
+        note: entry.note
       })) || []
     };
 
-    console.log('✅ Database: Current fast loaded:', fast.id);
+    console.log('✅ Database: Current fast loaded:', {
+      id: fast.id,
+      status: fast.status,
+      waterCount: fast.waterIntake.length
+    });
     return { fast, error: null };
   } catch (error: any) {
     console.error('❌ Database: Error getting current fast:', error);
@@ -231,70 +269,125 @@ export const getCurrentFast = async (userId: string) => {
   }
 };
 
-// 🔥 NEW: Real-time subscription to current active fast
+// Real-time subscription to current active fast - SIMPLIFIED VERSION
 export const subscribeToCurrentFast = (userId: string, callback: FastListener): UnsubscribeFunction => {
   console.log('📡 Database: Setting up real-time listener for user:', userId);
   
-  try {
-    const q = query(
+  let unsubscribeActive: UnsubscribeFunction | null = null;
+  let unsubscribePaused: UnsubscribeFunction | null = null;
+  let lastFastFound: Fast | null = null;
+
+  const setupActiveListener = () => {
+    const activeQuery = query(
       collection(db, 'fasts'),
       where('userId', '==', userId),
-      where('status', 'in', ['active', 'paused']),
+      where('status', '==', 'active'),
       orderBy('startTime', 'desc'),
       limit(1)
     );
 
-    const unsubscribe = onSnapshot(
-      q, 
+    unsubscribeActive = onSnapshot(
+      activeQuery,
       (querySnapshot: QuerySnapshot) => {
-        console.log('📡 Database: Real-time update received');
-        
-        if (querySnapshot.empty) {
-          console.log('📡 Database: No active fast found in real-time update');
-          callback(null);
-          return;
+        if (!querySnapshot.empty) {
+          const doc = querySnapshot.docs[0];
+          const data = doc.data();
+          
+          const fast: Fast = {
+            id: doc.id,
+            userId: data.userId,
+            startTime: data.startTime.toDate(),
+            endTime: data.endTime ? data.endTime.toDate() : undefined,
+            plannedDuration: data.plannedDuration,
+            actualDuration: data.actualDuration,
+            status: data.status,
+            notes: data.notes,
+            createdAt: data.createdAt.toDate(),
+            updatedAt: data.updatedAt.toDate(),
+            waterIntake: data.waterIntake?.map((entry: any) => ({
+              id: entry.id,
+              timestamp: entry.timestamp.toDate(),
+              amount: entry.amount,
+              note: entry.note
+            })) || []
+          };
+
+          console.log('📡 Database: Active fast found via real-time:', fast.id);
+          lastFastFound = fast;
+          callback(fast);
+        } else if (!lastFastFound || lastFastFound.status === 'active') {
+          // Only check paused if we don't have a fast or the last one was active
+          setupPausedListener();
         }
-
-        const doc = querySnapshot.docs[0];
-        const data = doc.data();
-        
-        const fast: Fast = {
-          id: doc.id,
-          ...data,
-          startTime: data.startTime.toDate(),
-          endTime: data.endTime ? data.endTime.toDate() : undefined,
-          createdAt: data.createdAt.toDate(),
-          updatedAt: data.updatedAt.toDate(),
-          waterIntake: data.waterIntake?.map((entry: any) => ({
-            ...entry,
-            timestamp: entry.timestamp.toDate()
-          })) || []
-        };
-
-        console.log('📡 Database: Real-time fast data:', {
-          id: fast.id,
-          status: fast.status,
-          waterIntakeCount: fast.waterIntake.length
-        });
-        
-        callback(fast);
       },
       (error) => {
-        console.error('❌ Database: Real-time listener error:', error);
-        // Don't call callback with error, let the component handle it
+        console.error('❌ Database: Active listener error:', error);
       }
     );
+  };
 
-    console.log('✅ Database: Real-time listener set up successfully');
-    return unsubscribe;
-  } catch (error) {
-    console.error('❌ Database: Error setting up real-time listener:', error);
-    // Return a dummy unsubscribe function
-    return () => {};
-  }
+  const setupPausedListener = () => {
+    const pausedQuery = query(
+      collection(db, 'fasts'),
+      where('userId', '==', userId),
+      where('status', '==', 'paused'),
+      orderBy('startTime', 'desc'),
+      limit(1)
+    );
+
+    unsubscribePaused = onSnapshot(
+      pausedQuery,
+      (querySnapshot: QuerySnapshot) => {
+        if (!querySnapshot.empty) {
+          const doc = querySnapshot.docs[0];
+          const data = doc.data();
+          
+          const fast: Fast = {
+            id: doc.id,
+            userId: data.userId,
+            startTime: data.startTime.toDate(),
+            endTime: data.endTime ? data.endTime.toDate() : undefined,
+            plannedDuration: data.plannedDuration,
+            actualDuration: data.actualDuration,
+            status: data.status,
+            notes: data.notes,
+            createdAt: data.createdAt.toDate(),
+            updatedAt: data.updatedAt.toDate(),
+            waterIntake: data.waterIntake?.map((entry: any) => ({
+              id: entry.id,
+              timestamp: entry.timestamp.toDate(),
+              amount: entry.amount,
+              note: entry.note
+            })) || []
+          };
+
+          console.log('📡 Database: Paused fast found via real-time:', fast.id);
+          lastFastFound = fast;
+          callback(fast);
+        } else if (!lastFastFound) {
+          console.log('📡 Database: No active or paused fast found');
+          callback(null);
+        }
+      },
+      (error) => {
+        console.error('❌ Database: Paused listener error:', error);
+      }
+    );
+  };
+
+  // Start with active listener
+  setupActiveListener();
+  setupPausedListener();
+
+  // Return cleanup function
+  return () => {
+    console.log('🧹 Database: Cleaning up real-time listeners');
+    if (unsubscribeActive) unsubscribeActive();
+    if (unsubscribePaused) unsubscribePaused();
+  };
 };
 
-// 🔥 NEW: Subscribe to specific fast by ID (for multi-device sync)
+// Subscribe to specific fast by ID
 export const subscribeToFast = (fastId: string, callback: FastListener): UnsubscribeFunction => {
   console.log('📡 Database: Setting up real-time listener for fast:', fastId);
   
@@ -313,16 +406,27 @@ export const subscribeToFast = (fastId: string, callback: FastListener): Unsubsc
         }
 
         const data = doc.data();
+        if (!data) {
+          callback(null);
+          return;
+        }
+
         const fast: Fast = {
           id: doc.id,
-          ...data,
-          startTime: data?.startTime.toDate(),
-          endTime: data?.endTime ? data.endTime.toDate() : undefined,
-          createdAt: data?.createdAt.toDate(),
-          updatedAt: data?.updatedAt.toDate(),
-          waterIntake: data?.waterIntake?.map((entry: any) => ({
-            ...entry,
-            timestamp: entry.timestamp.toDate()
+          userId: data.userId,
+          startTime: data.startTime.toDate(),
+          endTime: data.endTime ? data.endTime.toDate() : undefined,
+          plannedDuration: data.plannedDuration,
+          actualDuration: data.actualDuration,
+          status: data.status,
+          notes: data.notes,
+          createdAt: data.createdAt.toDate(),
+          updatedAt: data.updatedAt.toDate(),
+          waterIntake: data.waterIntake?.map((entry: any) => ({
+            id: entry.id,
+            timestamp: entry.timestamp.toDate(),
+            amount: entry.amount,
+            note: entry.note
           })) || []
         };
 
@@ -365,14 +469,20 @@ export const getFastHistory = async (userId: string) => {
       const data = doc.data();
       fasts.push({
         id: doc.id,
-        ...data,
+        userId: data.userId,
         startTime: data.startTime.toDate(),
         endTime: data.endTime ? data.endTime.toDate() : undefined,
+        plannedDuration: data.plannedDuration,
+        actualDuration: data.actualDuration,
+        status: data.status,
+        notes: data.notes,
         createdAt: data.createdAt.toDate(),
         updatedAt: data.updatedAt.toDate(),
         waterIntake: data.waterIntake?.map((entry: any) => ({
-          ...entry,
-          timestamp: entry.timestamp.toDate()
+          id: entry.id,
+          timestamp: entry.timestamp.toDate(),
+          amount: entry.amount,
+          note: entry.note
         })) || []
       });
     });
@@ -385,7 +495,7 @@ export const getFastHistory = async (userId: string) => {
   }
 };
 
-// 🔥 NEW: Calculate user's fasting streaks
+// Calculate user's fasting streaks
 export const calculateFastingStreak = async (userId: string): Promise<{ streak: FastStreak | null, error: string | null }> => {
   try {
     console.log('🔥 Database: Calculating fasting streak for user:', userId);
@@ -419,9 +529,13 @@ export const calculateFastingStreak = async (userId: string): Promise<{ streak: 
       if (data.endTime) {
         completedFasts.push({
           id: doc.id,
-          ...data,
+          userId: data.userId,
           startTime: data.startTime.toDate(),
           endTime: data.endTime.toDate(),
+          plannedDuration: data.plannedDuration,
+          actualDuration: data.actualDuration,
+          status: data.status,
+          notes: data.notes,
           createdAt: data.createdAt.toDate(),
           updatedAt: data.updatedAt.toDate(),
           waterIntake: []
