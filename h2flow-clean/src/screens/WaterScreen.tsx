@@ -12,23 +12,31 @@ interface WaterEntry { id?: string; amount: number; timestamp: number | Date; }
 
 const colors = {
   light: {
-    primary: '#7DD3FC', // Babyblauw zoals in TimerScreen
+    primary: '#7DD3FC',
     secondary: '#38BDF8',
     background: '#FFFFFF',
     backgroundSecondary: '#F8F9FA',
     text: '#000000',
     textSecondary: '#6B7280',
     border: '#E5E7EB',
+    success: '#059669',
+    warning: '#D97706',
+    danger: '#DC2626',
+    info: '#3B82F6',
     gradient: ['#F9FAFB', '#F3F4F6', '#F9FAFB'] as const,
   },
   dark: {
-    primary: '#7DD3FC', // Babyblauw zoals in TimerScreen
+    primary: '#7DD3FC',
     secondary: '#38BDF8',
     background: '#000000',
     backgroundSecondary: '#1F1F1F',
     text: '#FFFFFF',
     textSecondary: '#9CA3AF',
     border: '#374151',
+    success: '#059669',
+    warning: '#D97706',
+    danger: '#DC2626',
+    info: '#3B82F6',
     gradient: ['#111827', '#1F2937', '#111827'] as const,
   },
 };
@@ -69,50 +77,20 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const scheduledIdRef = useRef<string | null>(null);
   const nextReminderRef = useRef<Date | null>(null);
 
-  // Auth listener with improved debugging
+  // ✅ Auth listener
   useEffect(() => {
     const unsubscribe = onAuthStateChange(async (user) => {
       if (user) {
-        console.log('🔐 User logged in:', user.uid);
         setUserId(user.uid);
         try {
-          const { fast, error } = await getCurrentFast(user.uid);
-          
-          console.log('🔍 getCurrentFast result:', { 
-            fast: fast ? {
-              id: fast.id,
-              status: fast.status,
-              waterIntakeLength: fast.waterIntake?.length || 0,
-              startTime: fast.startTime
-            } : null,
-            error 
-          });
-          
-          if (error) {
-            console.error('❌ Error getting current fast:', error);
-            setError(error);
-          } else if (fast) {
-            setCurrentFast(fast);
-            // Calculate current water intake from the fast
-            const todayWater = fast.waterIntake?.reduce((total, entry) => {
-              return total + entry.amount;
-            }, 0) || 0;
-            setDailyWaterIntake(todayWater);
-            console.log('💧 Loaded water intake:', todayWater, 'ml');
-          } else {
-            console.log('🚫 No active fast found');
-            setCurrentFast(null);
-            setDailyWaterIntake(0);
-          }
+          const fast = await getCurrentFast(user.uid);
+          setCurrentFast(fast ?? null);
         } catch (e) {
-          console.error('❌ Failed to fetch fast:', e);
-          setError('Kon actieve vast niet laden');
+          console.warn('Failed to fetch fast', e);
         }
       } else {
-        console.log('🚪 User logged out');
         setUserId(null);
         setCurrentFast(null);
-        setDailyWaterIntake(0);
       }
     });
     return () => unsubscribe();
@@ -139,7 +117,7 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
     const { status } = await Notifications.requestPermissionsAsync();
     setPermissionStatus(status);
     if (status !== 'granted') {
-      Alert.alert('Machtiging vereist', 'Sta meldingen toe in de systeeminstellingen om herinneringen te gebruiken.');
+      Alert.alert('Permission required', 'Enable notifications in system settings to use reminders.');
       setRemindersEnabled(false);
     } else {
       setRemindersEnabled(true);
@@ -152,7 +130,7 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
       scheduledIdRef.current = null;
     }
     const id = await Notifications.scheduleNotificationAsync({
-      content: { title: '💧 Tijd om water te drinken', body: 'Blijf gehydrateerd!' },
+      content: { title: '💧 Time to drink water', body: 'Stay hydrated!' },
       trigger: { seconds: minutes * 60, repeats: true },
     });
     scheduledIdRef.current = id;
@@ -169,50 +147,26 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   }, [remindersEnabled, reminderInterval, permissionStatus, scheduleRepeatingReminder]);
 
   const addWater = useCallback(async (amount: number) => {
-    // Better validation
-    if (!userId) {
-      setError('Niet ingelogd');
-      return;
-    }
-    
-    if (!currentFast) {
-      setError('Geen actieve vast gevonden - start eerst een vast');
-      return;
-    }
-    
-    if (!currentFast.id) {
-      setError('Fast ID ontbreekt - probeer de app opnieuw te starten');
-      return;
-    }
-    
-    if (!amount || amount <= 0) {
-      setError('Ongeldige hoeveelheid water');
+    if (!userId || !currentFast) {
+      setError('No active fast found');
       return;
     }
     
     setLoading(true);
-    setError(null);
+    setError(null); // Clear previous errors
     
     try {
-      console.log('🚰 Adding water:', { 
-        fastId: currentFast.id, 
-        amount,
-        userId 
-      });
-      
       const result = await addWaterIntake(currentFast.id, amount);
       
       if (result.error) {
-        console.error('❌ Error from addWaterIntake:', result.error);
         setError(result.error);
       } else {
         setDailyWaterIntake(prev => prev + amount);
         setLastSaved(new Date());
-        console.log('✅ Water added successfully');
       }
     } catch (e) {
-      console.error('❌ Error saving water intake:', e);
-      setError('Kon inname niet opslaan');
+      console.error('Error saving water intake', e);
+      setError('Could not save intake');
     } finally {
       setLoading(false);
     }
@@ -228,14 +182,9 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
           <Text style={[styles.title, { color: theme.text }]}>Water Tracking</Text>
         </View>
         
-        {error && <Text style={[styles.errorText, { color: 'red' }]}>{error}</Text>}
-
-        {/* Debug info - Remove in production */}
-        {__DEV__ && (
-          <View style={styles.debugInfo}>
-            <Text style={[styles.debugText, { color: theme.textSecondary }]}>
-              Debug: User: {userId ? 'Yes' : 'No'} | Fast: {currentFast?.id || 'None'} | Status: {currentFast?.status || 'N/A'}
-            </Text>
+        {error && (
+          <View style={[styles.errorContainer, { backgroundColor: isDark ? 'rgba(153, 27, 27, 0.2)' : '#FEF2F2' }]}>
+            <Text style={[styles.errorText, { color: isDark ? '#F87171' : '#DC2626' }]}>{error}</Text>
           </View>
         )}
 
@@ -252,20 +201,14 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
             />
           </Svg>
           <Text style={[styles.waterAmount, { color: theme.text }]}>{dailyWaterIntake}ml</Text>
-          <Text style={[styles.waterGoal, { color: theme.textSecondary }]}>van de {WATER_GOAL}ml doel</Text>
+          <Text style={[styles.waterGoal, { color: theme.textSecondary }]}>of {WATER_GOAL}ml goal</Text>
         </View>
 
         <View style={styles.buttonRow}>
           {[250, 500, 750].map(ml => (
             <TouchableOpacity 
               key={ml} 
-              style={[
-                styles.waterButton, 
-                { 
-                  backgroundColor: theme.primary,
-                  opacity: loading ? 0.6 : 1 
-                }
-              ]} 
+              style={[styles.waterButton, { backgroundColor: theme.primary }]} 
               onPress={() => addWater(ml)} 
               disabled={loading}
             >
@@ -274,22 +217,16 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
           ))}
         </View>
 
-        {loading && (
-          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
-            Opslaan...
-          </Text>
-        )}
-
         {lastSaved && (
           <Text style={[styles.lastSaved, { color: theme.textSecondary }]}>
-            Laatst opgeslagen: {lastSaved.toLocaleTimeString()}
+            Last saved: {lastSaved.toLocaleTimeString()}
           </Text>
         )}
 
         <View style={styles.remindersSection}>
           <View style={styles.sectionHeader}>
             <Ionicons name="notifications" size={24} color={theme.text} />
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>Herinneringen</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Reminders</Text>
           </View>
           
           <TouchableOpacity
@@ -309,7 +246,7 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
               styles.reminderButtonText, 
               { color: remindersEnabled ? 'white' : theme.primary }
             ]}>
-              {remindersEnabled ? 'Ingeschakeld' : 'Inschakelen'}
+              {remindersEnabled ? 'Enabled' : 'Enable'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -338,20 +275,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold', 
     marginLeft: 12,
   },
+  errorContainer: {
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    alignSelf: 'stretch',
+  },
   errorText: {
     fontSize: 14,
-    marginBottom: 16,
     textAlign: 'center',
-  },
-  debugInfo: {
-    marginBottom: 16,
-    padding: 8,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 4,
-  },
-  debugText: {
-    fontSize: 12,
-    textAlign: 'center',
+    fontWeight: '500',
   },
   progressContainer: {
     alignItems: 'center',
@@ -382,10 +315,6 @@ const styles = StyleSheet.create({
     color: 'white', 
     fontSize: 16, 
     fontWeight: '600' 
-  },
-  loadingText: {
-    fontSize: 14,
-    marginBottom: 8,
   },
   lastSaved: {
     fontSize: 14,
