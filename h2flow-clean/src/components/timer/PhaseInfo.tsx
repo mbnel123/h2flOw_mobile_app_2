@@ -1,6 +1,8 @@
 // src/components/timer/PhaseInfo.tsx
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
 interface PhaseInfoProps {
   currentPhase: {
@@ -14,6 +16,7 @@ interface PhaseInfoProps {
     text: string;
     textSecondary: string;
     border: string;
+    primary: string;
   };
 }
 
@@ -23,6 +26,13 @@ const PhaseInfo: React.FC<PhaseInfoProps> = ({
   elapsedTime, 
   theme 
 }) => {
+  const navigation = useNavigation();
+
+  const handleLearnMore = () => {
+    // Navigeer naar het InfoScreen
+    navigation.navigate('Info' as never);
+  };
+
   return (
     <View style={[styles.container, { 
       backgroundColor: theme.background, 
@@ -33,6 +43,16 @@ const PhaseInfo: React.FC<PhaseInfoProps> = ({
         <Text style={[styles.title, { color: theme.text }]}>
           {currentPhase.title}
         </Text>
+        
+        <TouchableOpacity 
+          onPress={handleLearnMore}
+          style={styles.learnMoreButton}
+        >
+          <Ionicons name="information-circle-outline" size={20} color={theme.primary} />
+          <Text style={[styles.learnMoreText, { color: theme.primary }]}>
+            Learn more
+          </Text>
+        </TouchableOpacity>
       </View>
       
       <Text style={[styles.description, { color: theme.textSecondary }]}>
@@ -79,19 +99,33 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    width: '100%',
     marginBottom: 12,
   },
   title: {
     fontSize: 20,
     fontWeight: '600',
-    textAlign: 'center',
+    flex: 1,
+  },
+  learnMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+  },
+  learnMoreText: {
+    fontSize: 12,
+    marginLeft: 4,
+    fontWeight: '500',
   },
   description: {
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: 16,
     lineHeight: 20,
+    width: '100%',
   },
   statsContainer: {
     flexDirection: 'row',
