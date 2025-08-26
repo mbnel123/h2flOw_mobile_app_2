@@ -1,5 +1,5 @@
 // src/screens/InfoScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { RouteProp, useRoute } from '@react-navigation/native';
+import { RootStackParamList } from '../types/navigation';
 
 // Define colors for light and dark mode - aangepast voor consistentie met de rest van de app
 const colors = {
@@ -152,8 +154,9 @@ const ExpandableSection = ({
 );
 
 // Timeline Section
-const TimelineSection = ({ colors }: { colors: any }) => {
+const TimelineSection = ({ colors, scrollToTimeline, highlightPhase }: { colors: any, scrollToTimeline?: boolean, highlightPhase?: string }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const sectionRef = useRef<View>(null);
 
   const fastingPhases = [
     { hours: 0, title: "Fast begins", description: "Using glucose from last meal", processes: ["Glucose burning", "Insulin declining"] },
@@ -165,36 +168,70 @@ const TimelineSection = ({ colors }: { colors: any }) => {
     { hours: 72, title: "Immune reset", description: "Complete renewal", processes: ["New immune cells", "System reset"] }
   ];
 
+  // Auto-expand if we need to scroll to this section
+  React.useEffect(() => {
+    if (scrollToTimeline) {
+      setIsExpanded(true);
+      
+      // Small delay to ensure the section is expanded before scrolling
+      setTimeout(() => {
+        if (sectionRef.current) {
+          sectionRef.current.measureLayout(
+            // @ts-ignore - we're using a simplified approach
+            { getBoundingClientRect: () => ({ top: 0 }) },
+            (x, y, width, height) => {
+              // This would normally be passed from parent to scroll to position
+              // For now we'll just ensure it's expanded
+            }
+          );
+        }
+      }, 300);
+    }
+  }, [scrollToTimeline]);
+
   return (
-    <ExpandableSection
-      title="What happens during your fast"
-      iconName="time-outline"
-      colors={colors}
-      isExpanded={isExpanded}
-      onToggle={() => setIsExpanded(!isExpanded)}
-    >
-      <View style={styles.timelineContent}>
-        {fastingPhases.map((phase, index) => (
-          <View key={index} style={[styles.timelineItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={[styles.timelineHours, { backgroundColor: colors.blue[50] }]}>
-              <Text style={[styles.timelineHoursText, { color: colors.blue[600] }]}>{phase.hours}h</Text>
-            </View>
-            <View style={styles.timelineInfo}>
-              <Text style={[styles.timelineTitle, { color: colors.text }]}>{phase.title}</Text>
-              <Text style={[styles.timelineDescription, { color: colors.textSecondary }]}>{phase.description}</Text>
-              <View style={styles.timelineProcesses}>
-                {phase.processes.map((process, i) => (
-                  <View key={i} style={styles.processItem}>
-                    <View style={[styles.processDot, { backgroundColor: colors.primary }]} />
-                    <Text style={[styles.processText, { color: colors.textSecondary }]}>{process}</Text>
-                  </View>
-                ))}
+    <View ref={sectionRef}>
+      <ExpandableSection
+        title="What happens during your fast"
+        iconName="time-outline"
+        colors={colors}
+        isExpanded={isExpanded}
+        onToggle={() => setIsExpanded(!isExpanded)}
+      >
+        <View style={styles.timelineContent}>
+          {fastingPhases.map((phase, index) => (
+            <View 
+              key={index} 
+              style={[
+                styles.timelineItem, 
+                { 
+                  backgroundColor: colors.card, 
+                  borderColor: colors.border,
+                  borderWidth: highlightPhase === phase.title ? 2 : 1,
+                  borderColor: highlightPhase === phase.title ? colors.primary : colors.border
+                }
+              ]}
+            >
+              <View style={[styles.timelineHours, { backgroundColor: colors.blue[50] }]}>
+                <Text style={[styles.timelineHoursText, { color: colors.blue[600] }]}>{phase.hours}h</Text>
+              </View>
+              <View style={styles.timelineInfo}>
+                <Text style={[styles.timelineTitle, { color: colors.text }]}>{phase.title}</Text>
+                <Text style={[styles.timelineDescription, { color: colors.textSecondary }]}>{phase.description}</Text>
+                <View style={styles.timelineProcesses}>
+                  {phase.processes.map((process, i) => (
+                    <View key={i} style={styles.processItem}>
+                      <View style={[styles.processDot, { backgroundColor: colors.primary }]} />
+                      <Text style={[styles.processText, { color: colors.textSecondary }]}>{process}</Text>
+                    </View>
+                  ))}
+                </View>
               </View>
             </View>
-          </View>
-        ))}
-      </View>
-    </ExpandableSection>
+          ))}
+        </View>
+      </ExpandableSection>
+    </View>
   );
 };
 
@@ -744,6 +781,28 @@ const ResearchSection = ({ colors }: { colors: any }) => {
 const InfoScreen: React.FC = () => {
   const isDark = useColorScheme() === 'dark';
   const theme = isDark ? colors.dark : colors.light;
+  const route = useRoute<RouteProp<RootStackParamList, 'Info'>>();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const timelineSectionRef = useRef<View>(null);
+
+  const scrollToTimeline = route.params?.scrollToTimeline || false;
+  const highlightPhase = route.params?.highlightPhase;
+
+  // Handle scrolling to timeline when needed
+  React.useEffect(() => {
+    if (scrollToTimeline && timelineSectionRef.current) {
+      // Small delay to ensure the component is rendered
+      setTimeout(() => {
+        timelineSectionRef.current?.measureLayout(
+          // @ts-ignore - simplified approach
+          { getBoundingClientRect: () => ({ top: 0 }) },
+          (x, y, width, height) => {
+            scrollViewRef.current?.scrollTo({ y: y - 100, animated: true });
+          }
+        );
+      }, 500);
+    }
+  }, [scrollToTimeline]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -753,7 +812,7 @@ const InfoScreen: React.FC = () => {
         <Text style={[styles.headerTitle, { color: theme.text }]}>Fasting Benefits & Science</Text>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} ref={scrollViewRef}>
         {/* Introduction */}
         <Card colors={theme} style={styles.introCard}>
           <Text style={[styles.introTitle, { color: theme.text }]}>Why Water Fasting Works</Text>
@@ -768,12 +827,16 @@ const InfoScreen: React.FC = () => {
         <BenefitsSection colors={theme} />
 
         {/* Timeline Section */}
-        <View style={styles.section}>
+        <View style={styles.section} ref={timelineSectionRef}>
           <View style={styles.sectionHeader}>
             <Ionicons name="time-outline" size={24} color={theme.primary} />
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Fasting Timeline</Text>
           </View>
-          <TimelineSection colors={theme} />
+          <TimelineSection 
+            colors={theme} 
+            scrollToTimeline={scrollToTimeline}
+            highlightPhase={highlightPhase}
+          />
         </View>
 
         {/* Research Section */}
@@ -781,6 +844,16 @@ const InfoScreen: React.FC = () => {
 
         {/* Safety Section */}
         <SafetySection colors={theme} />
+
+        {/* Footer */}
+        <View style={[styles.footer, { backgroundColor: theme.card, borderTopColor: theme.border }]}>
+          <Text style={[styles.footerText, { color: theme.textSecondary }]}>
+            H2Flow - Fasting Tracker & Education
+          </Text>
+          <Text style={[styles.footerText, { color: theme.textSecondary }]}>
+            Information provided for educational purposes only
+          </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -791,13 +864,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    padding: 16,
+    borderBottomWidth: 1,
+    gap: 12,
   },
   headerTitle: {
     fontSize: 20,
@@ -805,99 +876,97 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 16,
-  },
-  card: {
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 16,
-    marginBottom: 16,
   },
   introCard: {
-    marginBottom: 24,
+    margin: 16,
+    padding: 20,
   },
   introTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '600',
     marginBottom: 12,
   },
   introText: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 24,
   },
   section: {
-    marginBottom: 24,
+    marginTop: 24,
+    paddingHorizontal: 16,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-    gap: 8,
+    gap: 12,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
   },
+  card: {
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
   expandableCard: {
-    marginBottom: 12,
+    padding: 0,
+    overflow: 'hidden',
   },
   expandableHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    justifyContent: 'space-between',
+    padding: 16,
   },
   expandableTitle: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
     gap: 12,
   },
   expandableTitleText: {
     fontSize: 16,
     fontWeight: '600',
-    flex: 1,
   },
   expandableContent: {
-    marginTop: 12,
-    paddingTop: 12,
+    padding: 16,
     borderTopWidth: 1,
   },
-  // Timeline styles
   timelineContent: {
     gap: 12,
   },
   timelineItem: {
     flexDirection: 'row',
-    padding: 12,
     borderRadius: 8,
+    padding: 12,
     borderWidth: 1,
+    gap: 12,
   },
   timelineHours: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    alignItems: 'center',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
-    marginRight: 12,
+    alignItems: 'center',
   },
   timelineHoursText: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
   },
   timelineInfo: {
     flex: 1,
+    gap: 4,
   },
   timelineTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 4,
   },
   timelineDescription: {
     fontSize: 14,
-    marginBottom: 8,
   },
   timelineProcesses: {
+    marginTop: 8,
     gap: 4,
   },
   processItem: {
@@ -913,22 +982,38 @@ const styles = StyleSheet.create({
   processText: {
     fontSize: 12,
   },
-  // Safety styles
+  benefitsGrid: {
+    gap: 12,
+  },
+  benefitContent: {
+    gap: 12,
+  },
+  benefitDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  benefitList: {
+    gap: 4,
+  },
+  benefitItem: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
   safetyGrid: {
     gap: 12,
   },
   safetyContent: {
-    padding: 12,
     borderRadius: 8,
+    padding: 16,
     borderWidth: 1,
-    gap: 8,
+    gap: 12,
   },
   safetyTip: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
     padding: 12,
     borderRadius: 8,
-    gap: 12,
   },
   safetyText: {
     fontSize: 14,
@@ -944,51 +1029,31 @@ const styles = StyleSheet.create({
   },
   conditionItem: {
     fontSize: 12,
+    lineHeight: 16,
   },
   disclaimerText: {
-    fontSize: 14,
+    fontSize: 12,
+    lineHeight: 16,
     marginBottom: 8,
-    lineHeight: 20,
   },
   disclaimerList: {
-    marginBottom: 12,
-    paddingLeft: 12,
+    marginLeft: 8,
+    marginBottom: 8,
   },
   disclaimerItem: {
     fontSize: 12,
-    marginBottom: 4,
-    lineHeight: 18,
+    lineHeight: 16,
   },
-  // Benefits styles
-  benefitsGrid: {
-    gap: 12,
-  },
-  benefitContent: {
-    gap: 8,
-  },
-  benefitDescription: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  benefitList: {
-    gap: 4,
-  },
-  benefitItem: {
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  // Research styles
   researchIntro: {
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 16,
   },
   researchItem: {
-    padding: 12,
-    marginBottom: 12,
+    paddingLeft: 12,
     borderLeftWidth: 3,
-    borderRadius: 4,
+    marginBottom: 16,
+    gap: 4,
   },
   researchTitle: {
     fontSize: 14,
@@ -997,7 +1062,6 @@ const styles = StyleSheet.create({
   },
   researchDetails: {
     fontSize: 12,
-    marginBottom: 4,
     lineHeight: 16,
   },
   researchLink: {
@@ -1006,8 +1070,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   databaseLink: {
-    padding: 12,
     borderRadius: 8,
+    padding: 12,
     borderWidth: 1,
     marginBottom: 8,
   },
@@ -1018,6 +1082,17 @@ const styles = StyleSheet.create({
   },
   databaseDescription: {
     fontSize: 12,
+  },
+  footer: {
+    padding: 24,
+    borderTopWidth: 1,
+    alignItems: 'center',
+    marginTop: 32,
+  },
+  footerText: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 4,
   },
 });
 
