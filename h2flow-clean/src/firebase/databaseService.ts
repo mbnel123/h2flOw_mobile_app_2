@@ -141,7 +141,7 @@ export const endFast = async (fastId: string) => {
   }
 };
 
-// Add water intake
+// add water intake
 export const addWaterIntake = async (fastId: string, amount: number, note?: string) => {
   try {
     console.log('💧 Database: Adding water intake:', amount, 'ml');
@@ -154,6 +154,9 @@ export const addWaterIntake = async (fastId: string, amount: number, note?: stri
     }
 
     const currentData = fastDoc.data();
+    // Ensure waterIntake is always an array
+    const currentWaterIntake = Array.isArray(currentData.waterIntake) ? currentData.waterIntake : [];
+    
     const newWaterEntry: WaterEntry = {
       id: Date.now().toString(),
       timestamp: new Date(),
@@ -162,7 +165,7 @@ export const addWaterIntake = async (fastId: string, amount: number, note?: stri
     };
 
     const updatedWaterIntake = [
-      ...(currentData.waterIntake || []),
+      ...currentWaterIntake,
       {
         ...newWaterEntry,
         timestamp: Timestamp.fromDate(newWaterEntry.timestamp)
@@ -181,6 +184,8 @@ export const addWaterIntake = async (fastId: string, amount: number, note?: stri
     return { error: error.message };
   }
 };
+
+// ... (rest of the file remains the same)
 
 // Get user's current active fast (one-time fetch)
 export const getCurrentFast = async (userId: string) => {
