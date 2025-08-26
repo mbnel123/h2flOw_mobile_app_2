@@ -1,3 +1,4 @@
+// TimerScreen.tsx - AANGEPAST VOOR NAVIGATIE
 import React, { useEffect, useRef } from 'react';
 import { 
   View, 
@@ -14,6 +15,9 @@ import { User } from 'firebase/auth';
 import { onAuthStateChange } from '../firebase/authService';
 import { useTimerLogic } from '../hooks/useTimerLogic';
 import { useMilestoneTracker } from '../components/SuccessAnimations';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../types/navigation';
 
 // Import components
 import TimerLoadingSkeleton from '../components/timer/TimerLoadingSkeleton';
@@ -25,6 +29,8 @@ import TemplateInfo from '../components/timer/TemplateInfo';
 import WarningModal from '../components/WarningModal';
 import TemplateSelectorScreen from './TemplateSelectorScreen';
 import TimerCelebrations from '../components/SuccessAnimations';
+
+type TimerScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Info'>;
 
 // Theme colors - Updated with baby blue
 const colors = {
@@ -60,6 +66,7 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
   const isDark = useColorScheme() === 'dark';
   const theme = isDark ? colors.dark : colors.light;
   const [user, setUser] = React.useState<User | null>(null);
+  const navigation = useNavigation<TimerScreenNavigationProp>();
 
   // Refs to prevent infinite loops
   const milestonesChecked = useRef(new Set<number>());
@@ -109,13 +116,13 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
 
   // Fasting phases
   const fastingPhases = [
-    { hours: 0, title: "Fast Begins", description: "Using glucose from last meal" },
-    { hours: 6, title: "Glycogen Use", description: "Using stored energy" },
-    { hours: 12, title: "Ketosis Start", description: "Fat burning begins" },
-    { hours: 18, title: "Deep Ketosis", description: "Mental clarity improves" },
+    { hours: 0, title: "Fast begins", description: "Using glucose from last meal" },
+    { hours: 6, title: "Glycogen use", description: "Using stored energy" },
+    { hours: 12, title: "Ketosis start", description: "Fat burning begins" },
+    { hours: 18, title: "Deep ketosis", description: "Mental clarity improves" },
     { hours: 24, title: "Autophagy", description: "Cellular repair starts" },
-    { hours: 48, title: "Deep Autophagy", description: "Maximum cleansing" },
-    { hours: 72, title: "Immune Reset", description: "Complete renewal" }
+    { hours: 48, title: "Deep autophagy", description: "Maximum cleansing" },
+    { hours: 72, title: "Immune reset", description: "Complete renewal" }
   ];
 
   const getProgress = () => {
