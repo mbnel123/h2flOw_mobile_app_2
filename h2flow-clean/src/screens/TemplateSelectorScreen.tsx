@@ -55,7 +55,7 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    icon: '⚡',
+    icon: 'flash-outline',
     duration: selectedDuration || 24,
     waterGoal: 2500,
     tags: '',
@@ -118,7 +118,7 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
     setFormData({
       name: '',
       description: '',
-      icon: '⚡',
+      icon: 'flash-outline',
       duration: selectedDuration || 24,
       waterGoal: 2500,
       tags: '',
@@ -151,6 +151,14 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
       case 'advanced': return 'Advanced';
       case 'custom': return 'Custom';
       default: return 'Custom';
+    }
+  };
+
+  const renderIcon = (icon: string, size: number = 20, color: string) => {
+    if (icon && icon.includes('-outline')) {
+      return <Ionicons name={icon as any} size={size} color={color} />;
+    } else {
+      return <Text style={{ fontSize: size }}>{icon || '⚡'}</Text>;
     }
   };
 
@@ -211,6 +219,26 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                     ]}
                   >
                     <Ionicons name={iconName as any} size={24} color={theme.text} />
+                  </TouchableOpacity>
+                ))}
+                {/* Voeg emoji opties toe */}
+                {['⚡', '🔥', '💧', '⭐', '💪', '🧠', '❤️', '🌿'].map(emoji => (
+                  <TouchableOpacity
+                    key={emoji}
+                    onPress={() => setFormData(prev => ({ ...prev, icon: emoji }))}
+                    style={[
+                      styles.iconButton,
+                      { 
+                        backgroundColor: theme.card, 
+                        borderColor: theme.border 
+                      },
+                      formData.icon === emoji && { 
+                        borderColor: theme.primary,
+                        backgroundColor: isDark ? '#1E3A8A' : '#EFF6FF'
+                      }
+                    ]}
+                  >
+                    <Text style={{ fontSize: 20 }}>{emoji}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -404,11 +432,7 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                   {/* Header */}
                   <View style={styles.cardHeader}>
                     <View style={[styles.cardIconContainer, { backgroundColor: theme.backgroundSecondary }]}>
-                      <Ionicons 
-                        name={template.icon as any} 
-                        size={20} 
-                        color={theme.text} 
-                      />
+                      {renderIcon(template.icon, 20, theme.text)}
                     </View>
                     <View style={styles.cardInfo}>
                       <Text style={[styles.cardTitle, { color: theme.text }]}>{template.name}</Text>
