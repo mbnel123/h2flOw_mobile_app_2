@@ -69,20 +69,50 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const scheduledIdRef = useRef<string | null>(null);
   const nextReminderRef = useRef<Date | null>(null);
 
-  // ✅ Auth listener
+  // Auth listener with improved debugging
   useEffect(() => {
     const unsubscribe = onAuthStateChange(async (user) => {
       if (user) {
+        console.log('🔐 User logged in:', user.uid);
         setUserId(user.uid);
         try {
-          const fast = await getCurrentFast(user.uid);
-          setCurrentFast(fast ?? null);
+          const { fast, error } = await getCurrentFast(user.uid);
+          
+          console.log('🔍 getCurrentFast result:', { 
+            fast: fast ? {
+              id: fast.id,
+              status: fast.status,
+              waterIntakeLength: fast.waterIntake?.length || 0,
+              startTime: fast.startTime
+            } : null,
+            error 
+          });
+          
+          if (error) {
+            console.error('❌ Error getting current fast:', error);
+            setError(error);
+          } else if (fast) {
+            setCurrentFast(fast);
+            // Calculate current water intake from the fast
+            const todayWater = fast.waterIntake?.reduce((total, entry) => {
+              return total + entry.amount;
+            }, 0) || 0;
+            setDailyWaterIntake(todayWater);
+            console.log('💧 Loaded water intake:', todayWater, 'ml');
+          } else {
+            console.log('🚫 No active fast found');
+            setCurrentFast(null);
+            setDailyWaterIntake(0);
+          }
         } catch (e) {
-          console.warn('Failed to fetch fast', e);
+          console.error('❌ Failed to fetch fast:', e);
+          setError('Kon actieve vast niet laden');
         }
       } else {
+        console.log('🚪 User logged out');
         setUserId(null);
         setCurrentFast(null);
+        setDailyWaterIntake(0);
       }
     });
     return () => unsubscribe();
@@ -139,25 +169,49 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   }, [remindersEnabled, reminderInterval, permissionStatus, scheduleRepeatingReminder]);
 
   const addWater = useCallback(async (amount: number) => {
-    if (!userId || !currentFast) {
-      setError('Geen actieve vast gevonden');
+    // Better validation
+    if (!userId) {
+      setError('Niet ingelogd');
+      return;
+    }
+    
+    if (!currentFast) {
+      setError('Geen actieve vast gevonden - start eerst een vast');
+      return;
+    }
+    
+    if (!currentFast.id) {
+      setError('Fast ID ontbreekt - probeer de app opnieuw te starten');
+      return;
+    }
+    
+    if (!amount || amount <= 0) {
+      setError('Ongeldige hoeveelheid water');
       return;
     }
     
     setLoading(true);
-    setError(null); // Clear previous errors
+    setError(null);
     
     try {
+      console.log('🚰 Adding water:', { 
+        fastId: currentFast.id, 
+        amount,
+        userId 
+      });
+      
       const result = await addWaterIntake(currentFast.id, amount);
       
       if (result.error) {
+        console.error('❌ Error from addWaterIntake:', result.error);
         setError(result.error);
       } else {
         setDailyWaterIntake(prev => prev + amount);
         setLastSaved(new Date());
+        console.log('✅ Water added successfully');
       }
     } catch (e) {
-      console.error('Error saving water intake', e);
+      console.error('❌ Error saving water intake:', e);
       setError('Kon inname niet opslaan');
     } finally {
       setLoading(false);
@@ -175,6 +229,15 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
         </View>
         
         {error && <Text style={[styles.errorText, { color: 'red' }]}>{error}</Text>}
+
+        {/* Debug info - Remove in production */}
+        {__DEV__ && (
+          <View style={styles.debugInfo}>
+            <Text style={[styles.debugText, { color: theme.textSecondary }]}>
+              Debug: User: {userId ? 'Yes' : 'No'} | Fast: {currentFast?.id || 'None'} | Status: {currentFast?.status || 'N/A'}
+            </Text>
+          </View>
+        )}
 
         <View style={styles.progressContainer}>
           <Svg width={ring.size} height={ring.size}>
@@ -196,7 +259,13 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
           {[250, 500, 750].map(ml => (
             <TouchableOpacity 
               key={ml} 
-              style={[styles.waterButton, { backgroundColor: theme.primary }]} 
+              style={[
+                styles.waterButton, 
+                { 
+                  backgroundColor: theme.primary,
+                  opacity: loading ? 0.6 : 1 
+                }
+              ]} 
               onPress={() => addWater(ml)} 
               disabled={loading}
             >
@@ -204,6 +273,12 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
             </TouchableOpacity>
           ))}
         </View>
+
+        {loading && (
+          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
+            Opslaan...
+          </Text>
+        )}
 
         {lastSaved && (
           <Text style={[styles.lastSaved, { color: theme.textSecondary }]}>
@@ -268,6 +343,16 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
+  debugInfo: {
+    marginBottom: 16,
+    padding: 8,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 4,
+  },
+  debugText: {
+    fontSize: 12,
+    textAlign: 'center',
+  },
   progressContainer: {
     alignItems: 'center',
     marginBottom: 32,
@@ -297,6 +382,10 @@ const styles = StyleSheet.create({
     color: 'white', 
     fontSize: 16, 
     fontWeight: '600' 
+  },
+  loadingText: {
+    fontSize: 14,
+    marginBottom: 8,
   },
   lastSaved: {
     fontSize: 14,
