@@ -56,7 +56,7 @@ const WarningsScreen: React.FC<WarningsScreenProps> = ({
             <p className="text-red-700 text-xs leading-relaxed">
               <strong>By clicking "I Agree" you acknowledge that:</strong><br/>
               • You are solely responsible for any health consequences that may result from this fast<br/>
-              • H2Flow and its creators are NOT liable for any health complications, injuries, or damages<br/>
+              • H2flOw and its creators are NOT liable for any health complications, injuries, or damages<br/>
               • This app is for educational purposes only and does NOT provide medical advice<br/>
               • Fasting is undertaken at your own risk
             </p>
