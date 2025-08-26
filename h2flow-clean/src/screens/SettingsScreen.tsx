@@ -19,12 +19,12 @@ interface SettingsScreenProps {
 }
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
-  const { theme, resolvedTheme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [notifications, setNotifications] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
 
-  const isDark = resolvedTheme === 'dark';
+  const isDark = theme === 'dark';
   const colors = {
     primary: '#7DD3FC',
     background: isDark ? '#000000' : '#FFFFFF',
@@ -123,36 +123,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
                     Dark
                   </Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.themeButton,
-                    { backgroundColor: colors.backgroundSecondary, borderColor: colors.border },
-                    theme === 'system' && { borderColor: colors.primary }
-                  ]}
-                  onPress={() => setTheme('system')}
-                >
-                  <Ionicons 
-                    name="desktop" 
-                    size={24} 
-                    color={theme === 'system' ? colors.primary : colors.textSecondary} 
-                  />
-                  <Text style={[
-                    styles.themeButtonText,
-                    { color: theme === 'system' ? colors.primary : colors.text }
-                  ]}>
-                    System
-                  </Text>
-                </TouchableOpacity>
               </View>
-
-              {theme === 'system' && (
-                <View style={[styles.systemInfo, { backgroundColor: colors.backgroundSecondary }]}>
-                  <Text style={[styles.systemInfoText, { color: colors.textSecondary }]}>
-                    Currently using {resolvedTheme} mode based on your system preference
-                  </Text>
-                </View>
-              )}
             </View>
           </View>
 
@@ -246,7 +217,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
               <View style={styles.infoRow}>
                 <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Theme</Text>
                 <Text style={[styles.infoValue, { color: colors.text }]}>
-                  {theme} {theme === 'system' && `(${resolvedTheme})`}
+                  {theme}
                 </Text>
               </View>
             </View>
