@@ -1,8 +1,9 @@
-// App.tsx - AANGEPAST VOOR THEME PROVIDER
+// App.tsx - AANGEPAST VOOR STACK NAVIGATION
 import React, { useState, useEffect } from 'react';
 import { useColorScheme, View, Text, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 
 // Import Firebase auth service
@@ -17,12 +18,14 @@ import WelcomeScreen from './src/screens/WelcomeScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import AuthScreen from './src/screens/AuthScreen';
 import AgeVerification from './src/screens/AgeVerification';
-import SettingsScreen from './src/screens/SettingsScreen'; // NIEUW: Settings screen
+import SettingsScreen from './src/screens/SettingsScreen';
 
 // Import ThemeProvider
 import { ThemeProvider } from './src/contexts/ThemeContext';
+import { TabParamList, RootStackParamList } from './src/types/navigation';
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<TabParamList>();
+const Stack = createStackNavigator<RootStackParamList>();
 
 // Theme colors
 const colors = {
@@ -47,6 +50,87 @@ const colors = {
     tabBarBorder: '#374151',
   }
 };
+
+// Tab Navigator component
+function TabNavigator() {
+  const isDark = useColorScheme() === 'dark';
+  const theme = isDark ? colors.dark : colors.light;
+
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarIcon: ({ focused, size }) => {
+          let iconName: keyof typeof Ionicons.glyphMap;
+
+          switch (route.name) {
+            case 'Timer':
+              iconName = focused ? 'time' : 'time-outline';
+              break;
+            case 'Water':
+              iconName = focused ? 'water' : 'water-outline';
+              break;
+            case 'Info':
+              iconName = focused ? 'information-circle' : 'information-circle-outline';
+              break;
+            case 'History':
+              iconName = focused ? 'bar-chart' : 'bar-chart-outline';
+              break;
+            case 'Settings':
+              iconName = focused ? 'settings' : 'settings-outline';
+              break;
+            default:
+              iconName = 'help-outline';
+          }
+
+          return (
+            <Ionicons
+              name={iconName}
+              size={size}
+              color={focused ? theme.primary : theme.textSecondary}
+            />
+          );
+        },
+        tabBarStyle: {
+          backgroundColor: theme.tabBar,
+          borderTopColor: theme.tabBarBorder,
+          borderTopWidth: 1,
+          paddingBottom: 12,
+          paddingTop: 12,
+          height: 90,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+          marginTop: 4,
+        },
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.textSecondary,
+        tabBarItemStyle: {
+          paddingVertical: 4,
+        },
+      })}
+    >
+      <Tab.Screen name="Timer" component={TimerScreen} />
+      <Tab.Screen name="Water" component={WaterScreen} />
+      <Tab.Screen name="Info" component={InfoScreen} />
+      <Tab.Screen name="History" component={HistoryScreen} />
+      <Tab.Screen name="Settings" component={SettingsScreen} />
+    </Tab.Navigator>
+  );
+}
+
+// Stack Navigator component
+function StackNavigator() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Home" component={TabNavigator} />
+      <Stack.Screen name="Info" component={InfoScreen} />
+    </Stack.Navigator>
+  );
+}
 
 function MainApp() {
   const isDark = useColorScheme() === 'dark';
@@ -120,68 +204,7 @@ function MainApp() {
       case 'main':
         return (
           <NavigationContainer>
-            <Tab.Navigator
-              screenOptions={({ route }) => ({
-                headerShown: false,
-                tabBarIcon: ({ focused, size }) => {
-                  let iconName: keyof typeof Ionicons.glyphMap;
-
-                  switch (route.name) {
-                    case 'Timer':
-                      iconName = focused ? 'time' : 'time-outline';
-                      break;
-                    case 'Water':
-                      iconName = focused ? 'water' : 'water-outline';
-                      break;
-                    case 'Info':
-                      iconName = focused ? 'information-circle' : 'information-circle-outline';
-                      break;
-                    case 'History':
-                      iconName = focused ? 'bar-chart' : 'bar-chart-outline';
-                      break;
-                    case 'Settings':
-                      iconName = focused ? 'settings' : 'settings-outline';
-                      break;
-                    default:
-                      iconName = 'help-outline';
-                  }
-
-                  return (
-                    <Ionicons
-                      name={iconName}
-                      size={size}
-                      color={focused ? theme.primary : theme.textSecondary}
-                    />
-                  );
-                },
-                tabBarStyle: {
-                  backgroundColor: theme.tabBar,
-                  borderTopColor: theme.tabBarBorder,
-                  borderTopWidth: 1,
-                  paddingBottom: 12,
-                  paddingTop: 12,
-                  height: 90,
-                  elevation: 0,
-                  shadowOpacity: 0,
-                },
-                tabBarLabelStyle: {
-                  fontSize: 11,
-                  fontWeight: '500',
-                  marginTop: 4,
-                },
-                tabBarActiveTintColor: theme.primary,
-                tabBarInactiveTintColor: theme.textSecondary,
-                tabBarItemStyle: {
-                  paddingVertical: 4,
-                },
-              })}
-            >
-              <Tab.Screen name="Timer" component={TimerScreen} />
-              <Tab.Screen name="Water" component={WaterScreen} />
-              <Tab.Screen name="Info" component={InfoScreen} />
-              <Tab.Screen name="History" component={HistoryScreen} />
-              <Tab.Screen name="Settings" component={SettingsScreen} />
-            </Tab.Navigator>
+            <StackNavigator />
           </NavigationContainer>
         );
       default:
