@@ -1,4 +1,4 @@
-// src/components/WarningModal.tsx - React Native version
+// src/components/WarningModal.tsx - React Native version (aangepaste vriendelijkere versie)
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Switch } from 'react-native';
 
@@ -43,13 +43,12 @@ const WarningModal: React.FC<WarningModalProps> = ({
     setHasAccepted(false); // Reset for next time
   };
 
-  const healthWarnings = [
-    "TESTConsult your doctor before extended fasting",
-    "DO NOT fast if pregnant, breastfeeding, or under 18",
-    "Stop immediately if you feel dizzy or unwell",
-    "Drink at least 2-3 liters of water daily",
-    "Listen to your body and stop if needed",
-    "This app does NOT provide medical advice"
+  const healthConfirmations = [
+    "Have consulted with a healthcare professional if you have any medical conditions",
+    "Are not pregnant, breastfeeding, or under 18 years of age",
+    "Have read and understand the risks of water fasting",
+    "Will stop immediately if you experience any concerning symptoms",
+    "Have adequate water and electrolytes available"
   ];
 
   return (
@@ -62,7 +61,7 @@ const WarningModal: React.FC<WarningModalProps> = ({
               <View style={styles.headerLeft}>
                 <Text style={styles.warningIcon}>⚠️</Text>
                 <Text style={[styles.headerTitle, { color: theme.text }]}>
-                  Health & Safety Notice
+                  Medical Safety Confirmation
                 </Text>
               </View>
               <TouchableOpacity 
@@ -74,23 +73,26 @@ const WarningModal: React.FC<WarningModalProps> = ({
               </TouchableOpacity>
             </View>
             <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
-              You're about to start a {targetHours}h fast. Please read these important reminders.
+              Before starting your {targetHours}h fast
             </Text>
           </View>
 
           {/* Content */}
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            <View style={styles.warningsContainer}>
-              {healthWarnings.map((warning, index) => (
-                <View key={index} style={[styles.warningItem, {
-                  backgroundColor: theme.background === '#111827' ? 'rgba(245, 158, 11, 0.1)' : '#FEF3C7',
-                  borderColor: theme.background === '#111827' ? 'rgba(245, 158, 11, 0.3)' : '#F59E0B'
+            <View style={styles.confirmationsContainer}>
+              <Text style={[styles.confirmationTitle, { color: theme.text }]}>
+                Please confirm that you:
+              </Text>
+              {healthConfirmations.map((confirmation, index) => (
+                <View key={index} style={[styles.confirmationItem, {
+                  backgroundColor: theme.background === '#111827' ? 'rgba(34, 197, 94, 0.1)' : '#DCFCE7',
+                  borderColor: theme.background === '#111827' ? 'rgba(34, 197, 94, 0.3)' : '#22C55E'
                 }]}>
-                  <Text style={styles.warningItemIcon}>⚠️</Text>
-                  <Text style={[styles.warningText, {
-                    color: theme.background === '#111827' ? '#FCD34D' : '#92400E'
+                  <Text style={styles.confirmationItemIcon}>✓</Text>
+                  <Text style={[styles.confirmationText, {
+                    color: theme.background === '#111827' ? '#86EFAC' : '#15803D'
                   }]}>
-                    {warning}
+                    {confirmation}
                   </Text>
                 </View>
               ))}
@@ -98,16 +100,22 @@ const WarningModal: React.FC<WarningModalProps> = ({
 
             {/* Legal Disclaimer */}
             <View style={[styles.disclaimerContainer, {
-              backgroundColor: theme.background === '#111827' ? '#374151' : '#F3F4F6',
-              borderColor: theme.border
+              backgroundColor: theme.background === '#111827' ? 'rgba(239, 68, 68, 0.1)' : '#FEF2F2',
+              borderColor: theme.background === '#111827' ? 'rgba(239, 68, 68, 0.3)' : '#EF4444'
             }]}>
-              <Text style={[styles.disclaimerTitle, { color: theme.text }]}>
-                ⚖️ Legal Disclaimer
+              <Text style={[styles.disclaimerTitle, { 
+                color: theme.background === '#111827' ? '#FCA5A5' : '#DC2626' 
+              }]}>
+                ⚖️ LEGAL DISCLAIMER
               </Text>
-              <Text style={[styles.disclaimerText, { color: theme.textSecondary }]}>
-                This app is for educational purposes only. We are not liable for any health complications. 
-                Fasting is at your own risk and responsibility. Always consult a qualified healthcare 
-                professional before starting any fasting regimen.
+              <Text style={[styles.disclaimerText, { 
+                color: theme.background === '#111827' ? '#FCA5A5' : '#DC2626' 
+              }]}>
+                <Text style={styles.disclaimerBold}>By clicking "I Agree" you acknowledge that:</Text>
+                {'\n'}• You are solely responsible for any health consequences that may result from this fast
+                {'\n'}• H2Flow and its creators are NOT liable for any health complications, injuries, or damages
+                {'\n'}• This app is for educational purposes only and does NOT provide medical advice
+                {'\n'}• Fasting is undertaken at your own risk
               </Text>
             </View>
 
@@ -119,15 +127,14 @@ const WarningModal: React.FC<WarningModalProps> = ({
                   onValueChange={setHasAccepted}
                   trackColor={{ 
                     false: theme.background === '#111827' ? '#374151' : '#E5E7EB', 
-                    true: theme.primary 
+                    true: '#22C55E' 
                   }}
                   thumbColor={hasAccepted ? '#FFFFFF' : '#9CA3AF'}
                 />
                 <View style={styles.acceptanceTextContainer}>
                   <Text style={[styles.acceptanceText, { color: theme.textSecondary }]}>
-                    <Text style={[styles.acceptanceBold, { color: theme.text }]}>I understand the risks</Text>
-                    {' '}and confirm that I have consulted with a healthcare professional if needed. 
-                    I accept full responsibility for my fasting decisions.
+                    <Text style={[styles.acceptanceBold, { color: theme.text }]}>I Agree & Accept Full Responsibility</Text>
+                    {' '}and confirm that I have read and understood all the above points.
                   </Text>
                 </View>
               </View>
@@ -152,7 +159,7 @@ const WarningModal: React.FC<WarningModalProps> = ({
               onPress={handleAccept}
               disabled={!hasAccepted}
               style={[styles.acceptButton, {
-                backgroundColor: hasAccepted ? theme.primary : (theme.background === '#111827' ? '#374151' : '#E5E7EB'),
+                backgroundColor: hasAccepted ? '#22C55E' : (theme.background === '#111827' ? '#374151' : '#E5E7EB'),
                 opacity: hasAccepted ? 1 : 0.5
               }]}
               activeOpacity={0.8}
@@ -160,7 +167,7 @@ const WarningModal: React.FC<WarningModalProps> = ({
               <Text style={[styles.acceptButtonText, {
                 color: hasAccepted ? '#FFFFFF' : theme.textSecondary
               }]}>
-                ✓ Start Fast
+                ✓ I Agree - Start Fast
               </Text>
             </TouchableOpacity>
           </View>
@@ -173,7 +180,7 @@ const WarningModal: React.FC<WarningModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -235,23 +242,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
   },
-  warningsContainer: {
+  confirmationsContainer: {
     marginBottom: 24,
   },
-  warningItem: {
+  confirmationTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 16,
+  },
+  confirmationItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    marginBottom: 12,
+    marginBottom: 8,
   },
-  warningItemIcon: {
+  confirmationItemIcon: {
     fontSize: 16,
     marginRight: 12,
     marginTop: 2,
+    color: '#22C55E',
   },
-  warningText: {
+  confirmationText: {
     fontSize: 14,
     lineHeight: 20,
     flex: 1,
@@ -270,6 +283,9 @@ const styles = StyleSheet.create({
   disclaimerText: {
     fontSize: 12,
     lineHeight: 18,
+  },
+  disclaimerBold: {
+    fontWeight: '600',
   },
   acceptanceContainer: {
     marginBottom: 8,
