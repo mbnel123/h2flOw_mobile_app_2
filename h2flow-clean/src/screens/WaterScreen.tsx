@@ -84,7 +84,7 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
         setUserId(user.uid);
         try {
           const fast = await getCurrentFast(user.uid);
-          setCurrentFast(fast ?? null);
+          setCurrentFast(fast);
         } catch (e) {
           console.warn('Failed to fetch fast', e);
         }
@@ -156,7 +156,8 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
     setError(null); // Clear previous errors
     
     try {
-      const result = await addWaterIntake(currentFast.id, amount);
+      // ✅ Voeg een lege string toe als derde parameter
+      const result = await addWaterIntake(currentFast.id!, amount, '');
       
       if (result.error) {
         setError(result.error);
