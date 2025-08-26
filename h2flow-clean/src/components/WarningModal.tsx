@@ -1,236 +1,319 @@
-// src/components/WarningModal.tsx
-import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  useColorScheme,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+// src/components/WarningModal.tsx - React Native version
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Switch } from 'react-native';
 
 interface WarningModalProps {
-  setHasAcceptedRisks: (accepted: boolean) => void;
-  setCurrentView: (view: string) => void;
+  isOpen: boolean;
+  onAccept: () => void;
+  onCancel: () => void;
+  targetHours: number;
+  theme?: {
+    background: string;
+    text: string;
+    textSecondary: string;
+    primary: string;
+    border: string;
+  };
 }
 
-const WarningModal: React.FC<WarningModalProps> = ({
-  setHasAcceptedRisks,
-  setCurrentView
+const WarningModal: React.FC<WarningModalProps> = ({ 
+  isOpen, 
+  onAccept, 
+  onCancel, 
+  targetHours,
+  theme = {
+    background: '#FFFFFF',
+    text: '#111827',
+    textSecondary: '#6B7280',
+    primary: '#3B82F6',
+    border: '#E5E7EB'
+  }
 }) => {
-  const isDark = useColorScheme() === 'dark';
-  const theme = {
-    background: isDark ? '#000000' : '#FFFFFF',
-    text: isDark ? '#FFFFFF' : '#000000',
-    textSecondary: isDark ? '#9CA3AF' : '#6B7280',
-    card: isDark ? '#1F1F1F' : '#FFFFFF',
-    border: isDark ? '#374151' : '#E5E7EB',
-    primary: '#7DD3FC',
-    success: '#10B981',
-    warning: '#F59E0B',
-    danger: '#EF4444',
-    orange: {
-      50: isDark ? '#7C2D12' : '#FFF7ED',
-      100: isDark ? '#9A3412' : '#FFEDD5',
-      500: '#F59E0B',
-      600: '#D97706',
-    },
-    red: {
-      50: isDark ? '#7F1D1D' : '#FEF2F2',
-      100: isDark ? '#991B1B' : '#FEE2E2',
-      500: '#EF4444',
-      600: '#DC2626',
-    },
+  const [hasAccepted, setHasAccepted] = useState(false);
+
+  const handleAccept = () => {
+    if (hasAccepted) {
+      onAccept();
+      setHasAccepted(false); // Reset for next time
+    }
   };
 
-  return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <View style={[styles.iconContainer, { backgroundColor: theme.orange[50] }]}>
-            <Ionicons name="warning" size={32} color={theme.orange[500]} />
-          </View>
-          <Text style={[styles.title, { color: theme.text }]}>Medical Safety Confirmation</Text>
-          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Before starting your fast</Text>
-        </View>
+  const handleCancel = () => {
+    onCancel();
+    setHasAccepted(false); // Reset for next time
+  };
 
-        <View style={styles.content}>
-          <View style={[styles.warningCard, { backgroundColor: theme.orange[50], borderColor: theme.orange[100] }]}>
-            <Text style={[styles.warningTitle, { color: theme.orange[600] }]}>
-              Please confirm that you:
+  const healthWarnings = [
+    "Consult your doctor before extended fasting",
+    "DO NOT fast if pregnant, breastfeeding, or under 18",
+    "Stop immediately if you feel dizzy or unwell",
+    "Drink at least 2-3 liters of water daily",
+    "Listen to your body and stop if needed",
+    "This app does NOT provide medical advice"
+  ];
+
+  return (
+    <Modal visible={isOpen} transparent animationType="fade" statusBarTranslucent>
+      <View style={styles.overlay}>
+        <View style={[styles.modal, { backgroundColor: theme.background }]}>
+          {/* Header */}
+          <View style={[styles.header, { borderBottomColor: theme.border }]}>
+            <View style={styles.headerTop}>
+              <View style={styles.headerLeft}>
+                <Text style={styles.warningIcon}>⚠️</Text>
+                <Text style={[styles.headerTitle, { color: theme.text }]}>
+                  Health & Safety Notice
+                </Text>
+              </View>
+              <TouchableOpacity 
+                onPress={handleCancel}
+                style={[styles.closeButton, { backgroundColor: theme.background === '#111827' ? '#374151' : '#F3F4F6' }]}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.closeText, { color: theme.textSecondary }]}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
+              You're about to start a {targetHours}h fast. Please read these important reminders.
             </Text>
-            <View style={styles.list}>
-              <View style={styles.listItem}>
-                <Ionicons name="checkmark-circle" size={16} color={theme.success} />
-                <Text style={[styles.listText, { color: theme.orange[600] }]}>
-                  Have consulted with a healthcare professional if you have any medical conditions
-                </Text>
-              </View>
-              <View style={styles.listItem}>
-                <Ionicons name="checkmark-circle" size={16} color={theme.success} />
-                <Text style={[styles.listText, { color: theme.orange[600] }]}>
-                  Are not pregnant, breastfeeding, or under 18 years of age
-                </Text>
-              </View>
-              <View style={styles.listItem}>
-                <Ionicons name="checkmark-circle" size={16} color={theme.success} />
-                <Text style={[styles.listText, { color: theme.orange[600] }]}>
-                  Have read and understand the risks of water fasting
-                </Text>
-              </View>
-              <View style={styles.listItem}>
-                <Ionicons name="checkmark-circle" size={16} color={theme.success} />
-                <Text style={[styles.listText, { color: theme.orange[600] }]}>
-                  Will stop immediately if you experience any concerning symptoms
-                </Text>
-              </View>
-              <View style={styles.listItem}>
-                <Ionicons name="checkmark-circle" size={16} color={theme.success} />
-                <Text style={[styles.listText, { color: theme.orange[600] }]}>
-                  Have adequate water and electrolytes available
-                </Text>
+          </View>
+
+          {/* Content */}
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            <View style={styles.warningsContainer}>
+              {healthWarnings.map((warning, index) => (
+                <View key={index} style={[styles.warningItem, {
+                  backgroundColor: theme.background === '#111827' ? 'rgba(245, 158, 11, 0.1)' : '#FEF3C7',
+                  borderColor: theme.background === '#111827' ? 'rgba(245, 158, 11, 0.3)' : '#F59E0B'
+                }]}>
+                  <Text style={styles.warningItemIcon}>⚠️</Text>
+                  <Text style={[styles.warningText, {
+                    color: theme.background === '#111827' ? '#FCD34D' : '#92400E'
+                  }]}>
+                    {warning}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Legal Disclaimer */}
+            <View style={[styles.disclaimerContainer, {
+              backgroundColor: theme.background === '#111827' ? '#374151' : '#F3F4F6',
+              borderColor: theme.border
+            }]}>
+              <Text style={[styles.disclaimerTitle, { color: theme.text }]}>
+                ⚖️ Legal Disclaimer
+              </Text>
+              <Text style={[styles.disclaimerText, { color: theme.textSecondary }]}>
+                This app is for educational purposes only. We are not liable for any health complications. 
+                Fasting is at your own risk and responsibility. Always consult a qualified healthcare 
+                professional before starting any fasting regimen.
+              </Text>
+            </View>
+
+            {/* Acceptance Checkbox */}
+            <View style={styles.acceptanceContainer}>
+              <View style={styles.acceptanceRow}>
+                <Switch
+                  value={hasAccepted}
+                  onValueChange={setHasAccepted}
+                  trackColor={{ 
+                    false: theme.background === '#111827' ? '#374151' : '#E5E7EB', 
+                    true: theme.primary 
+                  }}
+                  thumbColor={hasAccepted ? '#FFFFFF' : '#9CA3AF'}
+                />
+                <View style={styles.acceptanceTextContainer}>
+                  <Text style={[styles.acceptanceText, { color: theme.textSecondary }]}>
+                    <Text style={[styles.acceptanceBold, { color: theme.text }]}>I understand the risks</Text>
+                    {' '}and confirm that I have consulted with a healthcare professional if needed. 
+                    I accept full responsibility for my fasting decisions.
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
+          </ScrollView>
 
-          {/* Legal Disclaimer */}
-          <View style={[styles.disclaimerCard, { backgroundColor: theme.red[50], borderColor: theme.red[100] }]}>
-            <Text style={[styles.disclaimerTitle, { color: theme.red[600] }]}>⚖️ LEGAL DISCLAIMER</Text>
-            <Text style={[styles.disclaimerText, { color: theme.red[600] }]}>
-              <Text style={styles.bold}>By clicking "I Agree" you acknowledge that:</Text>{'\n'}
-              • You are solely responsible for any health consequences that may result from this fast{'\n'}
-              • H2Flow and its creators are NOT liable for any health complications, injuries, or damages{'\n'}
-              • This app is for educational purposes only and does NOT provide medical advice{'\n'}
-              • Fasting is undertaken at your own risk
-            </Text>
+          {/* Action Buttons */}
+          <View style={styles.buttonsContainer}>
+            <TouchableOpacity
+              onPress={handleCancel}
+              style={[styles.cancelButton, {
+                backgroundColor: theme.background === '#111827' ? '#374151' : '#F3F4F6'
+              }]}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.cancelButtonText, { color: theme.text }]}>
+                Cancel
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              onPress={handleAccept}
+              disabled={!hasAccepted}
+              style={[styles.acceptButton, {
+                backgroundColor: hasAccepted ? theme.primary : (theme.background === '#111827' ? '#374151' : '#E5E7EB'),
+                opacity: hasAccepted ? 1 : 0.5
+              }]}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.acceptButtonText, {
+                color: hasAccepted ? '#FFFFFF' : theme.textSecondary
+              }]}>
+                ✓ Start Fast
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
-        
-        <View style={styles.buttons}>
-          <TouchableOpacity
-            style={[styles.agreeButton, { backgroundColor: theme.success }]}
-            onPress={() => {
-              setHasAcceptedRisks(true);
-              setCurrentView('timer');
-            }}
-          >
-            <Ionicons name="checkmark-circle" size={20} color="#fff" />
-            <Text style={styles.agreeButtonText}>I Agree & Accept Full Responsibility - Start Fast</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: theme.card, borderColor: theme.border }]}
-            onPress={() => setCurrentView('welcome')}
-          >
-            <Text style={[styles.backButtonText, { color: theme.text }]}>Back to start</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </View>
+      </View>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  overlay: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
   },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 24,
+  modal: {
+    borderRadius: 16,
+    maxWidth: 450,
+    width: '100%',
+    maxHeight: '90%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 20,
   },
   header: {
-    alignItems: 'center',
-    marginBottom: 32,
+    padding: 24,
+    borderBottomWidth: 1,
   },
-  iconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 8,
   },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  warningIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    flex: 1,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    lineHeight: 20,
   },
   content: {
-    gap: 16,
-    marginBottom: 32,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
   },
-  warningCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 16,
-    gap: 12,
+  warningsContainer: {
+    marginBottom: 24,
   },
-  warningTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  list: {
-    gap: 12,
-  },
-  listItem: {
+  warningItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 12,
   },
-  listText: {
-    fontSize: 12,
+  warningItemIcon: {
+    fontSize: 16,
+    marginRight: 12,
+    marginTop: 2,
+  },
+  warningText: {
+    fontSize: 14,
+    lineHeight: 20,
     flex: 1,
-    lineHeight: 18,
   },
-  disclaimerCard: {
+  disclaimerContainer: {
     borderRadius: 12,
     borderWidth: 1,
     padding: 16,
-    gap: 8,
+    marginBottom: 24,
   },
   disclaimerTitle: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    marginBottom: 8,
   },
   disclaimerText: {
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 12,
+    lineHeight: 18,
   },
-  bold: {
-    fontWeight: 'bold',
+  acceptanceContainer: {
+    marginBottom: 8,
   },
-  buttons: {
+  acceptanceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  acceptanceTextContainer: {
+    flex: 1,
+    marginLeft: 12,
+    marginTop: 2,
+  },
+  acceptanceText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  acceptanceBold: {
+    fontWeight: '600',
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    padding: 24,
     gap: 12,
   },
-  agreeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 12,
     borderRadius: 12,
-    gap: 8,
-  },
-  agreeButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  backButton: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
     alignItems: 'center',
   },
-  backButtonText: {
+  cancelButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
+  },
+  acceptButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  acceptButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 
