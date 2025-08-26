@@ -1,4 +1,4 @@
-// src/components/WarningModal.tsx - React Native version (aangepaste vriendelijkere versie)
+// src/components/WarningModal.tsx - React Native version (verbeterde versie)
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Switch } from 'react-native';
 
@@ -141,7 +141,7 @@ const WarningModal: React.FC<WarningModalProps> = ({
             </View>
           </ScrollView>
 
-          {/* Action Buttons */}
+          {/* Action Buttons - VERBETERD */}
           <View style={styles.buttonsContainer}>
             <TouchableOpacity
               onPress={handleCancel}
@@ -306,30 +306,38 @@ const styles = StyleSheet.create({
   acceptanceBold: {
     fontWeight: '600',
   },
+  // VERBETERDE KNOPSTIJLEN
   buttonsContainer: {
     flexDirection: 'row',
-    padding: 24,
+    padding: 16,
     gap: 12,
+    alignItems: 'center',
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: 12,
+    height: 44, // Vaste hoogte voor consistentie
+    paddingVertical: 10, // Minder padding voor betere proporties
     borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '500',
+    textAlign: 'center',
   },
   acceptButton: {
     flex: 1,
-    paddingVertical: 12,
+    height: 44, // Vaste hoogte voor consistentie
+    paddingVertical: 10, // Minder padding voor betere proporties
     borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   acceptButtonText: {
     fontSize: 16,
     fontWeight: '500',
+    textAlign: 'center',
   },
 });
 
