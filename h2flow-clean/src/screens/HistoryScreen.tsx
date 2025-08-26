@@ -22,7 +22,7 @@ import { Fast, FastStreak, updateFast, deleteFast } from '../firebase/databaseSe
 // Define colors for light and dark mode
 const colors = {
   light: {
-    primary: '#7DD3FC', // Babyblauw
+    primary: '#7DD3FC',
     secondary: '#38BDF8',
     background: '#FFFFFF',
     backgroundSecondary: '#F8F9FA',
@@ -35,7 +35,7 @@ const colors = {
     info: '#3B82F6',
   },
   dark: {
-    primary: '#7DD3FC', // Babyblauw
+    primary: '#7DD3FC',
     secondary: '#38BDF8',
     background: '#000000',
     backgroundSecondary: '#1F1F1F',
@@ -1090,15 +1090,15 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 8,
   },
-  profileSkeleton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   statCardSkeleton: {
     width: Dimensions.get('window').width / 2 - 24,
     height: 100,
     borderRadius: 12,
     marginBottom: 12,
+  },
+  profileSkeleton: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
 
