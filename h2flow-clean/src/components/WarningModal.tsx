@@ -44,7 +44,7 @@ const WarningModal: React.FC<WarningModalProps> = ({
   };
 
   const healthWarnings = [
-    "Consult your doctor before extended fasting",
+    "TESTConsult your doctor before extended fasting",
     "DO NOT fast if pregnant, breastfeeding, or under 18",
     "Stop immediately if you feel dizzy or unwell",
     "Drink at least 2-3 liters of water daily",
