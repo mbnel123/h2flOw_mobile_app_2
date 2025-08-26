@@ -46,7 +46,7 @@ const OnboardingScreen: React.FC<OnboardingProps> = ({
 
   const onboardingSteps = [
     {
-      title: "Welcome to H2flOw! 💧",
+      title: "TEST - Welcome to H2flOw! 💧",
       description: "Your comprehensive water fasting companion. Track your fasting journey with science-backed insights.",
       icon: "🌊"
     },
