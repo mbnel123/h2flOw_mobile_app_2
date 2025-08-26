@@ -11,10 +11,10 @@ import {
   Alert,
   SafeAreaView,
   Dimensions,
-  useColorScheme,
 } from 'react-native';
 import { Ionicons, Feather, MaterialIcons, AntDesign } from '@expo/vector-icons';
 import { FastTemplate, templateService } from '../services/templateService';
+import { useTheme } from '../contexts/ThemeContext';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -33,8 +33,10 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
   onClose,
   onSelectTemplate,
 }) => {
-  const isDark = useColorScheme() === 'dark';
-  const theme = {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  
+  const colors = {
     primary: '#7DD3FC',
     secondary: '#38BDF8',
     background: isDark ? '#000000' : '#FFFFFF',
@@ -155,52 +157,50 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
   };
 
   const renderIcon = (icon: string, size: number = 20, color: string) => {
-    if (icon && icon.includes('-outline')) {
-      return <Ionicons name={icon as any} size={size} color={color} />;
-    } else {
-      return <Text style={{ fontSize: size }}>{icon || '⚡'}</Text>;
-    }
+    return <Ionicons name={icon as any} size={size} color={color} />;
   };
 
   const currentTemplates = getCurrentTemplates();
   const iconOptions = [
     'flash-outline', 'flame-outline', 'fitness-outline', 'body-outline',
     'star-outline', 'diamond-outline', 'rocket-outline', 'leaf-outline',
-    'shield-outline', 'refresh-outline', 'brain-outline', 'heart-outline'
+    'shield-outline', 'refresh-outline', 'brain-outline', 'heart-outline',
+    'water-outline', 'nutrition-outline', 'time-outline', 'speedometer-outline',
+    'barbell-outline', 'walk-outline', 'medal-outline', 'trophy-outline'
   ];
 
   // Create form modal
   if (showCreateForm) {
     return (
       <Modal visible={visible} animationType="slide" onRequestClose={() => setShowCreateForm(false)}>
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-          <View style={[styles.formHeader, { borderBottomColor: theme.border }]}>
-            <Text style={[styles.formTitle, { color: theme.text }]}>Create Custom Template</Text>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+          <View style={[styles.formHeader, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.formTitle, { color: colors.text }]}>Create Custom Template</Text>
             <TouchableOpacity onPress={() => setShowCreateForm(false)}>
-              <AntDesign name="close" size={24} color={theme.textSecondary} />
+              <AntDesign name="close" size={24} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.formContent} showsVerticalScrollIndicator={false}>
             {/* Name */}
             <View style={styles.formField}>
-              <Text style={[styles.label, { color: theme.text }]}>Template Name</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Template Name</Text>
               <TextInput
                 style={[styles.input, { 
-                  backgroundColor: theme.card, 
-                  borderColor: theme.border, 
-                  color: theme.text 
+                  backgroundColor: colors.card, 
+                  borderColor: colors.border, 
+                  color: colors.text 
                 }]}
                 value={formData.name}
                 onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
                 placeholder="My Custom Fast"
-                placeholderTextColor={theme.textSecondary}
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
 
             {/* Icon selector */}
             <View style={styles.formField}>
-              <Text style={[styles.label, { color: theme.text }]}>Icon</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Icon</Text>
               <View style={styles.iconGrid}>
                 {iconOptions.map(iconName => (
                   <TouchableOpacity
@@ -209,36 +209,16 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                     style={[
                       styles.iconButton,
                       { 
-                        backgroundColor: theme.card, 
-                        borderColor: theme.border 
+                        backgroundColor: colors.card, 
+                        borderColor: colors.border 
                       },
                       formData.icon === iconName && { 
-                        borderColor: theme.primary,
+                        borderColor: colors.primary,
                         backgroundColor: isDark ? '#1E3A8A' : '#EFF6FF'
                       }
                     ]}
                   >
-                    <Ionicons name={iconName as any} size={24} color={theme.text} />
-                  </TouchableOpacity>
-                ))}
-                {/* Voeg emoji opties toe */}
-                {['⚡', '🔥', '💧', '⭐', '💪', '🧠', '❤️', '🌿'].map(emoji => (
-                  <TouchableOpacity
-                    key={emoji}
-                    onPress={() => setFormData(prev => ({ ...prev, icon: emoji }))}
-                    style={[
-                      styles.iconButton,
-                      { 
-                        backgroundColor: theme.card, 
-                        borderColor: theme.border 
-                      },
-                      formData.icon === emoji && { 
-                        borderColor: theme.primary,
-                        backgroundColor: isDark ? '#1E3A8A' : '#EFF6FF'
-                      }
-                    ]}
-                  >
-                    <Text style={{ fontSize: 20 }}>{emoji}</Text>
+                    <Ionicons name={iconName as any} size={24} color={colors.text} />
                   </TouchableOpacity>
                 ))}
               </View>
@@ -246,12 +226,12 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
 
             {/* Duration */}
             <View style={styles.formField}>
-              <Text style={[styles.label, { color: theme.text }]}>Duration (hours)</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Duration (hours)</Text>
               <TextInput
                 style={[styles.input, { 
-                  backgroundColor: theme.card, 
-                  borderColor: theme.border, 
-                  color: theme.text 
+                  backgroundColor: colors.card, 
+                  borderColor: colors.border, 
+                  color: colors.text 
                 }]}
                 value={formData.duration.toString()}
                 onChangeText={(text) => setFormData(prev => ({ 
@@ -260,18 +240,18 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                 }))}
                 keyboardType="numeric"
                 placeholder="24"
-                placeholderTextColor={theme.textSecondary}
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
 
             {/* Water Goal */}
             <View style={styles.formField}>
-              <Text style={[styles.label, { color: theme.text }]}>Water Goal (ml)</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Water Goal (ml)</Text>
               <TextInput
                 style={[styles.input, { 
-                  backgroundColor: theme.card, 
-                  borderColor: theme.border, 
-                  color: theme.text 
+                  backgroundColor: colors.card, 
+                  borderColor: colors.border, 
+                  color: colors.text 
                 }]}
                 value={formData.waterGoal.toString()}
                 onChangeText={(text) => setFormData(prev => ({ 
@@ -280,23 +260,23 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                 }))}
                 keyboardType="numeric"
                 placeholder="2500"
-                placeholderTextColor={theme.textSecondary}
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
 
             {/* Description */}
             <View style={styles.formField}>
-              <Text style={[styles.label, { color: theme.text }]}>Description (optional)</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Description (optional)</Text>
               <TextInput
                 style={[styles.input, styles.textArea, { 
-                  backgroundColor: theme.card, 
-                  borderColor: theme.border, 
-                  color: theme.text 
+                  backgroundColor: colors.card, 
+                  borderColor: colors.border, 
+                  color: colors.text 
                 }]}
                 value={formData.description}
                 onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
                 placeholder="Brief description of your fast..."
-                placeholderTextColor={theme.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 multiline
                 textAlignVertical="top"
               />
@@ -304,33 +284,33 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
 
             {/* Tags */}
             <View style={styles.formField}>
-              <Text style={[styles.label, { color: theme.text }]}>Tags (comma separated)</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Tags (comma separated)</Text>
               <TextInput
                 style={[styles.input, { 
-                  backgroundColor: theme.card, 
-                  borderColor: theme.border, 
-                  color: theme.text 
+                  backgroundColor: colors.card, 
+                  borderColor: colors.border, 
+                  color: colors.text 
                 }]}
                 value={formData.tags}
                 onChangeText={(text) => setFormData(prev => ({ ...prev, tags: text }))}
                 placeholder="custom, personal, challenge"
-                placeholderTextColor={theme.textSecondary}
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
           </ScrollView>
 
-          <View style={[styles.formFooter, { borderTopColor: theme.border }]}>
+          <View style={[styles.formFooter, { borderTopColor: colors.border }]}>
             <TouchableOpacity 
               style={[styles.formButton, styles.formCancelButton, { 
-                backgroundColor: theme.card, 
-                borderColor: theme.border 
+                backgroundColor: colors.card, 
+                borderColor: colors.border 
               }]}
               onPress={() => setShowCreateForm(false)}
             >
-              <Text style={[styles.formCancelText, { color: theme.text }]}>Cancel</Text>
+              <Text style={[styles.formCancelText, { color: colors.text }]}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={[styles.formButton, styles.formSubmitButton, { backgroundColor: theme.primary }]}
+              style={[styles.formButton, styles.formSubmitButton, { backgroundColor: colors.primary }]}
               onPress={handleCreateTemplate}
             >
               <Text style={styles.formSubmitText}>Create Template</Text>
@@ -343,12 +323,12 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header */}
-        <View style={[styles.header, { borderBottomColor: theme.border }]}>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Choose Fast Template</Text>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Choose Fast Template</Text>
           <TouchableOpacity onPress={onClose}>
-            <Ionicons name="close" size={24} color={theme.textSecondary} />
+            <Ionicons name="close" size={24} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -366,19 +346,19 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                 <TouchableOpacity
                   key={category}
                   style={[styles.categoryBtn, { 
-                    backgroundColor: active ? theme.primary : theme.backgroundSecondary,
-                    borderColor: theme.border
+                    backgroundColor: active ? colors.primary : colors.backgroundSecondary,
+                    borderColor: colors.border
                   }]}
                   onPress={() => setSelectedCategory(category as any)}
                 >
                   <Ionicons 
                     name={getCategoryIcon(category) as any} 
                     size={16} 
-                    color={active ? '#FFFFFF' : theme.text} 
+                    color={active ? '#FFFFFF' : colors.text} 
                     style={{ marginRight: 6 }}
                   />
                   <Text style={[styles.categoryText, { 
-                    color: active ? '#FFFFFF' : theme.text 
+                    color: active ? '#FFFFFF' : colors.text 
                   }]}>
                     {getCategoryIconName(category)} ({count})
                   </Text>
@@ -396,15 +376,15 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
         >
           {currentTemplates.length === 0 ? (
             <View style={styles.emptyState}>
-              <MaterialIcons name="hourglass-empty" size={48} color={theme.textSecondary} />
-              <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+              <MaterialIcons name="hourglass-empty" size={48} color={colors.textSecondary} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 {selectedCategory === 'custom'
                   ? 'No custom templates yet. Create your first one!'
                   : 'No templates in this category yet.'}
               </Text>
               {selectedCategory === 'custom' && (
                 <TouchableOpacity
-                  style={[styles.createBtn, { backgroundColor: theme.primary }]}
+                  style={[styles.createBtn, { backgroundColor: colors.primary }]}
                   onPress={() => setShowCreateForm(true)}
                 >
                   <Ionicons name="add-circle" size={18} color="#fff" style={{ marginRight: 6 }} />
@@ -423,26 +403,26 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                   style={[
                     styles.card,
                     { 
-                      backgroundColor: isSelected ? theme.backgroundSecondary : theme.card,
-                      borderColor: isSelected ? theme.primary : theme.border
+                      backgroundColor: isSelected ? colors.backgroundSecondary : colors.card,
+                      borderColor: isSelected ? colors.primary : colors.border
                     }
                   ]}
                   onPress={() => handleSelectTemplate(template)}
                 >
                   {/* Header */}
                   <View style={styles.cardHeader}>
-                    <View style={[styles.cardIconContainer, { backgroundColor: theme.backgroundSecondary }]}>
-                      {renderIcon(template.icon, 20, theme.text)}
+                    <View style={[styles.cardIconContainer, { backgroundColor: colors.backgroundSecondary }]}>
+                      {renderIcon(template.icon, 20, colors.text)}
                     </View>
                     <View style={styles.cardInfo}>
-                      <Text style={[styles.cardTitle, { color: theme.text }]}>{template.name}</Text>
+                      <Text style={[styles.cardTitle, { color: colors.text }]}>{template.name}</Text>
                       <View style={styles.cardCategoryRow}>
-                        <Text style={[styles.cardCategory, { color: theme.textSecondary }]}>
+                        <Text style={[styles.cardCategory, { color: colors.textSecondary }]}>
                           {template.category}
                         </Text>
                         {template.isCustom && (
-                          <View style={[styles.customBadge, { backgroundColor: theme.backgroundSecondary }]}>
-                            <Text style={[styles.customBadgeText, { color: theme.textSecondary }]}>
+                          <View style={[styles.customBadge, { backgroundColor: colors.backgroundSecondary }]}>
+                            <Text style={[styles.customBadgeText, { color: colors.textSecondary }]}>
                               Custom
                             </Text>
                           </View>
@@ -458,13 +438,13 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                             onPress={() => handleDuplicateTemplate(template)}
                             style={styles.actionBtn}
                           >
-                            <Feather name="copy" size={16} color={theme.success} />
+                            <Feather name="copy" size={16} color={colors.success} />
                           </TouchableOpacity>
                           <TouchableOpacity
                             onPress={() => handleDeleteTemplate(template)}
                             style={styles.actionBtn}
                           >
-                            <Feather name="trash-2" size={16} color={theme.danger} />
+                            <Feather name="trash-2" size={16} color={colors.danger} />
                           </TouchableOpacity>
                         </>
                       )}
@@ -473,7 +453,7 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                           onPress={() => handleDuplicateTemplate(template)}
                           style={styles.actionBtn}
                         >
-                          <Feather name="copy" size={16} color={theme.success} />
+                          <Feather name="copy" size={16} color={colors.success} />
                         </TouchableOpacity>
                       )}
                     </View>
@@ -481,7 +461,7 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
 
                   {/* Description */}
                   {template.description && (
-                    <Text style={[styles.cardDesc, { color: theme.textSecondary }]} numberOfLines={2}>
+                    <Text style={[styles.cardDesc, { color: colors.textSecondary }]} numberOfLines={2}>
                       {template.description}
                     </Text>
                   )}
@@ -503,8 +483,8 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                   <View style={styles.detailsContainer}>
                     {template.waterGoal && (
                       <View style={styles.detailRow}>
-                        <Ionicons name="water" size={12} color={theme.primary} />
-                        <Text style={[styles.detailText, { color: theme.text }]}>
+                        <Ionicons name="water" size={12} color={colors.primary} />
+                        <Text style={[styles.detailText, { color: colors.text }]}>
                           <Text style={{ fontWeight: 'bold' }}>{template.waterGoal}ml</Text> water
                         </Text>
                       </View>
@@ -512,8 +492,8 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                     
                     {template.usageCount > 0 && (
                       <View style={styles.detailRow}>
-                        <AntDesign name="star" size={12} color={theme.warning} />
-                        <Text style={[styles.detailText, { color: theme.text }]}>
+                        <AntDesign name="star" size={12} color={colors.warning} />
+                        <Text style={[styles.detailText, { color: colors.text }]}>
                           Used <Text style={{ fontWeight: 'bold' }}>{template.usageCount}</Text>x
                         </Text>
                       </View>
@@ -524,12 +504,12 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                   {template.tags.length > 0 && (
                     <View style={styles.tagsContainer}>
                       {template.tags.slice(0, 3).map((tag) => (
-                        <View key={tag} style={[styles.tag, { backgroundColor: theme.backgroundSecondary }]}>
-                          <Text style={[styles.tagText, { color: theme.textSecondary }]}>#{tag}</Text>
+                        <View key={tag} style={[styles.tag, { backgroundColor: colors.backgroundSecondary }]}>
+                          <Text style={[styles.tagText, { color: colors.textSecondary }]}>#{tag}</Text>
                         </View>
                       ))}
                       {template.tags.length > 3 && (
-                        <Text style={[styles.tagText, { color: theme.textSecondary, paddingHorizontal: 4 }]}>
+                        <Text style={[styles.tagText, { color: colors.textSecondary, paddingHorizontal: 4 }]}>
                           +{template.tags.length - 3}
                         </Text>
                       )}
@@ -542,21 +522,21 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
         </ScrollView>
 
         {/* Footer */}
-        <View style={[styles.footer, { borderTopColor: theme.border, backgroundColor: theme.backgroundSecondary }]}>
+        <View style={[styles.footer, { borderTopColor: colors.border, backgroundColor: colors.backgroundSecondary }]}>
           <View style={styles.footerContent}>
             <TouchableOpacity 
               style={[styles.cancelButton, { 
-                backgroundColor: theme.card, 
-                borderColor: theme.border 
+                backgroundColor: colors.card, 
+                borderColor: colors.border 
               }]}
               onPress={onClose}
             >
-              <Text style={[styles.cancelButtonText, { color: theme.text }]}>Cancel</Text>
+              <Text style={[styles.cancelButtonText, { color: colors.text }]}>Cancel</Text>
             </TouchableOpacity>
             
             {selectedDuration && (
               <TouchableOpacity
-                style={[styles.useCurrentButton, { backgroundColor: theme.primary }]}
+                style={[styles.useCurrentButton, { backgroundColor: colors.primary }]}
                 onPress={() => {
                   const customTemplate: FastTemplate = {
                     id: 'temp_custom',
