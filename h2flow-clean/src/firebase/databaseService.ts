@@ -64,6 +64,7 @@ export const startFast = async (userId: string, plannedDuration: number) => {
       plannedDuration,
       status: 'active',
       waterIntake: [],
+      notes: '',
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -142,7 +143,7 @@ export const endFast = async (fastId: string) => {
 };
 
 // Add water intake - FIXED VERSION
-export const addWaterIntake = async (fastId: string, amount: number, note?: string) => {
+export const addWaterIntake = async (fastId: string, amount: number, note: string = '') => {
   try {
     console.log('💧 Database: Adding water intake:', amount, 'ml to fast:', fastId);
     
@@ -233,7 +234,7 @@ export const getCurrentFast = async (userId: string) => {
     
     if (querySnapshot.empty) {
       console.log('🚫 Database: No active or paused fast found');
-      return { fast: null, error: null };
+      return null;
     }
 
     const doc = querySnapshot.docs[0];
@@ -263,10 +264,10 @@ export const getCurrentFast = async (userId: string) => {
       status: fast.status,
       waterCount: fast.waterIntake.length
     });
-    return { fast, error: null };
+    return fast;
   } catch (error: any) {
     console.error('❌ Database: Error getting current fast:', error);
-    return { fast: null, error: error.message };
+    return null;
   }
 };
 
