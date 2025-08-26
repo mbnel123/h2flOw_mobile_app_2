@@ -1,8 +1,12 @@
 // src/components/timer/PhaseInfo.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../types/navigation';
+
+type PhaseInfoNavigationProp = StackNavigationProp<RootStackParamList, 'Info'>;
 
 interface PhaseInfoProps {
   currentPhase: {
@@ -26,18 +30,19 @@ const PhaseInfo: React.FC<PhaseInfoProps> = ({
   elapsedTime, 
   theme 
 }) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<PhaseInfoNavigationProp>();
 
-  const handleLearnMore = () => {
-    // Navigeer naar het InfoScreen
-    navigation.navigate('Info' as never);
+  const navigateToInfoScreen = () => {
+    navigation.navigate('Info', { 
+      scrollToTimeline: true,
+      highlightPhase: currentPhase.title 
+    });
   };
 
   return (
     <View style={[styles.container, { 
       backgroundColor: theme.background, 
       borderColor: theme.border,
-      shadowColor: theme.text,
     }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.text }]}>
@@ -45,12 +50,12 @@ const PhaseInfo: React.FC<PhaseInfoProps> = ({
         </Text>
         
         <TouchableOpacity 
-          onPress={handleLearnMore}
-          style={styles.learnMoreButton}
+          style={styles.infoLink}
+          onPress={navigateToInfoScreen}
         >
-          <Ionicons name="information-circle-outline" size={20} color={theme.primary} />
-          <Text style={[styles.learnMoreText, { color: theme.primary }]}>
-            Learn more
+          <Ionicons name="information-circle-outline" size={18} color={theme.primary} />
+          <Text style={[styles.infoLinkText, { color: theme.primary }]}>
+            Meer over deze fase
           </Text>
         </TouchableOpacity>
       </View>
@@ -90,42 +95,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 20,
     alignItems: 'center',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%',
     marginBottom: 12,
   },
   title: {
     fontSize: 20,
     fontWeight: '600',
-    flex: 1,
+    textAlign: 'center',
+    marginBottom: 8,
   },
-  learnMoreButton: {
+  infoLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 8,
+    gap: 4,
   },
-  learnMoreText: {
+  infoLinkText: {
     fontSize: 12,
-    marginLeft: 4,
     fontWeight: '500',
   },
   description: {
     fontSize: 14,
-    textAlign: 'left',
+    textAlign: 'center',
     marginBottom: 16,
     lineHeight: 20,
-    width: '100%',
   },
   statsContainer: {
     flexDirection: 'row',
