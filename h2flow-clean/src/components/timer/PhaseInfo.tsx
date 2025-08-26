@@ -55,7 +55,7 @@ const PhaseInfo: React.FC<PhaseInfoProps> = ({
         >
           <Ionicons name="information-circle-outline" size={18} color={theme.primary} />
           <Text style={[styles.infoLinkText, { color: theme.primary }]}>
-            Meer over deze fase
+            More about this phase
           </Text>
         </TouchableOpacity>
       </View>
