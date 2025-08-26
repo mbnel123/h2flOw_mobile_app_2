@@ -1,6 +1,6 @@
-// App.tsx - AANGEPAST VOOR STACK NAVIGATION
+// App.tsx - AANGEPAST VOOR THEME SUPPORT
 import React, { useState, useEffect } from 'react';
-import { useColorScheme, View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -21,40 +21,29 @@ import AgeVerification from './src/screens/AgeVerification';
 import SettingsScreen from './src/screens/SettingsScreen';
 
 // Import ThemeProvider
-import { ThemeProvider } from './src/contexts/ThemeContext';
+import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { TabParamList, RootStackParamList } from './src/types/navigation';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 const Stack = createStackNavigator<RootStackParamList>();
 
 // Theme colors
-const colors = {
-  light: {
-    primary: '#7DD3FC',
-    background: '#FFFFFF',
-    backgroundSecondary: '#F8F9FA',
-    text: '#000000',
-    textSecondary: '#6B7280',
-    border: '#E5E7EB',
-    tabBar: '#FFFFFF',
-    tabBarBorder: '#E5E7EB',
-  },
-  dark: {
-    primary: '#7DD3FC',
-    background: '#000000',
-    backgroundSecondary: '#1F1F1F',
-    text: '#FFFFFF',
-    textSecondary: '#9CA3AF',
-    border: '#374151',
-    tabBar: '#000000',
-    tabBarBorder: '#374151',
-  }
-};
+const getColors = (isDark: boolean) => ({
+  primary: '#7DD3FC',
+  background: isDark ? '#000000' : '#FFFFFF',
+  backgroundSecondary: isDark ? '#1F1F1F' : '#F8F9FA',
+  text: isDark ? '#FFFFFF' : '#000000',
+  textSecondary: isDark ? '#9CA3AF' : '#6B7280',
+  border: isDark ? '#374151' : '#E5E7EB',
+  tabBar: isDark ? '#000000' : '#FFFFFF',
+  tabBarBorder: isDark ? '#374151' : '#E5E7EB',
+});
 
 // Tab Navigator component
 function TabNavigator() {
-  const isDark = useColorScheme() === 'dark';
-  const theme = isDark ? colors.dark : colors.light;
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const colors = getColors(isDark);
 
   return (
     <Tab.Navigator
@@ -87,13 +76,13 @@ function TabNavigator() {
             <Ionicons
               name={iconName}
               size={size}
-              color={focused ? theme.primary : theme.textSecondary}
+              color={focused ? colors.primary : colors.textSecondary}
             />
           );
         },
         tabBarStyle: {
-          backgroundColor: theme.tabBar,
-          borderTopColor: theme.tabBarBorder,
+          backgroundColor: colors.tabBar,
+          borderTopColor: colors.tabBarBorder,
           borderTopWidth: 1,
           paddingBottom: 12,
           paddingTop: 12,
@@ -106,8 +95,8 @@ function TabNavigator() {
           fontWeight: '500',
           marginTop: 4,
         },
-        tabBarActiveTintColor: theme.primary,
-        tabBarInactiveTintColor: theme.textSecondary,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
         tabBarItemStyle: {
           paddingVertical: 4,
         },
@@ -133,8 +122,9 @@ function StackNavigator() {
 }
 
 function MainApp() {
-  const isDark = useColorScheme() === 'dark';
-  const theme = isDark ? colors.dark : colors.light;
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const colors = getColors(isDark);
   const [currentView, setCurrentView] = useState('age-verification');
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(true);
@@ -170,9 +160,9 @@ function MainApp() {
   const renderCurrentView = () => {
     if (authLoading && (currentView === 'auth' || currentView === 'main' || currentView === 'welcome')) {
       return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background }}>
-          <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={{ marginTop: 16, color: theme.text }}>Checking authentication...</Text>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={{ marginTop: 16, color: colors.text }}>Checking authentication...</Text>
         </View>
       );
     }
@@ -212,7 +202,11 @@ function MainApp() {
     }
   };
 
-  return renderCurrentView();
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      {renderCurrentView()}
+    </View>
+  );
 }
 
 export default function App() {
