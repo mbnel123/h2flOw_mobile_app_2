@@ -6,6 +6,7 @@ import {
   updateDoc, 
   getDoc,
   getDocs,
+  deleteDoc,
   query,
   where,
   orderBy,
@@ -492,6 +493,41 @@ export const getFastHistory = async (userId: string) => {
   } catch (error: any) {
     console.error('❌ Database: Error getting fast history:', error);
     return { fasts: [], error: error.message };
+  }
+};
+
+// Update fast duration
+export const updateFast = async (fastId: string, newDuration: number) => {
+  try {
+    console.log('🔄 Database: Updating fast duration:', fastId, 'to', newDuration);
+    
+    const fastRef = doc(db, 'fasts', fastId);
+    await updateDoc(fastRef, {
+      actualDuration: newDuration,
+      updatedAt: Timestamp.fromDate(new Date())
+    });
+
+    console.log('✅ Database: Fast duration updated');
+    return { error: null };
+  } catch (error: any) {
+    console.error('❌ Database: Error updating fast:', error);
+    return { error: error.message };
+  }
+};
+
+// Delete a fast
+export const deleteFast = async (fastId: string) => {
+  try {
+    console.log('🗑️ Database: Deleting fast:', fastId);
+    
+    const fastRef = doc(db, 'fasts', fastId);
+    await deleteDoc(fastRef);
+
+    console.log('✅ Database: Fast deleted successfully');
+    return { error: null };
+  } catch (error: any) {
+    console.error('❌ Database: Error deleting fast:', error);
+    return { error: error.message };
   }
 };
 
