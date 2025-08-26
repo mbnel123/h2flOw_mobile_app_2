@@ -1,29 +1,25 @@
 // src/contexts/ThemeContext.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useColorScheme, ColorSchemeName } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-type Theme = 'light' | 'dark' | 'system';
+type Theme = 'light' | 'dark';
 
 interface ThemeContextType {
   theme: Theme;
-  resolvedTheme: 'light' | 'dark';
   setTheme: (theme: Theme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const systemTheme = useColorScheme();
-  const [theme, setThemeState] = useState<Theme>('system');
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(systemTheme || 'light');
+  const [theme, setThemeState] = useState<Theme>('light');
 
   // Load saved theme from storage
   useEffect(() => {
     const loadTheme = async () => {
       try {
         const savedTheme = await AsyncStorage.getItem('@theme');
-        if (savedTheme) {
+        if (savedTheme === 'light' || savedTheme === 'dark') {
           setThemeState(savedTheme as Theme);
         }
       } catch (error) {
@@ -32,15 +28,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
     loadTheme();
   }, []);
-
-  // Update resolved theme based on selection
-  useEffect(() => {
-    if (theme === 'system') {
-      setResolvedTheme(systemTheme || 'light');
-    } else {
-      setResolvedTheme(theme);
-    }
-  }, [theme, systemTheme]);
 
   const setTheme = async (newTheme: Theme) => {
     try {
@@ -52,7 +39,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
