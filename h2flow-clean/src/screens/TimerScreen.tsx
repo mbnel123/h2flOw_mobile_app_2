@@ -1,4 +1,3 @@
-// TimerScreen.tsx - AANGEPAST VOOR NAVIGATIE
 import React, { useEffect, useRef } from 'react';
 import { 
   View, 
@@ -7,32 +6,24 @@ import {
   StyleSheet, 
   StatusBar, 
   useColorScheme, 
-  TouchableOpacity,
   ScrollView
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { User } from 'firebase/auth';
 import { onAuthStateChange } from '../firebase/authService';
 import { useTimerLogic } from '../hooks/useTimerLogic';
-import { useMilestoneTracker } from '../components/SuccessAnimations';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../types/navigation';
 
-// Import components
+// Import success animations
+import { useMilestoneTracker, TimerCelebrations } from '../components/SuccessAnimations';
+
+// Import existing components
 import TimerLoadingSkeleton from '../components/timer/TimerLoadingSkeleton';
 import CircularProgress from '../components/timer/CircularProgress';
 import TimerControls from '../components/timer/TimerControls';
 import PhaseInfo from '../components/timer/PhaseInfo';
-import NextPhaseInfo from '../components/timer/NextPhaseInfo';
 import TemplateInfo from '../components/timer/TemplateInfo';
 import WarningModal from '../components/WarningModal';
 import TemplateSelectorScreen from './TemplateSelectorScreen';
-import TimerCelebrations from '../components/SuccessAnimations';
 
-type TimerScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Info'>;
-
-// Theme colors - Updated with baby blue
 const colors = {
   light: {
     primary: '#7DD3FC',
@@ -66,7 +57,6 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
   const isDark = useColorScheme() === 'dark';
   const theme = isDark ? colors.dark : colors.light;
   const [user, setUser] = React.useState<User | null>(null);
-  const navigation = useNavigation<TimerScreenNavigationProp>();
 
   // Refs to prevent infinite loops
   const milestonesChecked = useRef(new Set<number>());
@@ -110,19 +100,21 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
     celebrations,
     removeCelebration,
     checkMilestones, 
-    checkGoalCompletion, 
+    checkGoalCompletion,
+    checkPersonalRecord,
+    checkFastCompletion,
     resetTracking
   } = useMilestoneTracker();
 
   // Fasting phases
   const fastingPhases = [
-    { hours: 0, title: "Fast begins", description: "Using glucose from last meal" },
-    { hours: 6, title: "Glycogen use", description: "Using stored energy" },
-    { hours: 12, title: "Ketosis start", description: "Fat burning begins" },
-    { hours: 18, title: "Deep ketosis", description: "Mental clarity improves" },
+    { hours: 0, title: "Fast Begins", description: "Using glucose from last meal" },
+    { hours: 6, title: "Glycogen Use", description: "Using stored energy" },
+    { hours: 12, title: "Ketosis Start", description: "Fat burning begins" },
+    { hours: 18, title: "Deep Ketosis", description: "Mental clarity improves" },
     { hours: 24, title: "Autophagy", description: "Cellular repair starts" },
-    { hours: 48, title: "Deep autophagy", description: "Maximum cleansing" },
-    { hours: 72, title: "Immune reset", description: "Complete renewal" }
+    { hours: 48, title: "Deep Autophagy", description: "Maximum cleansing" },
+    { hours: 72, title: "Immune Reset", description: "Complete renewal" }
   ];
 
   const getProgress = () => {
@@ -149,7 +141,7 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
     return { hours, minutes, nextPhase };
   };
 
-  // Run only on mount
+  // Auth state management
   useEffect(() => {
     const unsubscribe = onAuthStateChange((user) => {
       setUser(user);
@@ -160,31 +152,64 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
     return () => unsubscribe();
   }, []);
 
-  // Milestone check
+  // Milestone checking - only when celebrations are enabled
   useEffect(() => {
     if (!isActive || !showCelebrations || elapsedTime <= 0) return;
-    const currentHours = Math.floor(elapsedTime / 3600);
-    if (currentHours !== lastElapsedHour.current && currentHours > 0) {
-      lastElapsedHour.current = currentHours;
-      if (!milestonesChecked.current.has(currentHours)) {
-        milestonesChecked.current.add(currentHours);
+    
+    const currentHours = elapsedTime / 3600; // Get precise hours
+    const flooredHour = Math.floor(currentHours);
+    
+    if (flooredHour !== lastElapsedHour.current && flooredHour > 0) {
+      lastElapsedHour.current = flooredHour;
+      
+      if (!milestonesChecked.current.has(flooredHour)) {
+        milestonesChecked.current.add(flooredHour);
+        console.log(`Checking milestones for ${flooredHour}h (actual: ${currentHours.toFixed(2)}h)`);
+        
         checkMilestones(currentHours);
         checkGoalCompletion(targetHours, currentHours);
+        
+        // Check for personal record if you have access to previous records
+        // You'll need to implement this based on your data structure
+        // checkPersonalRecord(currentHours, previousRecord);
       }
     }
-  }, [isActive, showCelebrations, elapsedTime]);
+  }, [isActive, showCelebrations, elapsedTime, targetHours]);
 
   // Reset tracking on new fast
   useEffect(() => {
     const isNewFast = isActive && startTime && elapsedTime < 60;
     if (isNewFast && !trackingInitialized.current) {
+      console.log('New fast detected - resetting milestone tracking');
       resetTracking();
       milestonesChecked.current.clear();
       lastElapsedHour.current = -1;
       trackingInitialized.current = true;
     }
-    if (!isActive) trackingInitialized.current = false;
-  }, [isActive, startTime, elapsedTime]);
+    if (!isActive) {
+      trackingInitialized.current = false;
+    }
+  }, [isActive, startTime, elapsedTime, resetTracking]);
+
+  // Handle fast completion - this should be called when stopFast is executed
+  const handleFastCompletion = () => {
+    const actualDuration = elapsedTime / 3600;
+    console.log(`Fast completed: ${actualDuration}h / ${targetHours}h`);
+    checkFastCompletion(actualDuration, targetHours);
+  };
+
+  // Override the stopFast function to trigger completion celebration
+  const handleStopFast = () => {
+    if (showCelebrations && elapsedTime > 0) {
+      handleFastCompletion();
+      // Small delay to ensure celebration shows before stopping
+      setTimeout(() => {
+        stopFast();
+      }, 100);
+    } else {
+      stopFast();
+    }
+  };
 
   const currentPhase = getCurrentPhase();
   const nextPhaseInfo = getTimeToNextPhase();
@@ -212,10 +237,11 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
         translucent
       />
 
+      {/* Success Animations */}
       {showCelebrations && (
         <TimerCelebrations
           celebrations={celebrations}
-          onRemoveCelebration={(id) => removeCelebration(id)}
+          onRemoveCelebration={removeCelebration}
         />
       )}
 
@@ -292,7 +318,7 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
           onResumeFast={resumeFast}
           onPauseFast={pauseFast}
           onStopConfirmation={() => setShowStopConfirmation(true)}
-          onConfirmStop={stopFast}
+          onConfirmStop={handleStopFast} // Use our custom stop handler
           onCancelStop={() => setShowStopConfirmation(false)}
           onShowTemplateSelector={() => setShowTemplateSelector(true)}
           onSelectTemplate={handleSelectTemplate}
@@ -335,7 +361,6 @@ const styles = StyleSheet.create({
   errorContainer: { paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1 },
   errorText: { fontSize: 14 },
   dismissText: { fontSize: 12, marginTop: 4, textDecorationLine: 'underline' },
-  contentContainer: { flex: 1, paddingHorizontal: 24 },
   templateContainer: { marginTop: 20, marginBottom: 20 },
   timerContainer: { alignItems: 'center', justifyContent: 'center', minHeight: 400, marginVertical: 20 },
   phaseContainer: { 
@@ -364,11 +389,6 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     backgroundColor: 'transparent'
   },
-  startContainer: { gap: 16, width: '100%', maxWidth: 400, alignSelf: 'center' },
-  startButton: { padding: 20, borderRadius: 16, alignItems: 'center' },
-  startButtonText: { color: 'white', fontSize: 18, fontWeight: '600' },
-  templateButton: { padding: 20, borderRadius: 16, alignItems: 'center', borderWidth: 2 },
-  templateButtonText: { fontSize: 18, fontWeight: '600' },
 });
 
 export default TimerScreen;
