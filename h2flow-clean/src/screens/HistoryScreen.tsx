@@ -17,7 +17,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { User as FirebaseUser } from 'firebase/auth';
 import { onAuthStateChange, logout } from '../firebase/authService';
 import { useHistoryData } from '../hooks/useHistoryData';
-import { Fast, FastStreak, updateFast, deleteFast } from '../firebase/databaseService';
+import { Fast, FastStreak } from '../firebase/databaseService';
+import { updateFast, deleteFast } from '../firebase/databaseService';
+
+// ... (rest of the code remains the same)
 
 // Define colors for light and dark mode
 const colors = {
