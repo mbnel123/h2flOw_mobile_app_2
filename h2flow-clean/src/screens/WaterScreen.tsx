@@ -139,12 +139,23 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   }, [remindersEnabled, reminderInterval, permissionStatus, scheduleRepeatingReminder]);
 
   const addWater = useCallback(async (amount: number) => {
-    if (!userId || !currentFast) return;
+    if (!userId || !currentFast) {
+      setError('Geen actieve vast gevonden');
+      return;
+    }
+    
     setLoading(true);
+    setError(null); // Clear previous errors
+    
     try {
-      await addWaterIntake(currentFast.id, amount);
-      setDailyWaterIntake(prev => prev + amount);
-      setLastSaved(new Date());
+      const result = await addWaterIntake(currentFast.id, amount);
+      
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setDailyWaterIntake(prev => prev + amount);
+        setLastSaved(new Date());
+      }
     } catch (e) {
       console.error('Error saving water intake', e);
       setError('Kon inname niet opslaan');
@@ -163,7 +174,7 @@ const WaterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
           <Text style={[styles.title, { color: theme.text }]}>Water Tracking</Text>
         </View>
         
-        {error && <Text style={[styles.errorText, { color: theme.textSecondary }]}>{error}</Text>}
+        {error && <Text style={[styles.errorText, { color: 'red' }]}>{error}</Text>}
 
         <View style={styles.progressContainer}>
           <Svg width={ring.size} height={ring.size}>
