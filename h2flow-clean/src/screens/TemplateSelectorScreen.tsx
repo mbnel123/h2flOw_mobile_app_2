@@ -136,16 +136,30 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
-      case 'beginner': return '🌱';
-      case 'intermediate': return '🚀';
-      case 'advanced': return '💪';
-      case 'custom': return '⭐';
-      default: return '⚡';
+      case 'beginner': return 'leaf-outline';
+      case 'intermediate': return 'rocket-outline';
+      case 'advanced': return 'fitness-outline';
+      case 'custom': return 'star-outline';
+      default: return 'flash-outline';
+    }
+  };
+
+  const getCategoryIconName = (category: string) => {
+    switch (category) {
+      case 'beginner': return 'Beginner';
+      case 'intermediate': return 'Intermediate';
+      case 'advanced': return 'Advanced';
+      case 'custom': return 'Custom';
+      default: return 'Custom';
     }
   };
 
   const currentTemplates = getCurrentTemplates();
-  const emojiOptions = ['⚡', '🔥', '💪', '🧘', '🌟', '💎', '🚀', '⭐', '🌱', '🛡️', '🔄', '🧠'];
+  const iconOptions = [
+    'flash-outline', 'flame-outline', 'fitness-outline', 'body-outline',
+    'star-outline', 'diamond-outline', 'rocket-outline', 'leaf-outline',
+    'shield-outline', 'refresh-outline', 'brain-outline', 'heart-outline'
+  ];
 
   // Create form modal
   if (showCreateForm) {
@@ -180,23 +194,23 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
             <View style={styles.formField}>
               <Text style={[styles.label, { color: theme.text }]}>Icon</Text>
               <View style={styles.iconGrid}>
-                {emojiOptions.map(emoji => (
+                {iconOptions.map(iconName => (
                   <TouchableOpacity
-                    key={emoji}
-                    onPress={() => setFormData(prev => ({ ...prev, icon: emoji }))}
+                    key={iconName}
+                    onPress={() => setFormData(prev => ({ ...prev, icon: iconName }))}
                     style={[
                       styles.iconButton,
                       { 
                         backgroundColor: theme.card, 
                         borderColor: theme.border 
                       },
-                      formData.icon === emoji && { 
+                      formData.icon === iconName && { 
                         borderColor: theme.primary,
                         backgroundColor: isDark ? '#1E3A8A' : '#EFF6FF'
                       }
                     ]}
                   >
-                    <Text style={styles.iconEmoji}>{emoji}</Text>
+                    <Ionicons name={iconName as any} size={24} color={theme.text} />
                   </TouchableOpacity>
                 ))}
               </View>
@@ -329,10 +343,16 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                   }]}
                   onPress={() => setSelectedCategory(category as any)}
                 >
+                  <Ionicons 
+                    name={getCategoryIcon(category) as any} 
+                    size={16} 
+                    color={active ? '#FFFFFF' : theme.text} 
+                    style={{ marginRight: 6 }}
+                  />
                   <Text style={[styles.categoryText, { 
                     color: active ? '#FFFFFF' : theme.text 
                   }]}>
-                    {getCategoryIcon(category)} {category.charAt(0).toUpperCase() + category.slice(1)} ({count})
+                    {getCategoryIconName(category)} ({count})
                   </Text>
                 </TouchableOpacity>
               );
@@ -383,7 +403,13 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                 >
                   {/* Header */}
                   <View style={styles.cardHeader}>
-                    <Text style={styles.cardIcon}>{template.icon}</Text>
+                    <View style={[styles.cardIconContainer, { backgroundColor: theme.backgroundSecondary }]}>
+                      <Ionicons 
+                        name={template.icon as any} 
+                        size={20} 
+                        color={theme.text} 
+                      />
+                    </View>
                     <View style={styles.cardInfo}>
                       <Text style={[styles.cardTitle, { color: theme.text }]}>{template.name}</Text>
                       <View style={styles.cardCategoryRow}>
@@ -512,7 +538,7 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                     id: 'temp_custom',
                     userId,
                     name: `${selectedDuration}h Custom Fast`,
-                    icon: '⚡',
+                    icon: 'flash-outline',
                     duration: selectedDuration,
                     category: 'custom',
                     tags: ['custom'],
@@ -558,6 +584,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   categoryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
@@ -613,9 +641,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start', 
     marginBottom: 12 
   },
-  cardIcon: { 
-    fontSize: 24, 
-    marginRight: 12 
+  cardIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   cardInfo: {
     flex: 1,
@@ -773,9 +805,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  iconEmoji: {
-    fontSize: 24,
   },
   formFooter: {
     flexDirection: 'row',
