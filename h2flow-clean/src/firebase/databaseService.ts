@@ -497,7 +497,7 @@ export const getFastHistory = async (userId: string) => {
   }
 };
 
-// Update fast duration
+// Update fast duration - FIXED: Changed to named export
 export const updateFast = async (fastId: string, newDuration: number) => {
   try {
     console.log('🔄 Database: Updating fast duration:', fastId, 'to', newDuration);
@@ -516,7 +516,7 @@ export const updateFast = async (fastId: string, newDuration: number) => {
   }
 };
 
-// Delete a fast
+// Delete a fast - FIXED: Changed to named export
 export const deleteFast = async (fastId: string) => {
   try {
     console.log('🗑️ Database: Deleting fast:', fastId);
