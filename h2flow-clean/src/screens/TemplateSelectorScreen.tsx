@@ -71,7 +71,7 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
   const getCurrentTemplates = () =>
     templates
       .filter((t) => t.category === selectedCategory)
-      .sort((a, b) => a.duration - b.duration); // Sorteer van kortste naar langste
+      .sort((a, b) => a.duration - b.duration);
 
   const handleSelectTemplate = (template: FastTemplate) => {
     templateService.useTemplate(template.id);
@@ -132,6 +132,16 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
     if (duration <= 24) return { bg: isDark ? '#1E3A8A' : '#EFF6FF', text: isDark ? '#60A5FA' : '#2563EB', border: isDark ? '#1E40AF' : '#BFDBFE' };
     if (duration <= 48) return { bg: isDark ? '#7C2D12' : '#FFF7ED', text: isDark ? '#F97316' : '#EA580C', border: isDark ? '#9A3412' : '#FED7AA' };
     return { bg: isDark ? '#7F1D1D' : '#FEF2F2', text: isDark ? '#F87171' : '#DC2626', border: isDark ? '#991B1B' : '#FECACA' };
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'beginner': return '🌱';
+      case 'intermediate': return '🚀';
+      case 'advanced': return '💪';
+      case 'custom': return '⭐';
+      default: return '⚡';
+    }
   };
 
   const currentTemplates = getCurrentTemplates();
@@ -322,7 +332,7 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                   <Text style={[styles.categoryText, { 
                     color: active ? '#FFFFFF' : theme.text 
                   }]}>
-                    {category.charAt(0).toUpperCase() + category.slice(1)} ({count})
+                    {getCategoryIcon(category)} {category.charAt(0).toUpperCase() + category.slice(1)} ({count})
                   </Text>
                 </TouchableOpacity>
               );
@@ -338,7 +348,7 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
         >
           {currentTemplates.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>📋</Text>
+              <MaterialIcons name="hourglass-empty" size={48} color={theme.textSecondary} />
               <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
                 {selectedCategory === 'custom'
                   ? 'No custom templates yet. Create your first one!'
@@ -349,6 +359,7 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                   style={[styles.createBtn, { backgroundColor: theme.primary }]}
                   onPress={() => setShowCreateForm(true)}
                 >
+                  <Ionicons name="add-circle" size={18} color="#fff" style={{ marginRight: 6 }} />
                   <Text style={styles.createBtnText}>Create Custom Template</Text>
                 </TouchableOpacity>
               )}
@@ -375,9 +386,18 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                     <Text style={styles.cardIcon}>{template.icon}</Text>
                     <View style={styles.cardInfo}>
                       <Text style={[styles.cardTitle, { color: theme.text }]}>{template.name}</Text>
-                      <Text style={[styles.cardCategory, { color: theme.textSecondary }]}>
-                        {template.category}
-                      </Text>
+                      <View style={styles.cardCategoryRow}>
+                        <Text style={[styles.cardCategory, { color: theme.textSecondary }]}>
+                          {template.category}
+                        </Text>
+                        {template.isCustom && (
+                          <View style={[styles.customBadge, { backgroundColor: theme.backgroundSecondary }]}>
+                            <Text style={[styles.customBadgeText, { color: theme.textSecondary }]}>
+                              Custom
+                            </Text>
+                          </View>
+                        )}
+                      </View>
                     </View>
                     
                     {/* Action buttons */}
@@ -385,10 +405,10 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                       {template.isCustom && (
                         <>
                           <TouchableOpacity
-                            onPress={() => setShowCreateForm(true)}
+                            onPress={() => handleDuplicateTemplate(template)}
                             style={styles.actionBtn}
                           >
-                            <Feather name="edit-3" size={16} color={theme.textSecondary} />
+                            <Feather name="copy" size={16} color={theme.success} />
                           </TouchableOpacity>
                           <TouchableOpacity
                             onPress={() => handleDeleteTemplate(template)}
@@ -398,12 +418,14 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                           </TouchableOpacity>
                         </>
                       )}
-                      <TouchableOpacity
-                        onPress={() => handleDuplicateTemplate(template)}
-                        style={styles.actionBtn}
-                      >
-                        <Feather name="copy" size={16} color={theme.success} />
-                      </TouchableOpacity>
+                      {!template.isCustom && (
+                        <TouchableOpacity
+                          onPress={() => handleDuplicateTemplate(template)}
+                          style={styles.actionBtn}
+                        >
+                          <Feather name="copy" size={16} color={theme.success} />
+                        </TouchableOpacity>
+                      )}
                     </View>
                   </View>
 
@@ -557,16 +579,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 60,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
   emptyText: { 
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 20,
+    marginTop: 10,
   },
   createBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,
@@ -603,9 +624,24 @@ const styles = StyleSheet.create({
     fontWeight: '600', 
     fontSize: 16,
   },
+  cardCategoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
   cardCategory: { 
     fontSize: 12,
     textTransform: 'capitalize',
+    marginRight: 8,
+  },
+  customBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  customBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
   },
   cardActions: { 
     flexDirection: 'row', 
