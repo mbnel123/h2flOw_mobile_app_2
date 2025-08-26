@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -23,6 +23,7 @@ import PhaseInfo from '../components/timer/PhaseInfo';
 import TemplateInfo from '../components/timer/TemplateInfo';
 import WarningModal from '../components/WarningModal';
 import TemplateSelectorScreen from './TemplateSelectorScreen';
+import ExtendedFastWarningModal from '../components/ExtendedFastWarningModal';
 
 const colors = {
   light: {
@@ -62,6 +63,10 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
   const milestonesChecked = useRef(new Set<number>());
   const lastElapsedHour = useRef(-1);
   const trackingInitialized = useRef(false);
+
+  // State for extended fast warning
+  const [showExtendedFastWarning, setShowExtendedFastWarning] = useState(false);
+  const [hasAcceptedExtendedFastRisk, setHasAcceptedExtendedFastRisk] = useState(false);
 
   // Use custom hook for timer logic
   const {
@@ -176,6 +181,24 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
     }
   }, [isActive, showCelebrations, elapsedTime, targetHours]);
 
+  // 72-hour warning check
+  useEffect(() => {
+    if (isActive && elapsedTime > 0 && showCelebrations) {
+      const currentHours = elapsedTime / 3600;
+      
+      // Toon waarschuwing bij 72 uur (of iets ervoor voor betere UX)
+      if (currentHours >= 71.5 && currentHours < 72.5 && !hasAcceptedExtendedFastRisk && !showExtendedFastWarning) {
+        // Alleen tonen als we nog niet geaccepteerd hebben en binnen het tijdvenster
+        setShowExtendedFastWarning(true);
+      }
+      
+      // Reset acceptatie als de fast stopt of onder 72 uur komt
+      if (!isActive || currentHours < 71) {
+        setHasAcceptedExtendedFastRisk(false);
+      }
+    }
+  }, [isActive, elapsedTime, showCelebrations, hasAcceptedExtendedFastRisk, showExtendedFastWarning]);
+
   // Reset tracking on new fast
   useEffect(() => {
     const isNewFast = isActive && startTime && elapsedTime < 60;
@@ -185,6 +208,9 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
       milestonesChecked.current.clear();
       lastElapsedHour.current = -1;
       trackingInitialized.current = true;
+      // Reset extended fast warning state for new fast
+      setHasAcceptedExtendedFastRisk(false);
+      setShowExtendedFastWarning(false);
     }
     if (!isActive) {
       trackingInitialized.current = false;
@@ -209,6 +235,18 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
     } else {
       stopFast();
     }
+  };
+
+  // Functions for extended fast warning modal
+  const handleAcceptExtendedFastRisk = () => {
+    setHasAcceptedExtendedFastRisk(true);
+    setShowExtendedFastWarning(false);
+  };
+
+  const handleCancelExtendedFast = () => {
+    setShowExtendedFastWarning(false);
+    // Optioneel: automatisch stoppen met fasten
+    // handleStopFast();
   };
 
   const currentPhase = getCurrentPhase();
@@ -331,6 +369,14 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
         onAccept={proceedWithFastStart}
         onCancel={() => setShowWarningModal(false)}
         targetHours={targetHours}
+        theme={theme}
+      />
+
+      <ExtendedFastWarningModal
+        isOpen={showExtendedFastWarning}
+        onAccept={handleAcceptExtendedFastRisk}
+        onCancel={handleCancelExtendedFast}
+        elapsedHours={elapsedTime / 3600}
         theme={theme}
       />
 
