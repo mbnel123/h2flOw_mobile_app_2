@@ -1,6 +1,15 @@
-// src/components/SuccessAnimations.tsx - React Native version
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Modal, Animated, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import {
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  Animated,
+  Dimensions,
+  StyleSheet,
+  StatusBar,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
@@ -15,49 +24,109 @@ interface SuccessAnimationProps {
   duration?: number;
 }
 
-export const SuccessAnimation: React.FC<SuccessAnimationProps> = ({ 
-  type, 
-  title, 
-  description, 
-  icon, 
-  onClose, 
-  autoClose = true, 
-  duration = 4000 
+export const SuccessAnimation: React.FC<SuccessAnimationProps> = ({
+  type,
+  title,
+  description,
+  icon,
+  onClose,
+  autoClose = true,
+  duration = 4000,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const [shouldRender, setShouldRender] = useState(true);
+  
+  const scaleAnim = useRef(new Animated.Value(0.3)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(-15)).current;
+  const particleAnims = useRef(
+    Array.from({ length: 12 }, () => ({
+      translateY: new Animated.Value(-50),
+      opacity: new Animated.Value(0),
+      scale: new Animated.Value(0),
+    }))
+  ).current;
 
   useEffect(() => {
     // Trigger entrance animation
-    setIsVisible(true);
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    
+    setTimeout(() => {
+      setIsVisible(true);
+      
+      // Main card animation
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 50,
+          friction: 7,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.spring(rotateAnim, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 50,
+          friction: 7,
+        }),
+      ]).start();
+
+      // Particle animations
+      particleAnims.forEach((anim, index) => {
+        setTimeout(() => {
+          Animated.parallel([
+            Animated.timing(anim.translateY, {
+              toValue: height + 100,
+              duration: 3000,
+              useNativeDriver: true,
+            }),
+            Animated.sequence([
+              Animated.timing(anim.opacity, {
+                toValue: 1,
+                duration: 200,
+                useNativeDriver: true,
+              }),
+              Animated.timing(anim.opacity, {
+                toValue: 0,
+                duration: 2800,
+                useNativeDriver: true,
+              }),
+            ]),
+            Animated.sequence([
+              Animated.spring(anim.scale, {
+                toValue: 1,
+                useNativeDriver: true,
+                tension: 50,
+              }),
+              Animated.timing(anim.scale, {
+                toValue: 0,
+                duration: 2000,
+                useNativeDriver: true,
+              }),
+            ]),
+          ]).start();
+        }, index * 100);
+      });
+    }, 100);
+
     if (autoClose) {
       const timer = setTimeout(() => {
         handleClose();
       }, duration);
-      
+
       return () => clearTimeout(timer);
     }
   }, [autoClose, duration]);
 
   const handleClose = () => {
+    setIsVisible(false);
+    
+    // Exit animation
     Animated.parallel([
       Animated.timing(scaleAnim, {
-        toValue: 0.8,
+        toValue: 0.3,
         duration: 300,
         useNativeDriver: true,
       }),
@@ -66,195 +135,165 @@ export const SuccessAnimation: React.FC<SuccessAnimationProps> = ({
         duration: 300,
         useNativeDriver: true,
       }),
+      Animated.timing(rotateAnim, {
+        toValue: type === 'milestone' ? 15 : -10,
+        duration: 300,
+        useNativeDriver: true,
+      }),
     ]).start(() => {
-      setIsVisible(false);
+      setShouldRender(false);
       onClose();
     });
   };
 
-  const getBackgroundColor = () => {
+  const getBackgroundColors = () => {
     switch (type) {
       case 'milestone':
-        return 'rgba(0, 0, 0, 0.7)';
+        return ['rgba(0, 0, 0, 0.5)', 'rgba(0, 0, 0, 0.7)'];
       case 'phase_transition':
-        return 'rgba(59, 130, 246, 0.2)';
+        return ['rgba(59, 130, 246, 0.3)', 'rgba(147, 51, 234, 0.3)'];
       case 'goal_reached':
-        return 'rgba(16, 185, 129, 0.2)';
+        return ['rgba(34, 197, 94, 0.3)', 'rgba(16, 185, 129, 0.3)'];
       case 'achievement_unlocked':
-        return 'rgba(245, 158, 11, 0.2)';
+        return ['rgba(245, 158, 11, 0.3)', 'rgba(249, 115, 22, 0.3)'];
       case 'fast_completed':
-        return 'rgba(139, 92, 246, 0.2)';
+        return ['rgba(147, 51, 234, 0.3)', 'rgba(236, 72, 153, 0.3)'];
       default:
-        return 'rgba(0, 0, 0, 0.7)';
+        return ['rgba(0, 0, 0, 0.5)', 'rgba(0, 0, 0, 0.7)'];
     }
   };
 
-  const getDefaultIcon = () => {
+  const getIconName = (): keyof typeof Ionicons.glyphMap => {
     switch (type) {
       case 'milestone':
-        return '🎯';
+        return 'target';
       case 'phase_transition':
-        return '⚡';
+        return 'flash';
       case 'goal_reached':
-        return '🏆';
+        return 'trophy';
       case 'achievement_unlocked':
-        return '🏅';
+        return 'ribbon';
       case 'fast_completed':
-        return '❤️';
+        return 'heart';
       default:
-        return '⭐';
+        return 'star';
     }
   };
 
-  if (!isVisible) return null;
+  const getIconColor = () => {
+    switch (type) {
+      case 'milestone':
+        return '#3B82F6';
+      case 'phase_transition':
+        return '#8B5CF6';
+      case 'goal_reached':
+        return '#10B981';
+      case 'achievement_unlocked':
+        return '#F59E0B';
+      case 'fast_completed':
+        return '#EC4899';
+      default:
+        return '#3B82F6';
+    }
+  };
+
+  if (!shouldRender) return null;
 
   return (
-    <Modal visible={isVisible} transparent animationType="none">
-      <View style={[styles.overlay, { backgroundColor: getBackgroundColor() }]}>
-        <TouchableOpacity 
-          style={styles.overlayTouchable} 
-          onPress={handleClose}
-          activeOpacity={1}
-        >
-          <Animated.View 
+    <Modal
+      visible={shouldRender}
+      transparent
+      animationType="none"
+      statusBarTranslucent
+      onRequestClose={handleClose}
+    >
+      <StatusBar backgroundColor="rgba(0,0,0,0.5)" barStyle="light-content" />
+      
+      <TouchableOpacity 
+        style={[styles.overlay, { backgroundColor: getBackgroundColors()[0] }]}
+        activeOpacity={1}
+        onPress={handleClose}
+      >
+        {/* Floating particles */}
+        {particleAnims.map((anim, index) => (
+          <Animated.View
+            key={index}
             style={[
-              styles.card,
+              styles.particle,
               {
-                transform: [{ scale: scaleAnim }],
-                opacity: opacityAnim,
-              }
+                left: Math.random() * (width - 20),
+                backgroundColor: ['#F59E0B', '#EF4444', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899'][
+                  Math.floor(Math.random() * 6)
+                ],
+                transform: [
+                  { translateY: anim.translateY },
+                  { scale: anim.scale },
+                  { rotate: `${Math.random() * 360}deg` },
+                ],
+                opacity: anim.opacity,
+              },
             ]}
-          >
-            {/* Floating particles effect */}
-            <View style={styles.particlesContainer}>
-              {[...Array(8)].map((_, i) => (
-                <FloatingParticle key={i} index={i} />
-              ))}
-            </View>
+          />
+        ))}
 
-            {/* Main content */}
-            <View style={styles.content}>
-              {/* Icon */}
-              <View style={styles.iconContainer}>
-                <Text style={styles.icon}>
-                  {icon || getDefaultIcon()}
-                </Text>
-              </View>
+        {/* Main content */}
+        <Animated.View
+          style={[
+            styles.card,
+            {
+              transform: [
+                { scale: scaleAnim },
+                { rotateZ: rotateAnim.interpolate({
+                  inputRange: [-15, 15],
+                  outputRange: ['-15deg', '15deg'],
+                }) },
+              ],
+              opacity: opacityAnim,
+            },
+          ]}
+        >
+          {/* Icon or Emoji */}
+          <View style={styles.iconContainer}>
+            {icon ? (
+              <Text style={styles.emoji}>{icon}</Text>
+            ) : (
+              <Ionicons
+                name={getIconName()}
+                size={48}
+                color={getIconColor()}
+              />
+            )}
+          </View>
 
-              {/* Title */}
-              <Text style={styles.title}>{title}</Text>
+          {/* Title */}
+          <Text style={styles.title}>{title}</Text>
 
-              {/* Description */}
-              <Text style={styles.description}>{description}</Text>
+          {/* Description */}
+          <Text style={styles.description}>{description}</Text>
 
-              {/* Progress bar animation */}
-              <View style={styles.progressContainer}>
-                <View style={styles.progressBar}>
-                  <ProgressBar />
-                </View>
-              </View>
+          {/* Progress bar */}
+          <View style={styles.progressContainer}>
+            <Animated.View 
+              style={[
+                styles.progressBar,
+                {
+                  width: isVisible ? '100%' : '0%',
+                },
+              ]}
+            />
+          </View>
 
-              {/* Action button */}
-              <TouchableOpacity
-                onPress={handleClose}
-                style={styles.button}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.buttonText}>Awesome! 🎉</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </TouchableOpacity>
-      </View>
+          {/* Action button */}
+          <TouchableOpacity style={styles.button} onPress={handleClose}>
+            <Text style={styles.buttonText}>Awesome! 🎉</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </TouchableOpacity>
     </Modal>
   );
 };
 
-// Floating Particle Component
-const FloatingParticle: React.FC<{ index: number }> = ({ index }) => {
-  const translateY = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(0.7)).current;
-
-  useEffect(() => {
-    const animate = () => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(translateY, {
-            toValue: -20,
-            duration: 1000 + index * 200,
-            useNativeDriver: true,
-          }),
-          Animated.timing(translateY, {
-            toValue: 0,
-            duration: 1000 + index * 200,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(opacity, {
-            toValue: 1,
-            duration: 1500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(opacity, {
-            toValue: 0.3,
-            duration: 1500,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    };
-
-    const delay = setTimeout(animate, index * 300);
-    return () => clearTimeout(delay);
-  }, [index]);
-
-  return (
-    <Animated.View
-      style={[
-        styles.particle,
-        {
-          left: `${Math.random() * 80 + 10}%`,
-          top: `${Math.random() * 80 + 10}%`,
-          transform: [{ translateY }],
-          opacity,
-        }
-      ]}
-    />
-  );
-};
-
-// Progress Bar Component
-const ProgressBar: React.FC = () => {
-  const progressAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(progressAnim, {
-      toValue: 1,
-      duration: 2000,
-      useNativeDriver: false,
-    }).start();
-  }, []);
-
-  return (
-    <Animated.View
-      style={[
-        styles.progressFill,
-        {
-          width: progressAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: ['0%', '100%'],
-          }),
-        }
-      ]}
-    />
-  );
-};
-
-// MILESTONE TRACKER HOOK (unchanged logic, just removed lucide imports)
+// Milestone Tracker Hook - Adapted for React Native
 export const useMilestoneTracker = () => {
   const [celebrations, setCelebrations] = useState<Array<{
     id: string;
@@ -320,7 +359,7 @@ export const useMilestoneTracker = () => {
           type: 'phase_transition',
           title: milestone.title,
           description: milestone.description,
-          icon: milestone.icon
+          icon: milestone.icon,
         });
       }
     });
@@ -334,7 +373,7 @@ export const useMilestoneTracker = () => {
         type: 'goal_reached',
         title: "Goal Achieved!",
         description: `Amazing! You've completed your ${targetHours}h fast. Your dedication is inspiring!`,
-        icon: "🏆"
+        icon: "🏆",
       });
     }
   };
@@ -347,13 +386,14 @@ export const useMilestoneTracker = () => {
         type: 'achievement_unlocked',
         title: "New Personal Record!",
         description: `You've beaten your previous record of ${Math.round(previousRecord)}h! You're getting stronger!`,
-        icon: "📈"
+        icon: "📈",
       });
     }
   };
 
   const checkFastCompletion = (actualDuration: number, targetDuration: number) => {
     if (hasCompletedFastRef.current) {
+      console.log('🚫 Fast completion already shown');
       return;
     }
     
@@ -366,14 +406,21 @@ export const useMilestoneTracker = () => {
         type: 'fast_completed',
         title: "Fast Completed!",
         description: `Congratulations! You've successfully completed your ${targetDuration}h fast. Time to break it mindfully!`,
-        icon: "🎊"
+        icon: "🎊",
       });
     } else if (completionRate >= 80) {
       addCelebration({
         type: 'fast_completed',
         title: "Excellent Progress!",
         description: `You completed ${Math.round(completionRate)}% of your goal. That's still a fantastic achievement!`,
-        icon: "👏"
+        icon: "👏",
+      });
+    } else if (completionRate >= 50) {
+      addCelebration({
+        type: 'fast_completed',
+        title: "Good Effort!",
+        description: `You made it ${Math.round(completionRate)}% of the way. Every fast is progress toward your goals!`,
+        icon: "💪",
       });
     }
   };
@@ -386,11 +433,11 @@ export const useMilestoneTracker = () => {
     checkGoalCompletion,
     checkPersonalRecord,
     checkFastCompletion,
-    resetTracking
+    resetTracking,
   };
 };
 
-// Main component for TimerView integration
+// Timer Celebrations Component
 export const TimerCelebrations: React.FC<{
   celebrations: Array<{
     id: string;
@@ -424,18 +471,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-  overlayTouchable: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-  },
   card: {
     backgroundColor: 'white',
     borderRadius: 24,
     padding: 32,
-    maxWidth: 350,
-    width: '100%',
+    width: width * 0.85,
+    maxWidth: 400,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -446,73 +487,65 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 20,
   },
-  particlesContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 24,
-    overflow: 'hidden',
-  },
-  particle: {
-    position: 'absolute',
-    width: 8,
-    height: 8,
-    backgroundColor: '#F59E0B',
-    borderRadius: 4,
-  },
-  content: {
-    alignItems: 'center',
-    zIndex: 10,
-  },
   iconContainer: {
     marginBottom: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  icon: {
+  emoji: {
     fontSize: 64,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 12,
+    color: '#1F2937',
     textAlign: 'center',
+    marginBottom: 12,
   },
   description: {
     fontSize: 16,
     color: '#6B7280',
-    marginBottom: 24,
     textAlign: 'center',
     lineHeight: 24,
-  },
-  progressContainer: {
-    width: '100%',
     marginBottom: 24,
   },
-  progressBar: {
+  progressContainer: {
     width: '100%',
     height: 8,
     backgroundColor: '#E5E7EB',
     borderRadius: 4,
     overflow: 'hidden',
+    marginBottom: 24,
   },
-  progressFill: {
+  progressBar: {
     height: '100%',
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#7DD3FC',
     borderRadius: 4,
   },
   button: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#7DD3FC',
     paddingHorizontal: 32,
-    paddingVertical: 12,
+    paddingVertical: 16,
     borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   buttonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
+  particle: {
+    position: 'absolute',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    top: -50,
+  },
 });
-
-export default TimerCelebrations;
