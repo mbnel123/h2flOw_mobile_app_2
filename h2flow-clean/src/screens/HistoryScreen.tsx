@@ -576,7 +576,7 @@ const FastHistoryList = ({
                   {fast.status === 'completed' ? 'Completed' : 
                    fast.status === 'stopped_early' ? 'Stopped Early' : 'Active'}
                 </Text>
-              </View>
+            </View>
             </View>
             
             <View style={styles.fastDetails}>
@@ -850,42 +850,42 @@ const HistoryScreen: React.FC = () => {
           <View style={styles.statsGrid}>
             <StatCard
               title="Total Fasts"
-              value={stats.totalFasts.toString()}
-              subtitle={`${stats.thisWeekFasts} this week`}
+              value={(stats.totalFasts || 0).toString()}
+              subtitle={`${stats.thisWeekFasts || 0} this week`}
               icon="bar-chart"
               colors={theme}
             />
             <StatCard
               title="Total Hours"
-              value={Number(stats.totalHours).toFixed(0)}
-              subtitle={`${Number(stats.totalHours / 24).toFixed(1)} days`}
+              value={Number(stats.totalHours || 0).toFixed(0)}
+              subtitle={`${Number((stats.totalHours || 0) / 24).toFixed(1)} days`}
               icon="time"
               colors={theme}
             />
             <StatCard
               title="Average Duration"
-              value={Number(stats.averageDuration).toFixed(1)}
+              value={Number(stats.averageDuration || 0).toFixed(1)}
               subtitle="hours per fast"
               icon="analytics"
               colors={theme}
             />
             <StatCard
               title="Longest Fast"
-              value={Number(stats.longestFast).toFixed(1)}
+              value={Number(stats.longestFast || 0).toFixed(1)}
               subtitle="hours"
               icon="trophy"
               colors={theme}
             />
             <StatCard
               title="Success Rate"
-              value={`${stats.completionRate}%`}
+              value={`${stats.completionRate || 0}%`}
               subtitle="completed fasts"
               icon="checkmark-circle"
               colors={theme}
             />
             <StatCard
               title="Ketosis Hours"
-              value={Number(stats.ketosisHours).toFixed(0)}
+              value={Number(stats.ketosisHours || 0).toFixed(0)}
               subtitle="12+ hour fasts"
               icon="flash"
               colors={theme}
@@ -992,48 +992,50 @@ const styles = StyleSheet.create({
   profileContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 16,
   },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
   },
   profileInfo: {
     flex: 1,
   },
   profileName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 2,
   },
   profileEmail: {
     fontSize: 14,
     marginBottom: 4,
   },
   profileDetail: {
-    fontSize: 14,
+    fontSize: 12,
     marginBottom: 4,
   },
   streakText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '500',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   section: {
     marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
-    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
   },
   sectionHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
     gap: 8,
   },
   sectionTitle: {
@@ -1044,18 +1046,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   patternCard: {
     flex: 1,
-    minWidth: '30%',
-    maxWidth: '48%',
+    minWidth: Dimensions.get('window').width / 3 - 32,
+    marginBottom: 0,
   },
   patternHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
     gap: 4,
+    marginBottom: 8,
   },
   patternTitle: {
     fontSize: 12,
@@ -1063,45 +1065,45 @@ const styles = StyleSheet.create({
   },
   patternValue: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: 2,
   },
   patternValueSmall: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
     marginBottom: 2,
   },
   patternSubtitle: {
-    fontSize: 12,
+    fontSize: 10,
     marginBottom: 8,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   statCard: {
-    width: '48%',
-    minWidth: 150,
+    width: Dimensions.get('window').width / 2 - 24,
+    marginBottom: 0,
   },
   statHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
     gap: 4,
+    marginBottom: 8,
   },
   statTitle: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
     marginBottom: 2,
   },
   statSubtitle: {
-    fontSize: 12,
+    fontSize: 10,
   },
   fastList: {
     gap: 12,
@@ -1112,13 +1114,12 @@ const styles = StyleSheet.create({
   fastHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 8,
   },
   fastTitle: {
     fontSize: 16,
     fontWeight: '600',
-    flex: 1,
   },
   statusBadge: {
     flexDirection: 'row',
@@ -1129,12 +1130,13 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   statusText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '500',
   },
   fastDetails: {
-    gap: 4,
-    marginBottom: 8,
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 12,
   },
   fastDetail: {
     flexDirection: 'row',
@@ -1142,7 +1144,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   fastDetailValue: {
-    fontSize: 14,
+    fontSize: 12,
   },
   fastActions: {
     flexDirection: 'row',
@@ -1151,10 +1153,8 @@ const styles = StyleSheet.create({
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
     gap: 4,
+    padding: 4,
   },
   editButtonText: {
     fontSize: 12,
@@ -1162,11 +1162,12 @@ const styles = StyleSheet.create({
   emptyCard: {
     alignItems: 'center',
     padding: 32,
+    marginBottom: 24,
   },
   emptyText: {
     fontSize: 14,
     textAlign: 'center',
-    marginTop: 12,
+    marginTop: 8,
   },
   modalOverlay: {
     flex: 1,
@@ -1180,7 +1181,6 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     borderRadius: 16,
     padding: 20,
-    maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1190,13 +1190,13 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   modalBody: {
     gap: 16,
   },
   modalLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
   },
   input: {
@@ -1208,13 +1208,13 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: 20,
+    gap: 8,
+    marginTop: 16,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
     gap: 4,
@@ -1224,13 +1224,16 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: 'white',
   },
+  saveButton: {
+    minWidth: 80,
+    justifyContent: 'center',
+  },
   deleteButton: {
-    marginRight: 'auto',
+    minWidth: 80,
+    justifyContent: 'center',
   },
   cancelButton: {
     borderWidth: 1,
-  },
-  saveButton: {
     minWidth: 80,
     justifyContent: 'center',
   },
@@ -1240,20 +1243,22 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     borderWidth: 1,
+    minWidth: 80,
+    justifyContent: 'center',
   },
   fastDetailRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 12,
+    paddingVertical: 4,
   },
   fastDetailLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
     minWidth: 80,
   },
   fastDetailValue: {
-    fontSize: 16,
+    fontSize: 14,
     flex: 1,
   },
   // Skeleton styles
@@ -1263,10 +1268,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   skeletonCircleLarge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    marginRight: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
   skeletonText: {
     height: 20,
@@ -1275,12 +1279,12 @@ const styles = StyleSheet.create({
   },
   skeletonTextMedium: {
     height: 16,
-    width: 100,
+    width: 80,
     borderRadius: 4,
   },
   skeletonTextSmall: {
     height: 12,
-    width: 80,
+    width: 60,
     borderRadius: 4,
   },
   skeletonButton: {
@@ -1291,9 +1295,10 @@ const styles = StyleSheet.create({
   profileSkeleton: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 16,
   },
   statCardSkeleton: {
-    width: '48%',
+    width: Dimensions.get('window').width / 2 - 24,
     height: 100,
     borderRadius: 12,
   },
