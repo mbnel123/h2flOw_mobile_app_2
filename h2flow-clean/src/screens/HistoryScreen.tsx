@@ -19,7 +19,8 @@ import { onAuthStateChange, logout } from '../firebase/authService';
 import { useHistoryData } from '../hooks/useHistoryData';
 import { Fast, FastStreak } from '../firebase/databaseService';
 import { updateFast, deleteFast } from '../firebase/databaseService';
-import { MobileShareService } from '../services/mobileShareService';
+
+// ... (rest of the code remains the same)
 
 // Define colors for light and dark mode
 const colors = {
@@ -129,7 +130,14 @@ const EditFastModal = ({
   onSave, 
   onDelete,
   colors 
-}: any) => {
+}: { 
+  visible: boolean; 
+  onClose: () => void; 
+  fast: Fast | null; 
+  onSave: (fastId: string, newDuration: number) => void;
+  onDelete: (fastId: string) => void;
+  colors: any;
+}) => {
   const [duration, setDuration] = useState('');
 
   useEffect(() => {
@@ -144,12 +152,6 @@ const EditFastModal = ({
     const newDuration = parseFloat(duration);
     if (isNaN(newDuration) || newDuration <= 0) {
       Alert.alert('Invalid Duration', 'Please enter a valid number of hours.');
-      return;
-    }
-
-    const currentDuration = Number(fast.actualDuration || fast.plannedDuration);
-    if (newDuration > currentDuration) {
-      Alert.alert('Not Allowed', 'You can only reduce the fast duration, not increase it.');
       return;
     }
 
@@ -247,62 +249,140 @@ const EditFastModal = ({
   );
 };
 
-// Info popup
-const FastInfoModal = ({ visible, onClose, fast, colors }: any) => {
-  if (!fast) return null;
-
-  const handleShare = async () => {
-    await MobileShareService.shareAchievement(
-      {
-        emoji: '⏱️',
-        title: `${Number(fast.actualDuration || fast.plannedDuration).toFixed(1)}h Fast`,
-        description: `Started on ${new Date(fast.startTime).toLocaleDateString('nl-NL')}`,
-        bgColor: colors.primary,
-      },
-      {
-        totalFasts: 1,
-        longestFast: Number(fast.actualDuration || fast.plannedDuration),
-        completionRate: 100,
-      },
-      'Me'
-    );
-    onClose();
-  };
-
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-          <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Fast Info</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={24} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-
-          <Text style={[styles.modalLabel, { color: colors.text }]}>
-            Date: {new Date(fast.startTime).toLocaleDateString('nl-NL')}
-          </Text>
-          <Text style={[styles.modalLabel, { color: colors.text }]}>
-            Duration: {Number(fast.actualDuration || fast.plannedDuration).toFixed(1)} hours
-          </Text>
-          <Text style={[styles.modalLabel, { color: colors.text }]}>Status: {fast.status}</Text>
-
-          <TouchableOpacity
-            style={[styles.button, styles.saveButton, { backgroundColor: colors.primary, marginTop: 20 }]}
-            onPress={handleShare}
-          >
-            <Ionicons name="share-social" size={16} color="white" />
-            <Text style={styles.buttonText}>Share</Text>
-          </TouchableOpacity>
-        </View>
+// Loading skeleton component
+const HistoryLoadingSkeleton = ({ colors }: { colors: any }) => (
+  <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.header, { borderBottomColor: colors.border }]}>
+      <View style={styles.headerContent}>
+        <View style={[styles.skeletonCircle, { backgroundColor: colors.border }]} />
+        <View style={[styles.skeletonText, { backgroundColor: colors.border }]} />
       </View>
-    </Modal>
-  );
-};
+      <View style={[styles.skeletonButton, { backgroundColor: colors.border }]} />
+    </View>
+
+    <ScrollView style={styles.content}>
+      {/* User Profile Skeleton */}
+      <Card colors={colors} style={styles.profileCard}>
+        <View style={styles.profileSkeleton}>
+          <View style={[styles.skeletonCircleLarge, { backgroundColor: colors.border }]} />
+          <View>
+            <View style={[styles.skeletonTextMedium, { backgroundColor: colors.border, marginBottom: 8 }]} />
+            <View style={[styles.skeletonTextSmall, { backgroundColor: colors.border, marginBottom: 4 }]} />
+            <View style={[styles.skeletonTextSmall, { backgroundColor: colors.border }]} />
+          </View>
+        </View>
+      </Card>
+
+      {/* Stats Skeleton */}
+      <View style={styles.statsGrid}>
+        {[1, 2, 3, 4, 5, 6].map(i => (
+          <View key={i} style={[styles.statCardSkeleton, { backgroundColor: colors.border }]} />
+        ))}
+      </View>
+    </ScrollView>
+  </View>
+);
+
+// User Profile Section
+const UserProfileSection = ({ 
+  user, 
+  fastingStreak, 
+  accountAgeDays, 
+  colors 
+}: { 
+  user: FirebaseUser; 
+  fastingStreak: FastStreak | null; 
+  accountAgeDays: number; 
+  colors: any;
+}) => (
+  <Card colors={colors} style={styles.profileCard}>
+    <View style={styles.profileContent}>
+      <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+        <Ionicons name="person" size={24} color="white" />
+      </View>
+      <View style={styles.profileInfo}>
+        <Text style={[styles.profileName, { color: colors.text }]}>
+          {user.displayName || 'Faster'}
+        </Text>
+        <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>
+          {user.email}
+        </Text>
+        <Text style={[styles.profileDetail, { color: colors.textSecondary }]}>
+          Fasting for {accountAgeDays} days
+        </Text>
+        {fastingStreak && (
+          <Text style={[styles.streakText, { color: colors.warning }]}>
+            <Ionicons name="flame" size={14} color={colors.warning} /> Current streak: {fastingStreak.currentStreak} days (Best: {fastingStreak.longestStreak})
+          </Text>
+        )}
+      </View>
+    </View>
+  </Card>
+);
+
+// Fasting Patterns Section
+const FastingPatternsSection = ({ stats, colors }: { stats: any; colors: any }) => (
+  <View style={styles.section}>
+    <View style={styles.sectionHeader}>
+      <Ionicons name="stats-chart" size={24} color={colors.text} />
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Fasting Patterns</Text>
+    </View>
+    
+    <View style={styles.patternsGrid}>
+      <Card colors={colors} style={styles.patternCard}>
+        <View style={styles.patternHeader}>
+          <Ionicons name="calendar" size={20} color={colors.success} />
+          <Text style={[styles.patternTitle, { color: colors.success }]}>This Year</Text>
+        </View>
+        <Text style={[styles.patternValue, { color: colors.text }]}>{stats.fastsPerYear}</Text>
+        <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Total fasts</Text>
+        <Text style={[styles.patternValueSmall, { color: colors.text }]}>
+          {Math.round(stats.hoursPerYear)}h
+        </Text>
+        <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Total hours</Text>
+      </Card>
+
+      <Card colors={colors} style={styles.patternCard}>
+        <View style={styles.patternHeader}>
+          <Ionicons name="calendar" size={20} color={colors.primary} />
+          <Text style={[styles.patternTitle, { color: colors.primary }]}>This Month</Text>
+        </View>
+        <Text style={[styles.patternValue, { color: colors.text }]}>{stats.fastsPerMonth}</Text>
+        <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Total fasts</Text>
+        <Text style={[styles.patternValueSmall, { color: colors.text }]}>
+          {Math.round(stats.hoursPerMonth)}h
+        </Text>
+        <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Total hours</Text>
+      </Card>
+
+      <Card colors={colors} style={styles.patternCard}>
+        <View style={styles.patternHeader}>
+          <Ionicons name="analytics" size={20} color={colors.info} />
+          <Text style={[styles.patternTitle, { color: colors.info }]}>Averages</Text>
+        </View>
+        <Text style={[styles.patternValue, { color: colors.text }]}>
+          {Math.round(stats.averageDuration)}h
+        </Text>
+        <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Avg duration</Text>
+        <Text style={[styles.patternValueSmall, { color: colors.text }]}>
+          {stats.completionRate}%
+        </Text>
+        <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Success rate</Text>
+      </Card>
+    </View>
+  </View>
+);
 
 // Fast History List
-const FastHistoryList = ({ fastHistory, colors, onEditFast, onInfoFast }: any) => {
+const FastHistoryList = ({ 
+  fastHistory, 
+  colors, 
+  onEditFast 
+}: { 
+  fastHistory: Fast[]; 
+  colors: any;
+  onEditFast: (fast: Fast) => void;
+}) => {
   if (fastHistory.length === 0) {
     return (
       <Card colors={colors} style={styles.emptyCard}>
@@ -316,65 +396,47 @@ const FastHistoryList = ({ fastHistory, colors, onEditFast, onInfoFast }: any) =
 
   return (
     <View style={styles.fastList}>
-      {fastHistory.slice(0, 10).map((fast: Fast) => (
-        <TouchableOpacity key={fast.id} onPress={() => onInfoFast(fast)} activeOpacity={0.7}>
+      {fastHistory.slice(0, 10).map(fast => (
+        <TouchableOpacity 
+          key={fast.id} 
+          onPress={() => onEditFast(fast)}
+          activeOpacity={0.7}
+        >
           <Card colors={colors} style={styles.fastCard}>
             <View style={styles.fastHeader}>
               <Text style={[styles.fastTitle, { color: colors.text }]}>
                 {Number(fast.plannedDuration).toFixed(2)}h Fast
               </Text>
-              <View
-                style={[
-                  styles.statusBadge,
-                  {
-                    backgroundColor:
-                      fast.status === 'completed'
-                        ? `${colors.success}20`
-                        : fast.status === 'stopped_early'
-                        ? `${colors.warning}20`
-                        : `${colors.primary}20`,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name={
-                    fast.status === 'completed'
-                      ? 'checkmark-circle'
-                      : fast.status === 'stopped_early'
-                      ? 'time'
-                      : 'refresh-circle'
-                  }
-                  size={14}
-                  color={
-                    fast.status === 'completed'
-                      ? colors.success
-                      : fast.status === 'stopped_early'
-                      ? colors.warning
-                      : colors.primary
-                  }
+              <View style={[
+                styles.statusBadge,
+                { 
+                  backgroundColor: fast.status === 'completed' ? 
+                    `${colors.success}20` : 
+                    fast.status === 'stopped_early' ? 
+                    `${colors.warning}20` : 
+                    `${colors.primary}20`
+                }
+              ]}>
+                <Ionicons 
+                  name={fast.status === 'completed' ? 'checkmark-circle' : 
+                         fast.status === 'stopped_early' ? 'time' : 'refresh-circle'} 
+                  size={14} 
+                  color={fast.status === 'completed' ? colors.success : 
+                         fast.status === 'stopped_early' ? colors.warning : colors.primary} 
                 />
-                <Text
-                  style={[
-                    styles.statusText,
-                    {
-                      color:
-                        fast.status === 'completed'
-                          ? colors.success
-                          : fast.status === 'stopped_early'
-                          ? colors.warning
-                          : colors.primary,
-                    },
-                  ]}
-                >
-                  {fast.status === 'completed'
-                    ? 'Completed'
-                    : fast.status === 'stopped_early'
-                    ? 'Stopped Early'
-                    : 'Active'}
+                <Text style={[
+                  styles.statusText,
+                  { 
+                    color: fast.status === 'completed' ? colors.success : 
+                           fast.status === 'stopped_early' ? colors.warning : colors.primary
+                  }
+                ]}>
+                  {fast.status === 'completed' ? 'Completed' : 
+                   fast.status === 'stopped_early' ? 'Stopped Early' : 'Active'}
                 </Text>
               </View>
             </View>
-
+            
             <View style={styles.fastDetails}>
               <View style={styles.fastDetail}>
                 <Ionicons name="calendar" size={14} color={colors.textSecondary} />
@@ -389,11 +451,16 @@ const FastHistoryList = ({ fastHistory, colors, onEditFast, onInfoFast }: any) =
                 </Text>
               </View>
             </View>
-
+            
             <View style={styles.fastActions}>
-              <TouchableOpacity style={styles.editButton} onPress={() => onEditFast(fast)}>
+              <TouchableOpacity 
+                style={styles.editButton}
+                onPress={() => onEditFast(fast)}
+              >
                 <Ionicons name="create" size={14} color={colors.textSecondary} />
-                <Text style={[styles.editButtonText, { color: colors.textSecondary }]}>Edit</Text>
+                <Text style={[styles.editButtonText, { color: colors.textSecondary }]}>
+                  Edit
+                </Text>
               </TouchableOpacity>
             </View>
           </Card>
@@ -409,17 +476,30 @@ const HistoryScreen: React.FC = () => {
   const theme = isDark ? colors.dark : colors.light;
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [editingFast, setEditingFast] = useState<Fast | null>(null);
-  const [infoFast, setInfoFast] = useState<Fast | null>(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
+  const [expandedSections, setExpandedSections] = useState({
+    recentFasts: true,
+    fastingPatterns: true,
+    lifetimeStats: true
+  });
 
-  const { fastHistory, fastingStreak, loading, error, stats, setError, refreshData } =
-    useHistoryData(user);
+  // Use custom hook for history data
+  const {
+    fastHistory,
+    fastingStreak,
+    loading,
+    error,
+    stats,
+    setError,
+    refreshData
+  } = useHistoryData(user);
 
+  // Listen to auth state
   useEffect(() => {
     const unsubscribe = onAuthStateChange((user) => {
       setUser(user);
     });
+
     return () => unsubscribe();
   }, []);
 
@@ -436,31 +516,38 @@ const HistoryScreen: React.FC = () => {
     setIsEditModalVisible(true);
   };
 
-  const handleInfoFast = (fast: Fast) => {
-    setInfoFast(fast);
-    setIsInfoModalVisible(true);
-  };
-
   const handleSaveFast = async (fastId: string, newDuration: number) => {
-    const result = await updateFast(fastId, newDuration);
-    if (result.error) {
-      console.error('Error updating fast:', result.error);
-      Alert.alert('Error', 'Failed to update fast duration. Please try again.');
-    } else {
-      refreshData();
+    try {
+      await updateFast(fastId, newDuration);
+      refreshData(); // Refresh data to show updated values
       Alert.alert('Success', 'Fast duration updated successfully!');
+    } catch (error) {
+      console.error('Error updating fast:', error);
+      Alert.alert('Error', 'Failed to update fast duration. Please try again.');
     }
   };
 
   const handleDeleteFast = async (fastId: string) => {
-    const result = await deleteFast(fastId);
-    if (result.error) {
-      console.error('Error deleting fast:', result.error);
-      Alert.alert('Error', 'Failed to delete fast. Please try again.');
-    } else {
-      refreshData();
+    try {
+      await deleteFast(fastId);
+      refreshData(); // Refresh data to show updated values
       Alert.alert('Success', 'Fast deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting fast:', error);
+      Alert.alert('Error', 'Failed to delete fast. Please try again.');
     }
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalVisible(false);
+    setEditingFast(null);
+  };
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
   };
 
   if (!user) {
@@ -476,34 +563,177 @@ const HistoryScreen: React.FC = () => {
     );
   }
 
-  // ... loading skeleton en andere sections zoals eerder (niet ingekort in dit bestand)
+  // Show loading skeleton
+  if (loading) {
+    return <HistoryLoadingSkeleton colors={theme} />;
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* header + sections + rest (zoals in jouw originele bestand) */}
+      {/* Header */}
+      <View style={[styles.header, { borderBottomColor: theme.border }]}>
+        <View style={styles.headerContent}>
+          <Ionicons name="person-circle" size={24} color={theme.text} />
+          <Text style={[styles.headerTitle, { color: theme.text }]}>Personal Dashboard</Text>
+        </View>
+        <TouchableOpacity
+          onPress={handleLogout}
+          style={[styles.logoutButton, { borderColor: theme.danger }]}
+        >
+          <Ionicons name="log-out" size={16} color={theme.danger} />
+          <Text style={[styles.logoutText, { color: theme.danger }]}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Error Display */}
+      {error && (
+        <View style={[styles.errorContainer, { backgroundColor: `${theme.danger}20`, borderBottomColor: theme.border }]}>
+          <Ionicons name="warning" size={16} color={theme.danger} />
+          <Text style={[styles.errorText, { color: theme.danger }]}>{error}</Text>
+          <TouchableOpacity onPress={() => setError(null)}>
+            <Text style={[styles.dismissText, { color: theme.danger }]}>Dismiss</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <ScrollView style={styles.content}>
-        <FastHistoryList
-          fastHistory={fastHistory}
+        {/* User Profile Section */}
+        <UserProfileSection 
+          user={user}
+          fastingStreak={fastingStreak}
+          accountAgeDays={stats.accountAgeDays}
           colors={theme}
-          onEditFast={handleEditFast}
-          onInfoFast={handleInfoFast}
         />
+
+        {/* Recent Fasts Section - Now at the top and collapsible */}
+        <CollapsibleSection
+          title="Recent Fasts"
+          icon="list"
+          isExpanded={expandedSections.recentFasts}
+          onToggle={() => toggleSection('recentFasts')}
+          colors={theme}
+        >
+          <FastHistoryList 
+            fastHistory={fastHistory} 
+            colors={theme}
+            onEditFast={handleEditFast}
+          />
+        </CollapsibleSection>
+
+        {/* Fasting Patterns - Now collapsible */}
+        <CollapsibleSection
+          title="Your Fasting Patterns"
+          icon="stats-chart"
+          isExpanded={expandedSections.fastingPatterns}
+          onToggle={() => toggleSection('fastingPatterns')}
+          colors={theme}
+        >
+          <View style={styles.patternsGrid}>
+            <Card colors={theme} style={styles.patternCard}>
+              <View style={styles.patternHeader}>
+                <Ionicons name="calendar" size={20} color={theme.success} />
+                <Text style={[styles.patternTitle, { color: theme.success }]}>This Year</Text>
+              </View>
+              <Text style={[styles.patternValue, { color: theme.text }]}>{stats.fastsPerYear}</Text>
+              <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Total fasts</Text>
+              <Text style={[styles.patternValueSmall, { color: theme.text }]}>
+                {Math.round(stats.hoursPerYear)}h
+              </Text>
+              <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Total hours</Text>
+            </Card>
+
+            <Card colors={theme} style={styles.patternCard}>
+              <View style={styles.patternHeader}>
+                <Ionicons name="calendar" size={20} color={theme.primary} />
+                <Text style={[styles.patternTitle, { color: theme.primary }]}>This Month</Text>
+              </View>
+              <Text style={[styles.patternValue, { color: theme.text }]}>{stats.fastsPerMonth}</Text>
+              <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Total fasts</Text>
+              <Text style={[styles.patternValueSmall, { color: theme.text }]}>
+                {Math.round(stats.hoursPerMonth)}h
+              </Text>
+              <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Total hours</Text>
+            </Card>
+
+            <Card colors={theme} style={styles.patternCard}>
+              <View style={styles.patternHeader}>
+                <Ionicons name="analytics" size={20} color={theme.info} />
+                <Text style={[styles.patternTitle, { color: theme.info }]}>Averages</Text>
+              </View>
+              <Text style={[styles.patternValue, { color: theme.text }]}>
+                {Math.round(stats.averageDuration)}h
+              </Text>
+              <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Avg duration</Text>
+              <Text style={[styles.patternValueSmall, { color: theme.text }]}>
+                {stats.completionRate}%
+              </Text>
+              <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Success rate</Text>
+            </Card>
+          </View>
+        </CollapsibleSection>
+
+        {/* Lifetime Stats - Now collapsible */}
+        <CollapsibleSection
+          title="Lifetime Stats"
+          icon="trophy"
+          isExpanded={expandedSections.lifetimeStats}
+          onToggle={() => toggleSection('lifetimeStats')}
+          colors={theme}
+        >
+          <View style={styles.statsGrid}>
+            <StatCard
+              title="Total Fasts"
+              value={stats.totalFasts.toString()}
+              subtitle={`${stats.thisWeekFasts} this week`}
+              icon="bar-chart"
+              colors={theme}
+            />
+            <StatCard
+              title="Total Hours"
+              value={Number(stats.totalHours).toFixed(0)}
+              subtitle={`${Number(stats.totalHours / 24).toFixed(1)} days`}
+              icon="time"
+              colors={theme}
+            />
+            <StatCard
+              title="Average Duration"
+              value={Number(stats.averageDuration).toFixed(1)}
+              subtitle="hours per fast"
+              icon="analytics"
+              colors={theme}
+            />
+            <StatCard
+              title="Longest Fast"
+              value={Number(stats.longestFast).toFixed(1)}
+              subtitle="hours"
+              icon="trophy"
+              colors={theme}
+            />
+            <StatCard
+              title="Success Rate"
+              value={`${stats.completionRate}%`}
+              subtitle="completed fasts"
+              icon="checkmark-circle"
+              colors={theme}
+            />
+            <StatCard
+              title="Ketosis Hours"
+              value={Number(stats.ketosisHours).toFixed(0)}
+              subtitle="12+ hour fasts"
+              icon="flash"
+              colors={theme}
+            />
+          </View>
+        </CollapsibleSection>
       </ScrollView>
 
+      {/* Edit Fast Modal */}
       <EditFastModal
         visible={isEditModalVisible}
-        onClose={() => setIsEditModalVisible(false)}
+        onClose={closeEditModal}
         fast={editingFast}
         onSave={handleSaveFast}
         onDelete={handleDeleteFast}
-        colors={theme}
-      />
-
-      <FastInfoModal
-        visible={isInfoModalVisible}
-        onClose={() => setIsInfoModalVisible(false)}
-        fast={infoFast}
         colors={theme}
       />
     </SafeAreaView>
@@ -511,9 +741,368 @@ const HistoryScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  // jouw bestaande styles ongewijzigd
-  container: { flex: 1 },
-  // ... rest
+  container: {
+    flex: 1,
+  },
+  authContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  authText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 4,
+  },
+  logoutText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    gap: 8,
+  },
+  errorText: {
+    fontSize: 14,
+    flex: 1,
+  },
+  dismissText: {
+    fontSize: 12,
+    textDecorationLine: 'underline',
+  },
+  content: {
+    flex: 1,
+    padding: 16,
+  },
+  card: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 16,
+  },
+  profileCard: {
+    marginBottom: 24,
+  },
+  profileContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  profileEmail: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  profileDetail: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  streakText: {
+    fontSize: 12,
+    fontWeight: '500',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    padding: 8,
+    borderRadius: 8,
+  },
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  patternsGrid: {
+    gap: 12,
+  },
+  patternCard: {
+    marginBottom: 12,
+  },
+  patternHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  patternTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  patternValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  patternValueSmall: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+    marginTop: 8,
+  },
+  patternSubtitle: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  statCard: {
+    width: Dimensions.get('window').width / 2 - 24,
+    marginBottom: 12,
+  },
+  statHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
+  statTitle: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  statSubtitle: {
+    fontSize: 11,
+  },
+  fastList: {
+    gap: 12,
+  },
+  fastCard: {
+    marginBottom: 12,
+  },
+  fastHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  fastTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  fastDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  fastDetail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  fastDetailValue: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  fastActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 6,
+    gap: 4,
+  },
+  editButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  emptyCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    gap: 16,
+  },
+  emptyText: {
+    textAlign: 'center',
+    fontSize: 14,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    borderRadius: 16,
+    padding: 20,
+    maxWidth: 400,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  modalBody: {
+    gap: 16,
+  },
+  modalLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginTop: 20,
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 8,
+    gap: 8,
+    flex: 1,
+  },
+  deleteButton: {
+    backgroundColor: '#DC2626',
+  },
+  cancelButton: {
+    borderWidth: 1,
+  },
+  saveButton: {
+    backgroundColor: '#059669',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  // Skeleton styles
+  skeletonCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 12,
+  },
+  skeletonCircleLarge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    marginRight: 16,
+  },
+  skeletonText: {
+    height: 20,
+    width: 120,
+    borderRadius: 4,
+  },
+  skeletonTextMedium: {
+    height: 24,
+    width: 160,
+    borderRadius: 4,
+  },
+  skeletonTextSmall: {
+    height: 16,
+    width: 100,
+    borderRadius: 4,
+  },
+  skeletonButton: {
+    width: 80,
+    height: 36,
+    borderRadius: 8,
+  },
+  statCardSkeleton: {
+    width: Dimensions.get('window').width / 2 - 24,
+    height: 100,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  profileSkeleton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
 });
 
 export default HistoryScreen;
