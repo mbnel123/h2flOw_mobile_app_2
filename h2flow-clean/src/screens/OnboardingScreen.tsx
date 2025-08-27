@@ -17,13 +17,15 @@ interface OnboardingProps {
   setOnboardingStep: (step: number) => void;
   setShowOnboarding: (show: boolean) => void;
   setCurrentView: (view: string) => void;
+  onComplete: () => void;
 }
 
 const OnboardingScreen: React.FC<OnboardingProps> = ({
   onboardingStep,
   setOnboardingStep,
   setShowOnboarding,
-  setCurrentView
+  setCurrentView,
+  onComplete
 }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -133,10 +135,7 @@ const OnboardingScreen: React.FC<OnboardingProps> = ({
           ) : (
             <TouchableOpacity
               style={[styles.nextButton, { backgroundColor: colors.primary }]}
-              onPress={() => {
-                setShowOnboarding(false);
-                setCurrentView('welcome');
-              }}
+              onPress={onComplete}
             >
               <Text style={styles.nextButtonText}>Get Started</Text>
             </TouchableOpacity>
