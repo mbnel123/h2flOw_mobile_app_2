@@ -1,5 +1,5 @@
 // src/screens/HistoryScreen.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -20,8 +20,6 @@ import { onAuthStateChange, logout } from '../firebase/authService';
 import { useHistoryData } from '../hooks/useHistoryData';
 import { Fast, FastStreak } from '../firebase/databaseService';
 import { updateFast, deleteFast } from '../firebase/databaseService';
-
-// ... (rest of the code remains the same)
 
 // Define colors for light and dark mode
 const colors = {
