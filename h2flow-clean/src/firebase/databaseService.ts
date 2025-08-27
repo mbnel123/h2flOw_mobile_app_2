@@ -533,7 +533,130 @@ export const deleteFast = async (fastId: string) => {
 };
 
 // Calculate user's fasting streaks
-export const calculateFastingStreak = async (userId: string): Promise<{ streak: FastStreak | null, error: string | null }> => {
+export const getFastingStreak = async (userId: string): Promise<FastStreak | null> => {
+  try {
+    console.log('🔥 Database: Calculating fasting streak for user:', userId);
+    
+    const { streak, error } = await calculateFastingStreak(userId);
+    if (error) {
+      console.error('❌ Database: Error getting fasting streak:', error);
+      return null;
+    }
+    return streak;
+  } catch (error: any) {
+    console.error('❌ Database: Error getting fasting streak:', error);
+    return null;
+  }
+};
+
+// Get user's fasting statistics
+export const getFastingStats = async (userId: string): Promise<any> => {
+  try {
+    console.log('📊 Database: Getting fasting stats for user:', userId);
+    
+    const q = query(
+      collection(db, 'fasts'),
+      where('userId', '==', userId),
+      orderBy('startTime', 'desc')
+    );
+
+    const querySnapshot = await getDocs(q);
+    const fasts: Fast[] = [];
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      fasts.push({
+        id: doc.id,
+        userId: data.userId,
+        startTime: data.startTime.toDate(),
+        endTime: data.endTime ? data.endTime.toDate() : undefined,
+        plannedDuration: data.plannedDuration,
+        actualDuration: data.actualDuration,
+        status: data.status,
+        notes: data.notes,
+        createdAt: data.createdAt.toDate(),
+        updatedAt: data.updatedAt.toDate(),
+        waterIntake: []
+      });
+    });
+
+    // Calculate statistics
+    const completedFasts = fasts.filter(fast => fast.status === 'completed');
+    const totalFasts = completedFasts.length;
+    const totalHours = completedFasts.reduce((sum, fast) => sum + (fast.actualDuration || fast.plannedDuration), 0);
+    const averageDuration = totalFasts > 0 ? totalHours / totalFasts : 0;
+    const longestFast = completedFasts.length > 0 
+      ? Math.max(...completedFasts.map(fast => fast.actualDuration || fast.plannedDuration))
+      : 0;
+    
+    const thisWeekFasts = completedFasts.filter(fast => {
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      return fast.endTime && fast.endTime > oneWeekAgo;
+    }).length;
+
+    const ketosisFasts = completedFasts.filter(fast => (fast.actualDuration || fast.plannedDuration) >= 12);
+    const ketosisHours = ketosisFasts.reduce((sum, fast) => sum + (fast.actualDuration || fast.plannedDuration), 0);
+
+    const completionRate = totalFasts > 0 
+      ? Math.round((completedFasts.length / fasts.filter(fast => fast.status !== 'active').length) * 100)
+      : 0;
+
+    // Calculate account age (assuming user creation date is when first fast was created)
+    const accountAgeDays = fasts.length > 0 
+      ? Math.ceil((new Date().getTime() - new Date(fasts[fasts.length - 1].createdAt).getTime()) / (1000 * 60 * 60 * 24))
+      : 0;
+
+    // Monthly and yearly stats
+    const now = new Date();
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
+    
+    const fastsPerMonth = completedFasts.filter(fast => {
+      const fastDate = new Date(fast.startTime);
+      return fastDate.getMonth() === thisMonth && fastDate.getFullYear() === thisYear;
+    }).length;
+
+    const hoursPerMonth = completedFasts.filter(fast => {
+      const fastDate = new Date(fast.startTime);
+      return fastDate.getMonth() === thisMonth && fastDate.getFullYear() === thisYear;
+    }).reduce((sum, fast) => sum + (fast.actualDuration || fast.plannedDuration), 0);
+
+    const fastsPerYear = completedFasts.filter(fast => {
+      const fastDate = new Date(fast.startTime);
+      return fastDate.getFullYear() === thisYear;
+    }).length;
+
+    const hoursPerYear = completedFasts.filter(fast => {
+      const fastDate = new Date(fast.startTime);
+      return fastDate.getFullYear() === thisYear;
+    }).reduce((sum, fast) => sum + (fast.actualDuration || fast.plannedDuration), 0);
+
+    const stats = {
+      totalFasts,
+      totalHours,
+      averageDuration,
+      longestFast,
+      thisWeekFasts,
+      ketosisHours,
+      completionRate,
+      accountAgeDays,
+      fastsPerMonth,
+      hoursPerMonth,
+      fastsPerYear,
+      hoursPerYear
+    };
+
+    console.log('✅ Database: Fasting stats calculated:', stats);
+    return stats;
+  } catch (error: any) {
+    console.error('❌ Database: Error getting fasting stats:', error);
+    return {};
+  }
+};
+
+// Calculate user's fasting streaks (internal function)
+const calculateFastingStreak = async (userId: string): Promise<{ streak: FastStreak | null, error: string | null }> => {
   try {
     console.log('🔥 Database: Calculating fasting streak for user:', userId);
     
@@ -684,3 +807,6 @@ export const calculateFastingStreak = async (userId: string): Promise<{ streak: 
     return { streak: null, error: error.message };
   }
 };
+
+// Alias for getFastHistory to maintain backward compatibility
+export const getFastingHistory = getFastHistory;
