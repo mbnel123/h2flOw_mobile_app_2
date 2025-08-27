@@ -177,8 +177,6 @@ function MainApp() {
             setShowTermsOfService={setShowTermsOfService}
           />
         );
-      case 'welcome':
-        return <WelcomeScreen setCurrentView={setCurrentView} />;
       case 'onboarding':
         return (
           <OnboardingScreen
