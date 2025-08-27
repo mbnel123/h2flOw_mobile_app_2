@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { 
-  getFastingHistory, 
+  getFastHistory, 
   getFastingStreak, 
   getFastingStats,
   Fast,
@@ -29,13 +29,13 @@ export const useHistoryData = (user: FirebaseUser | null) => {
       setLoading(true);
       setError(null);
 
-      const [history, streak, statistics] = await Promise.all([
-        getFastingHistory(user.uid),
+      const [historyResult, streak, statistics] = await Promise.all([
+        getFastHistory(user.uid),
         getFastingStreak(user.uid),
         getFastingStats(user.uid)
       ]);
 
-      setFastHistory(history);
+      setFastHistory(historyResult.fasts || []);
       setFastingStreak(streak);
       setStats(statistics);
     } catch (err) {
