@@ -650,6 +650,15 @@ const HistoryScreen: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
+  // Create a stable reference to refreshData
+  const handleRefreshData = useCallback(() => {
+    if (refreshData && typeof refreshData === 'function') {
+      refreshData();
+    } else {
+      console.warn('refreshData is not available');
+    }
+  }, [refreshData]);
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -672,7 +681,7 @@ const HistoryScreen: React.FC = () => {
   const handleSaveFast = async (fastId: string, newDuration: number) => {
     try {
       await updateFast(fastId, newDuration);
-      refreshData(); // Refresh data to show updated values
+      handleRefreshData(); // Use the stable reference
       Alert.alert('Success', 'Fast duration updated successfully!');
     } catch (error) {
       console.error('Error updating fast:', error);
@@ -683,7 +692,7 @@ const HistoryScreen: React.FC = () => {
   const handleDeleteFast = async (fastId: string) => {
     try {
       await deleteFast(fastId);
-      refreshData(); // Refresh data to show updated values
+      handleRefreshData(); // Use the stable reference
       Alert.alert('Success', 'Fast deleted successfully!');
     } catch (error) {
       console.error('Error deleting fast:', error);
