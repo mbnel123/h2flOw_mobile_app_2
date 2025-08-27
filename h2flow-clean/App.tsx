@@ -1,10 +1,11 @@
-// App.tsx - AANGEPAST VOOR THEME SUPPORT
+// App.tsx - AANGEPAST ZONDER WELCOME SCREEN EN MET VERBETERDE ONBOARDING LOGICA
 import React, { useState, useEffect } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import Firebase auth service
 import { onAuthStateChange, User } from './src/firebase/authService';
@@ -124,15 +125,35 @@ function MainApp() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const colors = getColors(isDark);
-  const [currentView, setCurrentView] = useState('age-verification');
+  const [currentView, setCurrentView] = useState('loading');
   const [onboardingStep, setOnboardingStep] = useState(0);
-  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [ageVerified, setAgeVerified] = useState(false);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showTermsOfService, setShowTermsOfService] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [onboardingLoading, setOnboardingLoading] = useState(true);
 
+  // Check of onboarding al is voltooid
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      try {
+        const value = await AsyncStorage.getItem('@hasCompletedOnboarding');
+        if (value !== null) {
+          setHasCompletedOnboarding(JSON.parse(value));
+        }
+        setOnboardingLoading(false);
+      } catch (error) {
+        console.error('Error reading onboarding status:', error);
+        setOnboardingLoading(false);
+      }
+    };
+
+    checkOnboardingStatus();
+  }, []);
+
+  // Auth state listener
   useEffect(() => {
     console.log('🔄 App: Setting up auth state listener');
     
@@ -145,8 +166,14 @@ function MainApp() {
         console.log('✅ App: User authenticated, redirecting to main app');
         setCurrentView('main');
       } else if (currentView === 'main') {
-        console.log('🚪 App: User logged out, going back to welcome');
-        setCurrentView('welcome');
+        console.log('🚪 App: User logged out, determining next view');
+        // Als gebruiker uitlogt, ga naar auth screen als onboarding al is voltooid
+        // of naar age verification als het de eerste keer is
+        if (hasCompletedOnboarding) {
+          setCurrentView('auth');
+        } else {
+          setCurrentView('age-verification');
+        }
       }
     });
 
@@ -154,14 +181,37 @@ function MainApp() {
       console.log('🧹 App: Cleaning up auth listener');
       unsubscribe();
     };
-  }, [currentView]);
+  }, [currentView, hasCompletedOnboarding]);
+
+  // Bepaal de juiste view wanneer auth en onboarding loading klaar zijn
+  useEffect(() => {
+    if (!authLoading && !onboardingLoading) {
+      if (user) {
+        setCurrentView('main');
+      } else if (hasCompletedOnboarding) {
+        setCurrentView('auth');
+      } else {
+        setCurrentView('age-verification');
+      }
+    }
+  }, [authLoading, onboardingLoading, user, hasCompletedOnboarding]);
+
+  const handleOnboardingComplete = async () => {
+    try {
+      await AsyncStorage.setItem('@hasCompletedOnboarding', JSON.stringify(true));
+      setHasCompletedOnboarding(true);
+      setCurrentView('auth');
+    } catch (error) {
+      console.error('Error saving onboarding status:', error);
+    }
+  };
 
   const renderCurrentView = () => {
-    if (authLoading && (currentView === 'auth' || currentView === 'main' || currentView === 'welcome')) {
+    if (authLoading || onboardingLoading) {
       return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={{ marginTop: 16, color: colors.text }}>Checking authentication...</Text>
+          <Text style={{ marginTop: 16, color: colors.text }}>Loading...</Text>
         </View>
       );
     }
@@ -172,7 +222,7 @@ function MainApp() {
           <AgeVerification
             setAgeVerified={setAgeVerified}
             setCurrentView={setCurrentView}
-            showOnboarding={showOnboarding}
+            showOnboarding={!hasCompletedOnboarding}
             setShowPrivacyPolicy={setShowPrivacyPolicy}
             setShowTermsOfService={setShowTermsOfService}
           />
@@ -182,8 +232,9 @@ function MainApp() {
           <OnboardingScreen
             onboardingStep={onboardingStep}
             setOnboardingStep={setOnboardingStep}
-            setShowOnboarding={setShowOnboarding}
+            setShowOnboarding={() => {}}
             setCurrentView={setCurrentView}
+            onComplete={handleOnboardingComplete}
           />
         );
       case 'auth':
@@ -194,8 +245,14 @@ function MainApp() {
             <StackNavigator />
           </NavigationContainer>
         );
+      case 'loading':
       default:
-        return <WelcomeScreen setCurrentView={setCurrentView} />;
+        return (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={{ marginTop: 16, color: colors.text }}>Loading...</Text>
+          </View>
+        );
     }
   };
 
