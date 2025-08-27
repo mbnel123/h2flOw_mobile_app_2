@@ -14,7 +14,6 @@ import TimerScreen from './src/screens/TimerScreen';
 import WaterScreen from './src/screens/WaterScreen'; 
 import HistoryScreen from './src/screens/HistoryScreen';
 import InfoScreen from './src/screens/InfoScreen';
-import WelcomeScreen from './src/screens/WelcomeScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import AuthScreen from './src/screens/AuthScreen';
 import AgeVerification from './src/screens/AgeVerification';
