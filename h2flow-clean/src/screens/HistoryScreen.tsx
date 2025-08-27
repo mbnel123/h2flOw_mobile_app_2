@@ -12,6 +12,7 @@ import {
   Modal,
   TextInput,
   Alert,
+  Share,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { User as FirebaseUser } from 'firebase/auth';
@@ -139,10 +140,13 @@ const EditFastModal = ({
   colors: any;
 }) => {
   const [duration, setDuration] = useState('');
+  const [originalDuration, setOriginalDuration] = useState(0);
 
   useEffect(() => {
     if (fast) {
-      setDuration(Number(fast.actualDuration || fast.plannedDuration).toFixed(1));
+      const originalDur = Number(fast.actualDuration || fast.plannedDuration);
+      setOriginalDuration(originalDur);
+      setDuration(originalDur.toFixed(1));
     }
   }, [fast]);
 
@@ -152,6 +156,12 @@ const EditFastModal = ({
     const newDuration = parseFloat(duration);
     if (isNaN(newDuration) || newDuration <= 0) {
       Alert.alert('Invalid Duration', 'Please enter a valid number of hours.');
+      return;
+    }
+
+    // Prevent increasing the duration
+    if (newDuration > originalDuration) {
+      Alert.alert('Invalid Duration', 'You can only decrease the duration, not increase it.');
       return;
     }
 
@@ -203,7 +213,11 @@ const EditFastModal = ({
             </Text>
             
             <Text style={[styles.modalLabel, { color: colors.text }]}>
-              Duration (hours):
+              Original Duration: {originalDuration.toFixed(1)} hours
+            </Text>
+
+            <Text style={[styles.modalLabel, { color: colors.text }]}>
+              New Duration (hours):
             </Text>
             <TextInput
               style={[styles.input, { 
@@ -214,7 +228,7 @@ const EditFastModal = ({
               value={duration}
               onChangeText={setDuration}
               keyboardType="numeric"
-              placeholder="Enter duration in hours"
+              placeholder="Enter new duration (cannot exceed original)"
               placeholderTextColor={colors.textSecondary}
             />
 
@@ -240,6 +254,136 @@ const EditFastModal = ({
               >
                 <Ionicons name="save" size={16} color="white" />
                 <Text style={styles.buttonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// Fast Details Modal Component
+const FastDetailsModal = ({ 
+  visible, 
+  onClose, 
+  fast, 
+  onEdit,
+  colors 
+}: { 
+  visible: boolean; 
+  onClose: () => void; 
+  fast: Fast | null; 
+  onEdit: (fast: Fast) => void;
+  colors: any;
+}) => {
+  const handleShare = async () => {
+    if (!fast) return;
+
+    try {
+      const shareContent = {
+        message: `I completed a ${Number(fast.actualDuration || fast.plannedDuration).toFixed(1)} hour fast! 🎉\n\nStarted: ${new Date(fast.startTime).toLocaleDateString('nl-NL')}\nStatus: ${fast.status === 'completed' ? 'Completed' : 'Stopped Early'}`,
+        title: 'My Fasting Achievement'
+      };
+
+      await Share.share(shareContent);
+    } catch (error) {
+      console.error('Error sharing fast:', error);
+      Alert.alert('Error', 'Failed to share fast. Please try again.');
+    }
+  };
+
+  const handleEdit = () => {
+    if (fast) {
+      onEdit(fast);
+      onClose();
+    }
+  };
+
+  if (!fast) return null;
+
+  return (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Fast Details</Text>
+            <TouchableOpacity onPress={onClose}>
+              <Ionicons name="close" size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalBody}>
+            <View style={styles.fastDetailRow}>
+              <Ionicons name="time" size={20} color={colors.textSecondary} />
+              <Text style={[styles.fastDetailLabel, { color: colors.text }]}>Duration:</Text>
+              <Text style={[styles.fastDetailValue, { color: colors.text }]}>
+                {Number(fast.actualDuration || fast.plannedDuration).toFixed(1)} hours
+              </Text>
+            </View>
+
+            <View style={styles.fastDetailRow}>
+              <Ionicons name="calendar" size={20} color={colors.textSecondary} />
+              <Text style={[styles.fastDetailLabel, { color: colors.text }]}>Start Date:</Text>
+              <Text style={[styles.fastDetailValue, { color: colors.text }]}>
+                {new Date(fast.startTime).toLocaleDateString('nl-NL')}
+              </Text>
+            </View>
+
+            <View style={styles.fastDetailRow}>
+              <Ionicons name="flag" size={20} color={colors.textSecondary} />
+              <Text style={[styles.fastDetailLabel, { color: colors.text }]}>Status:</Text>
+              <View style={[
+                styles.statusBadge,
+                { 
+                  backgroundColor: fast.status === 'completed' ? 
+                    `${colors.success}20` : 
+                    `${colors.warning}20`
+                }
+              ]}>
+                <Ionicons 
+                  name={fast.status === 'completed' ? 'checkmark-circle' : 'time'} 
+                  size={14} 
+                  color={fast.status === 'completed' ? colors.success : colors.warning} 
+                />
+                <Text style={[
+                  styles.statusText,
+                  { 
+                    color: fast.status === 'completed' ? colors.success : colors.warning
+                  }
+                ]}>
+                  {fast.status === 'completed' ? 'Completed' : 'Stopped Early'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.button, styles.shareButton, { backgroundColor: colors.primary }]}
+                onPress={handleShare}
+              >
+                <Ionicons name="share-social" size={16} color="white" />
+                <Text style={styles.buttonText}>Share</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.button, styles.editButton, { borderColor: colors.border }]}
+                onPress={handleEdit}
+              >
+                <Ionicons name="create" size={16} color={colors.text} />
+                <Text style={[styles.buttonText, { color: colors.text }]}>Edit</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.button, styles.closeButton, { borderColor: colors.border }]}
+                onPress={onClose}
+              >
+                <Text style={[styles.buttonText, { color: colors.text }]}>Close</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -377,11 +521,11 @@ const FastingPatternsSection = ({ stats, colors }: { stats: any; colors: any }) 
 const FastHistoryList = ({ 
   fastHistory, 
   colors, 
-  onEditFast 
+  onFastPress 
 }: { 
   fastHistory: Fast[]; 
   colors: any;
-  onEditFast: (fast: Fast) => void;
+  onFastPress: (fast: Fast) => void;
 }) => {
   if (fastHistory.length === 0) {
     return (
@@ -399,7 +543,7 @@ const FastHistoryList = ({
       {fastHistory.slice(0, 10).map(fast => (
         <TouchableOpacity 
           key={fast.id} 
-          onPress={() => onEditFast(fast)}
+          onPress={() => onFastPress(fast)}
           activeOpacity={0.7}
         >
           <Card colors={colors} style={styles.fastCard}>
@@ -455,11 +599,14 @@ const FastHistoryList = ({
             <View style={styles.fastActions}>
               <TouchableOpacity 
                 style={styles.editButton}
-                onPress={() => onEditFast(fast)}
+                onPress={(e) => {
+                  e.stopPropagation(); // Prevent triggering the parent onPress
+                  onFastPress(fast);
+                }}
               >
-                <Ionicons name="create" size={14} color={colors.textSecondary} />
+                <Ionicons name="information-circle" size={14} color={colors.textSecondary} />
                 <Text style={[styles.editButtonText, { color: colors.textSecondary }]}>
-                  Edit
+                  Details
                 </Text>
               </TouchableOpacity>
             </View>
@@ -475,7 +622,9 @@ const HistoryScreen: React.FC = () => {
   const isDark = useColorScheme() === 'dark';
   const theme = isDark ? colors.dark : colors.light;
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [selectedFast, setSelectedFast] = useState<Fast | null>(null);
   const [editingFast, setEditingFast] = useState<Fast | null>(null);
+  const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     recentFasts: true,
@@ -511,9 +660,15 @@ const HistoryScreen: React.FC = () => {
     }
   };
 
+  const handleFastPress = (fast: Fast) => {
+    setSelectedFast(fast);
+    setIsDetailsModalVisible(true);
+  };
+
   const handleEditFast = (fast: Fast) => {
     setEditingFast(fast);
     setIsEditModalVisible(true);
+    setIsDetailsModalVisible(false);
   };
 
   const handleSaveFast = async (fastId: string, newDuration: number) => {
@@ -536,6 +691,11 @@ const HistoryScreen: React.FC = () => {
       console.error('Error deleting fast:', error);
       Alert.alert('Error', 'Failed to delete fast. Please try again.');
     }
+  };
+
+  const closeDetailsModal = () => {
+    setIsDetailsModalVisible(false);
+    setSelectedFast(null);
   };
 
   const closeEditModal = () => {
@@ -616,7 +776,7 @@ const HistoryScreen: React.FC = () => {
           <FastHistoryList 
             fastHistory={fastHistory} 
             colors={theme}
-            onEditFast={handleEditFast}
+            onFastPress={handleFastPress}
           />
         </CollapsibleSection>
 
@@ -726,6 +886,15 @@ const HistoryScreen: React.FC = () => {
           </View>
         </CollapsibleSection>
       </ScrollView>
+
+      {/* Fast Details Modal */}
+      <FastDetailsModal
+        visible={isDetailsModalVisible}
+        onClose={closeDetailsModal}
+        fast={selectedFast}
+        onEdit={handleEditFast}
+        colors={theme}
+      />
 
       {/* Edit Fast Modal */}
       <EditFastModal
@@ -838,30 +1007,26 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   profileDetail: {
-    fontSize: 12,
+    fontSize: 14,
     marginBottom: 4,
   },
   streakText: {
-    fontSize: 12,
-    fontWeight: '500',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+    fontSize: 14,
+    fontWeight: '600',
   },
   section: {
     marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
-    padding: 8,
-    borderRadius: 8,
+    gap: 8,
   },
   sectionHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
     gap: 8,
   },
   sectionTitle: {
@@ -869,79 +1034,84 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   patternsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
+    marginBottom: 16,
   },
   patternCard: {
-    marginBottom: 12,
+    flex: 1,
+    minWidth: '30%',
+    maxWidth: '48%',
   },
   patternHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    gap: 8,
+    marginBottom: 8,
+    gap: 4,
   },
   patternTitle: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
   },
   patternValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   patternValueSmall: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
-    marginTop: 8,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 2,
   },
   patternSubtitle: {
     fontSize: 12,
-    marginBottom: 4,
+    marginBottom: 8,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
     gap: 12,
+    marginBottom: 16,
   },
   statCard: {
-    width: Dimensions.get('window').width / 2 - 24,
-    marginBottom: 12,
+    width: '48%',
+    minWidth: 150,
   },
   statHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
-    gap: 8,
+    gap: 4,
   },
   statTitle: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   statValue: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   statSubtitle: {
-    fontSize: 11,
+    fontSize: 12,
   },
   fastList: {
     gap: 12,
   },
   fastCard: {
-    marginBottom: 12,
+    marginBottom: 0,
   },
   fastHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    alignItems: 'flex-start',
+    marginBottom: 8,
   },
   fastTitle: {
     fontSize: 16,
     fontWeight: '600',
+    flex: 1,
   },
   statusBadge: {
     flexDirection: 'row',
@@ -956,9 +1126,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   fastDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
+    gap: 4,
+    marginBottom: 8,
   },
   fastDetail: {
     flexDirection: 'row',
@@ -967,7 +1136,6 @@ const styles = StyleSheet.create({
   },
   fastDetailValue: {
     fontSize: 14,
-    fontWeight: '500',
   },
   fastActions: {
     flexDirection: 'row',
@@ -976,25 +1144,23 @@ const styles = StyleSheet.create({
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 6,
     gap: 4,
   },
   editButtonText: {
     fontSize: 12,
-    fontWeight: '500',
   },
   emptyCard: {
     alignItems: 'center',
-    justifyContent: 'center',
     padding: 32,
-    gap: 16,
   },
   emptyText: {
-    textAlign: 'center',
     fontSize: 14,
+    textAlign: 'center',
+    marginTop: 12,
   },
-  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -1004,9 +1170,10 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '100%',
+    maxWidth: 400,
     borderRadius: 16,
     padding: 20,
-    maxWidth: 400,
+    maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1033,39 +1200,60 @@ const styles = StyleSheet.create({
   },
   modalButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     gap: 12,
     marginTop: 20,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 8,
-    gap: 8,
-    flex: 1,
+    gap: 4,
+  },
+  buttonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'white',
   },
   deleteButton: {
-    backgroundColor: '#DC2626',
+    marginRight: 'auto',
   },
   cancelButton: {
     borderWidth: 1,
   },
   saveButton: {
-    backgroundColor: '#059669',
+    minWidth: 80,
+    justifyContent: 'center',
   },
-  buttonText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 14,
+  shareButton: {
+    minWidth: 80,
+    justifyContent: 'center',
+  },
+  closeButton: {
+    borderWidth: 1,
+  },
+  fastDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  fastDetailLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    minWidth: 80,
+  },
+  fastDetailValue: {
+    fontSize: 16,
+    flex: 1,
   },
   // Skeleton styles
   skeletonCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    marginRight: 12,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
   },
   skeletonCircleLarge: {
     width: 64,
@@ -1079,29 +1267,28 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   skeletonTextMedium: {
-    height: 24,
-    width: 160,
-    borderRadius: 4,
-  },
-  skeletonTextSmall: {
     height: 16,
     width: 100,
     borderRadius: 4,
   },
-  skeletonButton: {
+  skeletonTextSmall: {
+    height: 12,
     width: 80,
-    height: 36,
-    borderRadius: 8,
+    borderRadius: 4,
   },
-  statCardSkeleton: {
-    width: Dimensions.get('window').width / 2 - 24,
-    height: 100,
-    borderRadius: 12,
-    marginBottom: 12,
+  skeletonButton: {
+    height: 32,
+    width: 80,
+    borderRadius: 8,
   },
   profileSkeleton: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  statCardSkeleton: {
+    width: '48%',
+    height: 100,
+    borderRadius: 12,
   },
 });
 
