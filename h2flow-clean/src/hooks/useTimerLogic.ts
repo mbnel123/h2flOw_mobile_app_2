@@ -8,11 +8,17 @@ import {
   getCurrentFast, 
   updateFastStatus,
   subscribeToCurrentFast,
-  calculateFastingStreak,
-  Fast,
-  FastStreak
+  Fast
 } from '../firebase/databaseService';
 import { FastTemplate, templateService } from '../services/templateService';
+
+// Define FastStreak interface if not exported from databaseService
+interface FastStreak {
+  currentStreak: number;
+  longestStreak: number;
+  totalFasts: number;
+  lastFastDate?: string;
+}
 
 export const useTimerLogic = (user: User | null, setCurrentView: (view: string) => void) => {
   // Firebase state
@@ -74,13 +80,23 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
     return phase;
   }, fastingPhases[0]);
 
-  // ---- Load streak data ----
+  // ---- Load streak data - placeholder implementation ----
   const loadStreakData = useCallback(async (userId: string) => {
     if (streakLoading) return;
     setStreakLoading(true);
     try {
-      const { streak, error } = await calculateFastingStreak(userId);
-      if (!error) setFastingStreak(streak);
+      // For now, just set a default streak until calculateFastingStreak is implemented
+      // You'll need to implement this function in your databaseService
+      const defaultStreak: FastStreak = {
+        currentStreak: 0,
+        longestStreak: 0,
+        totalFasts: 0
+      };
+      setFastingStreak(defaultStreak);
+      
+      // TODO: Replace with actual implementation when available
+      // const { streak, error } = await calculateFastingStreak(userId);
+      // if (!error) setFastingStreak(streak);
     } catch (err) {
       console.error('Error loading streak:', err);
     } finally {
@@ -213,14 +229,22 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
 
   const pauseFast = async () => {
     if (!currentFast?.id || !isOnline) return;
-    try { await updateFastStatus(currentFast.id, 'paused'); }
-    catch { setError('Failed to pause fast'); }
+    try { 
+      await updateFastStatus(currentFast.id, 'paused'); 
+    }
+    catch { 
+      setError('Failed to pause fast'); 
+    }
   };
 
   const resumeFast = async () => {
     if (!currentFast?.id || !isOnline) return;
-    try { await updateFastStatus(currentFast.id, 'active'); }
-    catch { setError('Failed to resume fast'); }
+    try { 
+      await updateFastStatus(currentFast.id, 'active'); 
+    }
+    catch { 
+      setError('Failed to resume fast'); 
+    }
   };
 
   const stopFast = async () => {
@@ -272,7 +296,9 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
         setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
       }, 1000);
     }
-    return () => { if (interval) clearInterval(interval); };
+    return () => { 
+      if (interval) clearInterval(interval); 
+    };
   }, [isActive, startTime, elapsedTime]);
 
   useEffect(() => {
