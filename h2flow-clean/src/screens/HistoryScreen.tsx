@@ -476,10 +476,10 @@ const FastingPatternsSection = ({ stats, colors }: { stats: any; colors: any }) 
           <Ionicons name="calendar" size={20} color={colors.success} />
           <Text style={[styles.patternTitle, { color: colors.success }]}>This Year</Text>
         </View>
-        <Text style={[styles.patternValue, { color: colors.text }]}>{stats.fastsPerYear}</Text>
+        <Text style={[styles.patternValue, { color: colors.text }]}>{stats.fastsPerYear || 0}</Text>
         <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Total fasts</Text>
         <Text style={[styles.patternValueSmall, { color: colors.text }]}>
-          {Math.round(stats.hoursPerYear)}h
+          {Math.round(stats.hoursPerYear || 0)}h
         </Text>
         <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Total hours</Text>
       </Card>
@@ -489,10 +489,10 @@ const FastingPatternsSection = ({ stats, colors }: { stats: any; colors: any }) 
           <Ionicons name="calendar" size={20} color={colors.primary} />
           <Text style={[styles.patternTitle, { color: colors.primary }]}>This Month</Text>
         </View>
-        <Text style={[styles.patternValue, { color: colors.text }]}>{stats.fastsPerMonth}</Text>
+        <Text style={[styles.patternValue, { color: colors.text }]}>{stats.fastsPerMonth || 0}</Text>
         <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Total fasts</Text>
         <Text style={[styles.patternValueSmall, { color: colors.text }]}>
-          {Math.round(stats.hoursPerMonth)}h
+          {Math.round(stats.hoursPerMonth || 0)}h
         </Text>
         <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Total hours</Text>
       </Card>
@@ -503,11 +503,11 @@ const FastingPatternsSection = ({ stats, colors }: { stats: any; colors: any }) 
           <Text style={[styles.patternTitle, { color: colors.info }]}>Averages</Text>
         </View>
         <Text style={[styles.patternValue, { color: colors.text }]}>
-          {Math.round(stats.averageDuration)}h
+          {Math.round(stats.averageDuration || 0)}h
         </Text>
         <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Avg duration</Text>
         <Text style={[styles.patternValueSmall, { color: colors.text }]}>
-          {stats.completionRate}%
+          {stats.completionRate || 0}%
         </Text>
         <Text style={[styles.patternSubtitle, { color: colors.textSecondary }]}>Success rate</Text>
       </Card>
@@ -768,7 +768,7 @@ const HistoryScreen: React.FC = () => {
         <UserProfileSection 
           user={user}
           fastingStreak={fastingStreak}
-          accountAgeDays={stats.accountAgeDays}
+          accountAgeDays={stats.accountAgeDays || 0}
           colors={theme}
         />
 
@@ -801,10 +801,10 @@ const HistoryScreen: React.FC = () => {
                 <Ionicons name="calendar" size={20} color={theme.success} />
                 <Text style={[styles.patternTitle, { color: theme.success }]}>This Year</Text>
               </View>
-              <Text style={[styles.patternValue, { color: theme.text }]}>{stats.fastsPerYear}</Text>
+              <Text style={[styles.patternValue, { color: theme.text }]}>{stats.fastsPerYear || 0}</Text>
               <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Total fasts</Text>
               <Text style={[styles.patternValueSmall, { color: theme.text }]}>
-                {Math.round(stats.hoursPerYear)}h
+                {Math.round(stats.hoursPerYear || 0)}h
               </Text>
               <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Total hours</Text>
             </Card>
@@ -814,10 +814,10 @@ const HistoryScreen: React.FC = () => {
                 <Ionicons name="calendar" size={20} color={theme.primary} />
                 <Text style={[styles.patternTitle, { color: theme.primary }]}>This Month</Text>
               </View>
-              <Text style={[styles.patternValue, { color: theme.text }]}>{stats.fastsPerMonth}</Text>
+              <Text style={[styles.patternValue, { color: theme.text }]}>{stats.fastsPerMonth || 0}</Text>
               <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Total fasts</Text>
               <Text style={[styles.patternValueSmall, { color: theme.text }]}>
-                {Math.round(stats.hoursPerMonth)}h
+                {Math.round(stats.hoursPerMonth || 0)}h
               </Text>
               <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Total hours</Text>
             </Card>
@@ -828,11 +828,11 @@ const HistoryScreen: React.FC = () => {
                 <Text style={[styles.patternTitle, { color: theme.info }]}>Averages</Text>
               </View>
               <Text style={[styles.patternValue, { color: theme.text }]}>
-                {Math.round(stats.averageDuration)}h
+                {Math.round(stats.averageDuration || 0)}h
               </Text>
               <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Avg duration</Text>
               <Text style={[styles.patternValueSmall, { color: theme.text }]}>
-                {stats.completionRate}%
+                {stats.completionRate || 0}%
               </Text>
               <Text style={[styles.patternSubtitle, { color: theme.textSecondary }]}>Success rate</Text>
             </Card>
@@ -995,9 +995,9 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1020,44 +1020,68 @@ const styles = StyleSheet.create({
   streakText: {
     fontSize: 12,
     fontWeight: '500',
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   section: {
     marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 4,
+    marginBottom: 16,
+    gap: 8,
   },
   sectionHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
   },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 16,
+  },
+  statCard: {
+    width: (Dimensions.get('window').width - 56) / 2,
+    padding: 16,
+  },
+  statHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 4,
+  },
+  statTitle: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  statSubtitle: {
+    fontSize: 11,
+  },
   patternsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    marginBottom: 8,
   },
   patternCard: {
-    flex: 1,
-    minWidth: Dimensions.get('window').width / 3 - 32,
-    marginBottom: 0,
+    width: (Dimensions.get('window').width - 56) / 2,
+    padding: 16,
   },
   patternHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 12,
     gap: 4,
-    marginBottom: 8,
   },
   patternTitle: {
     fontSize: 12,
@@ -1070,52 +1094,24 @@ const styles = StyleSheet.create({
   },
   patternValueSmall: {
     fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  patternSubtitle: {
-    fontSize: 10,
-    marginBottom: 8,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 8,
-  },
-  statCard: {
-    width: Dimensions.get('window').width / 2 - 24,
-    marginBottom: 0,
-  },
-  statHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 8,
-  },
-  statTitle: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  statValue: {
-    fontSize: 20,
     fontWeight: '700',
     marginBottom: 2,
   },
-  statSubtitle: {
-    fontSize: 10,
+  patternSubtitle: {
+    fontSize: 11,
+    marginBottom: 8,
   },
   fastList: {
     gap: 12,
   },
   fastCard: {
-    marginBottom: 0,
+    padding: 16,
   },
   fastHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   fastTitle: {
     fontSize: 16,
@@ -1130,7 +1126,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   statusText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '500',
   },
   fastDetails: {
@@ -1154,7 +1150,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    padding: 4,
   },
   editButtonText: {
     fontSize: 12,
@@ -1162,23 +1157,20 @@ const styles = StyleSheet.create({
   emptyCard: {
     alignItems: 'center',
     padding: 32,
-    marginBottom: 24,
+    gap: 12,
   },
   emptyText: {
     fontSize: 14,
     textAlign: 'center',
-    marginTop: 8,
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
   modalContent: {
-    width: '100%',
-    maxWidth: 400,
+    width: '90%',
     borderRadius: 16,
     padding: 20,
   },
@@ -1189,7 +1181,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
   },
   modalBody: {
@@ -1214,7 +1206,7 @@ const styles = StyleSheet.create({
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
     gap: 4,
@@ -1225,32 +1217,25 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   saveButton: {
-    minWidth: 80,
-    justifyContent: 'center',
-  },
-  deleteButton: {
-    minWidth: 80,
-    justifyContent: 'center',
+    backgroundColor: '#059669',
   },
   cancelButton: {
     borderWidth: 1,
-    minWidth: 80,
-    justifyContent: 'center',
+  },
+  deleteButton: {
+    backgroundColor: '#DC2626',
   },
   shareButton: {
-    minWidth: 80,
-    justifyContent: 'center',
+    backgroundColor: '#3B82F6',
   },
   closeButton: {
     borderWidth: 1,
-    minWidth: 80,
-    justifyContent: 'center',
   },
   fastDetailRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingVertical: 4,
+    marginBottom: 12,
   },
   fastDetailLabel: {
     fontSize: 14,
@@ -1268,9 +1253,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   skeletonCircleLarge: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
   },
   skeletonText: {
     height: 20,
@@ -1278,13 +1263,13 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   skeletonTextMedium: {
-    height: 16,
-    width: 80,
+    height: 18,
+    width: 100,
     borderRadius: 4,
   },
   skeletonTextSmall: {
     height: 12,
-    width: 60,
+    width: 80,
     borderRadius: 4,
   },
   skeletonButton: {
@@ -1298,7 +1283,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   statCardSkeleton: {
-    width: Dimensions.get('window').width / 2 - 24,
+    width: (Dimensions.get('window').width - 56) / 2,
     height: 100,
     borderRadius: 12,
   },
