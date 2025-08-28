@@ -227,12 +227,11 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
 
   // Override the stopFast function to trigger completion celebration
   const handleStopFast = () => {
+    console.log('🛑 Handle stop fast called');
     if (showCelebrations && elapsedTime > 0) {
       handleFastCompletion();
-      // Small delay to ensure celebration shows before stopping
-      setTimeout(() => {
-        stopFast();
-      }, 100);
+      // Direct stoppen zonder delay
+      stopFast();
     } else {
       stopFast();
     }
