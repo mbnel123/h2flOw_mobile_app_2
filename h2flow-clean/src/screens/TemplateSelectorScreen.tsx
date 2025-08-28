@@ -58,10 +58,16 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
     name: '',
     description: '',
     icon: 'flash-outline',
-    duration: selectedDuration || 24,
-    waterGoal: 2500,
+    duration: selectedDuration || 0, // Geen default waarde
+    waterGoal: 0, // Wordt automatisch berekend
     tags: '',
   });
+
+  // Bereken watergoal op basis van duration
+  useEffect(() => {
+    const calculatedWaterGoal = Math.round((formData.duration || 0) * 100); // 100ml per uur
+    setFormData(prev => ({ ...prev, waterGoal: calculatedWaterGoal }));
+  }, [formData.duration]);
 
   useEffect(() => {
     const unsubscribe = templateService.subscribe((updatedTemplates) => {
@@ -102,6 +108,11 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
       return;
     }
 
+    if (!formData.duration || formData.duration <= 0) {
+      Alert.alert('Error', 'Please enter a valid duration');
+      return;
+    }
+
     await templateService.createTemplate(userId, {
       name: formData.name.trim(),
       description: formData.description.trim(),
@@ -121,8 +132,8 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
       name: '',
       description: '',
       icon: 'flash-outline',
-      duration: selectedDuration || 24,
-      waterGoal: 2500,
+      duration: selectedDuration || 0,
+      waterGoal: 0,
       tags: '',
     });
     setShowCreateForm(false);
@@ -157,7 +168,9 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
   };
 
   const renderIcon = (icon: string, size: number = 20, color: string) => {
-    return <Ionicons name={icon as any} size={size} color={color} />;
+    // Controleer of het icoon bestaat in Ionicons, anders gebruik een fallback
+    const iconName = icon as any;
+    return <Ionicons name={iconName} size={size} color={color} />;
   };
 
   const currentTemplates = getCurrentTemplates();
@@ -233,35 +246,34 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                   borderColor: colors.border, 
                   color: colors.text 
                 }]}
-                value={formData.duration.toString()}
-                onChangeText={(text) => setFormData(prev => ({ 
-                  ...prev, 
-                  duration: parseInt(text) || 24 
-                }))}
+                value={formData.duration === 0 ? '' : formData.duration.toString()}
+                onChangeText={(text) => {
+                  const numValue = text === '' ? 0 : parseInt(text) || 0;
+                  setFormData(prev => ({ ...prev, duration: numValue }));
+                }}
                 keyboardType="numeric"
-                placeholder="24"
+                placeholder="Enter duration in hours"
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
 
-            {/* Water Goal */}
+            {/* Water Goal (read-only, automatisch berekend) */}
             <View style={styles.formField}>
               <Text style={[styles.label, { color: colors.text }]}>Water Goal (ml)</Text>
               <TextInput
                 style={[styles.input, { 
-                  backgroundColor: colors.card, 
+                  backgroundColor: isDark ? '#2A2A2A' : '#F0F0F0', 
                   borderColor: colors.border, 
-                  color: colors.text 
+                  color: colors.textSecondary 
                 }]}
                 value={formData.waterGoal.toString()}
-                onChangeText={(text) => setFormData(prev => ({ 
-                  ...prev, 
-                  waterGoal: parseInt(text) || 2500 
-                }))}
-                keyboardType="numeric"
-                placeholder="2500"
+                editable={false}
+                placeholder="Calculated automatically"
                 placeholderTextColor={colors.textSecondary}
               />
+              <Text style={[styles.helperText, { color: colors.textSecondary }]}>
+                Calculated based on duration ({formData.duration}h × 100ml/h)
+              </Text>
             </View>
 
             {/* Description */}
@@ -551,6 +563,7 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                     createdAt: new Date(),
                     updatedAt: new Date(),
                     usageCount: 0,
+                    waterGoal: Math.round(selectedDuration * 100), // Automatisch berekend
                   };
                   onSelectTemplate(customTemplate);
                   onClose();
@@ -796,6 +809,10 @@ const styles = StyleSheet.create({
   textArea: {
     height: 80,
     textAlignVertical: 'top',
+  },
+  helperText: {
+    fontSize: 12,
+    marginTop: 4,
   },
   iconGrid: {
     flexDirection: 'row',
