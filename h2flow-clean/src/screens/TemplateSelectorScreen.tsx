@@ -113,6 +113,11 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
       return;
     }
 
+    if (formData.duration > 72) {
+      Alert.alert('Error', 'Maximum duration is 72 hours');
+      return;
+    }
+
     await templateService.createTemplate(userId, {
       name: formData.name.trim(),
       description: formData.description.trim(),
@@ -169,8 +174,11 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
 
   const renderIcon = (icon: string, size: number = 20, color: string) => {
     // Controleer of het icoon bestaat in Ionicons, anders gebruik een fallback
-    const iconName = icon as any;
-    return <Ionicons name={iconName} size={size} color={color} />;
+    try {
+      return <Ionicons name={icon as any} size={size} color={color} />;
+    } catch (error) {
+      return <Ionicons name="flash-outline" size={size} color={color} />;
+    }
   };
 
   const currentTemplates = getCurrentTemplates();
@@ -252,9 +260,13 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
                   setFormData(prev => ({ ...prev, duration: numValue }));
                 }}
                 keyboardType="numeric"
-                placeholder="Enter duration in hours"
+                placeholder="Enter duration in hours (max 72)"
                 placeholderTextColor={colors.textSecondary}
+                maxLength={2} // Max 72 uur
               />
+              <Text style={[styles.helperText, { color: colors.textSecondary }]}>
+                Maximum duration: 72 hours
+              </Text>
             </View>
 
             {/* Water Goal (read-only, automatisch berekend) */}
