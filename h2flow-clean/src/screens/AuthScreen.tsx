@@ -108,7 +108,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ setCurrentView }) => {
           <View style={[styles.authContainer, { backgroundColor: theme.backgroundSecondary }]}>
             <View style={styles.header}>
               <Ionicons name="water" size={48} color={theme.primary} />
-              <Text style={[styles.title, { color: theme.text }]}>H2Flow</Text>
+              <Text style={[styles.title, { color: theme.text }]}>H2flOw</Text>
               <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                 {isLogin ? 'Welcome back!' : 'Create your account'}
               </Text>
