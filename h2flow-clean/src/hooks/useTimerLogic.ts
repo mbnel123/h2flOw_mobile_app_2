@@ -104,17 +104,12 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
     }
   }, [streakLoading]);
 
-  // ---- Handle realtime updates ----
+  // ---- Handle realtime updates - FIXED VERSION ----
   const handleRealtimeUpdate = useCallback((updatedFast: Fast | null) => {
-    const wasActive = currentFast?.status === 'active';
-    const nowCompleted = updatedFast?.status === 'completed';
-
+    console.log('🔄 Realtime update received:', updatedFast?.status);
+    
     if (!updatedFast) {
-      if (currentFast && user) {
-        setMultiDeviceActivity('Fast ended on another device');
-        setTimeout(() => setMultiDeviceActivity(null), 3000);
-        loadStreakData(user.uid);
-      }
+      console.log('❌ No active fast found');
       setCurrentFast(null);
       setIsActive(false);
       setStartTime(null);
@@ -125,23 +120,26 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
 
     setCurrentFast(updatedFast);
 
-    if (wasActive && nowCompleted && user) {
-      loadStreakData(user.uid);
-    }
-
     if (updatedFast.status === 'active') {
+      console.log('▶️ Fast is active, starting timer');
       setIsActive(true);
       const fastStartTime = new Date(updatedFast.startTime).getTime();
       setStartTime(fastStartTime);
       setElapsedTime(Math.floor((Date.now() - fastStartTime) / 1000));
-    } else {
-      setIsActive(updatedFast.status === 'active');
+    } else if (updatedFast.status === 'completed') {
+      console.log('✅ Fast completed, stopping timer');
+      setIsActive(false);
+      setStartTime(null);
+      // Keep elapsed time for display purposes
+    } else if (updatedFast.status === 'paused') {
+      console.log('⏸️ Fast paused');
+      setIsActive(false);
     }
 
     setTargetHours(updatedFast.plannedDuration);
     const totalWater = updatedFast.waterIntake?.reduce((total, entry) => total + entry.amount, 0) || 0;
     setDailyWaterIntake(totalWater);
-  }, [currentFast, user, loadStreakData]);
+  }, []);
 
   // ---- Load current fast ----
   const loadCurrentFast = useCallback(async (userId: string) => {
@@ -150,17 +148,21 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
       const fast = await getCurrentFast(userId);
       
       if (fast) {
+        console.log('📥 Loaded current fast:', fast.status);
         setCurrentFast(fast);
         if (fast.status === 'active') {
           setIsActive(true);
           const fastStartTime = new Date(fast.startTime).getTime();
           setStartTime(fastStartTime);
           setElapsedTime(Math.floor((Date.now() - fastStartTime) / 1000));
+        } else {
+          setIsActive(false);
         }
         setTargetHours(fast.plannedDuration);
         const totalWater = fast.waterIntake?.reduce((total, entry) => total + entry.amount, 0) || 0;
         setDailyWaterIntake(totalWater);
       } else {
+        console.log('📥 No current fast found');
         setCurrentFast(null);
         setIsActive(false);
         setStartTime(null);
@@ -169,6 +171,7 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
       }
       setSyncStatus('connected');
     } catch (err) {
+      console.error('❌ Error loading current fast:', err);
       setError('Failed to load fasting data: ' + (err instanceof Error ? err.message : String(err)));
       setSyncStatus('error');
     } finally {
@@ -192,6 +195,7 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
       realtimeUnsubscribe.current = unsubscribe;
       currentUserId.current = userId;
     } catch (err) {
+      console.error('❌ Error setting up realtime sync:', err);
       setSyncStatus('error');
     }
   }, [loadCurrentFast, loadStreakData, handleRealtimeUpdate]);
@@ -215,8 +219,10 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
       else {
         setPreviousElapsedTime(0);
         setShowCelebrations(true);
+        console.log('✅ Fast started successfully');
       }
     } catch (err) {
+      console.error('❌ Error starting fast:', err);
       setError('Failed to start fast');
     }
     setLoading(false);
@@ -226,8 +232,10 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
     if (!currentFast?.id || !isOnline) return;
     try { 
       await updateFastStatus(currentFast.id, 'paused'); 
+      console.log('⏸️ Fast paused');
     }
-    catch { 
+    catch (err) { 
+      console.error('❌ Error pausing fast:', err);
       setError('Failed to pause fast'); 
     }
   };
@@ -236,23 +244,38 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
     if (!currentFast?.id || !isOnline) return;
     try { 
       await updateFastStatus(currentFast.id, 'active'); 
+      console.log('▶️ Fast resumed');
     }
-    catch { 
+    catch (err) { 
+      console.error('❌ Error resuming fast:', err);
       setError('Failed to resume fast'); 
     }
   };
 
   const stopFast = async () => {
-    if (!currentFast?.id || !isOnline) return;
+    if (!currentFast?.id || !isOnline) {
+      console.log('❌ Cannot stop fast: no active fast or offline');
+      return;
+    }
+    
     setLoading(true);
     try {
+      console.log('🛑 Stopping fast...');
       const { error } = await endFast(currentFast.id);
-      if (error) setError(error);
-      else {
+      if (error) {
+        console.error('❌ Error stopping fast:', error);
+        setError(error);
+      } else {
+        console.log('✅ Fast stopped successfully');
         setShowStopConfirmation(false);
         if (user) await loadStreakData(user.uid);
+        
+        // Force UI update since realtime listener might be delayed
+        setIsActive(false);
+        setStartTime(null);
       }
-    } catch {
+    } catch (err) {
+      console.error('❌ Error stopping fast:', err);
       setError('Failed to end fast');
     }
     setLoading(false);
@@ -274,12 +297,18 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
 
   useEffect(() => {
     if (user && !isInitialized.current) {
+      console.log('👤 User logged in, setting up realtime sync');
       setupRealtimeSync(user.uid);
       isInitialized.current = true;
     }
     if (!user) {
+      console.log('👤 User logged out, cleaning up');
       isInitialized.current = false;
       currentUserId.current = null;
+      if (realtimeUnsubscribe.current) {
+        realtimeUnsubscribe.current();
+        realtimeUnsubscribe.current = null;
+      }
     }
   }, [user, setupRealtimeSync]);
 
