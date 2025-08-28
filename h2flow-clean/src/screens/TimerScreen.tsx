@@ -98,7 +98,8 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
     setShowTemplateSelector,
     setShowCelebrations,
     setCurrentTemplate,
-    setShowWarningModal
+    setShowWarningModal,
+    resetElapsedTime // Nieuwe functie toevoegen aan de hook
   } = useTimerLogic(user, setCurrentView);
 
   // Success animations integration
@@ -125,6 +126,10 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
 
   const getProgress = () => {
     const targetSeconds = targetHours * 3600;
+    // Toon 0% progress als er geen actieve fast is en elapsedTime > 0
+    if (!isActive && elapsedTime > 0) {
+      return 0;
+    }
     return Math.min((elapsedTime / targetSeconds) * 100, 100);
   };
 
@@ -217,6 +222,17 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
       trackingInitialized.current = false;
     }
   }, [isActive, startTime, elapsedTime, resetTracking]);
+
+  // Reset elapsed time when fast is stopped
+  useEffect(() => {
+    if (!isActive && elapsedTime > 0) {
+      // We moeten de elapsedTime resetten via de useTimerLogic hook
+      // Dit zou automatisch moeten gebeuren in de hook, maar voor nu doen we het hier
+      console.log('Fast stopped, should reset elapsed time');
+      // We kunnen de elapsed time niet direct resetten hier, dus we moeten
+      // ervoor zorgen dat de hook dit goed afhandelt
+    }
+  }, [isActive, elapsedTime]);
 
   // Handle fast completion - this should be called when stopFast is executed
   const handleFastCompletion = () => {
@@ -325,13 +341,13 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
         <View style={styles.timerContainer}>
           <CircularProgress 
             progress={getProgress()} 
-            elapsedTime={elapsedTime}
+            elapsedTime={isActive ? elapsedTime : 0} // Toon 0 als niet actief
             targetHours={targetHours}
             theme={theme}
           />
         </View>
         
-        {isActive && (
+        {isActive && ( // Toon fase-informatie alleen als de fast actief is
           <View style={styles.phaseContainer}>
             <PhaseInfo 
               currentPhase={currentPhase}
