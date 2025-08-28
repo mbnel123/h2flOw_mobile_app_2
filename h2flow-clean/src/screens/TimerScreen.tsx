@@ -344,7 +344,6 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
 
       {/* Controls at bottom - always visible */}
       <View style={styles.controlsContainer}>
-        // TimerScreen.tsx - vervang het TimerControls component
         <TimerControls
         isActive={isActive}
         startTime={startTime}
