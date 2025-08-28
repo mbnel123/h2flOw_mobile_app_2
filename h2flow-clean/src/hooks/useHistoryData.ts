@@ -35,12 +35,17 @@ export const useHistoryData = (user: FirebaseUser | null) => {
         getFastingStats(user.uid)
       ]);
 
+      // Check for errors in history result
+      if (historyResult.error) {
+        throw new Error(historyResult.error);
+      }
+
       setFastHistory(historyResult.fasts || []);
       setFastingStreak(streak);
-      setStats(statistics);
-    } catch (err) {
+      setStats(statistics || {});
+    } catch (err: any) {
       console.error('Error fetching history data:', err);
-      setError('Failed to load history data');
+      setError(err.message || 'Failed to load history data');
     } finally {
       setLoading(false);
     }
@@ -61,6 +66,6 @@ export const useHistoryData = (user: FirebaseUser | null) => {
     loading,
     error,
     setError,
-    refreshData // Make sure this is returned
+    refreshData
   };
 };
