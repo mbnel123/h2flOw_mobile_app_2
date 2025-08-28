@@ -1,3 +1,4 @@
+// src/components/timer/TimerControls.tsx
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Play, Square } from 'lucide-react-native';
@@ -17,7 +18,7 @@ interface TimerControlsProps {
   onResumeFast: () => void;
   onPauseFast: () => void;
   onStopConfirmation: () => void;
-  onConfirmStop: () => void;
+  onConfirmStop: () => void; // Changed: This should trigger the celebration first
   onCancelStop: () => void;
   onShowTemplateSelector: () => void;
   onSelectTemplate: (template: FastTemplate) => void;
@@ -35,7 +36,7 @@ const TimerControls: React.FC<TimerControlsProps> = ({
   onStartFast,
   onResumeFast,
   onStopConfirmation,
-  onConfirmStop,
+  onConfirmStop, // Now this is the celebration-triggering function
   onCancelStop,
   onShowTemplateSelector,
   onToggleCelebrations,
