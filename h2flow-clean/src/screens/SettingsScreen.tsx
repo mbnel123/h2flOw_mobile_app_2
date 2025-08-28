@@ -12,27 +12,24 @@ import {
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../contexts/ThemeContext';
 
 interface SettingsScreenProps {
   navigation?: any;
 }
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
-  const { theme, setTheme } = useTheme();
   const [notifications, setNotifications] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
 
-  const isDark = theme === 'dark';
   const colors = {
     primary: '#7DD3FC',
-    background: isDark ? '#000000' : '#FFFFFF',
-    backgroundSecondary: isDark ? '#1F1F1F' : '#F8F9FA',
-    text: isDark ? '#FFFFFF' : '#000000',
-    textSecondary: isDark ? '#9CA3AF' : '#6B7280',
-    border: isDark ? '#374151' : '#E5E7EB',
-    card: isDark ? '#1F1F1F' : '#FFFFFF',
+    background: '#FFFFFF',
+    backgroundSecondary: '#F8F9FA',
+    text: '#000000',
+    textSecondary: '#6B7280',
+    border: '#E5E7EB',
+    card: '#FFFFFF',
   };
 
   const testNotification = () => {
@@ -66,67 +63,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
         </View>
 
         <View style={styles.content}>
-          {/* Theme Settings */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="color-palette" size={20} color={colors.primary} />
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Appearance</Text>
-            </View>
-            
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.themeOption}>
-                <Text style={[styles.themeLabel, { color: colors.text }]}>Theme</Text>
-                <Text style={[styles.themeDescription, { color: colors.textSecondary }]}>
-                  Choose your preferred color scheme
-                </Text>
-              </View>
-              
-              <View style={styles.themeButtons}>
-                <TouchableOpacity
-                  style={[
-                    styles.themeButton,
-                    { backgroundColor: colors.backgroundSecondary, borderColor: colors.border },
-                    theme === 'light' && { borderColor: colors.primary }
-                  ]}
-                  onPress={() => setTheme('light')}
-                >
-                  <Ionicons 
-                    name="sunny" 
-                    size={24} 
-                    color={theme === 'light' ? colors.primary : colors.textSecondary} 
-                  />
-                  <Text style={[
-                    styles.themeButtonText,
-                    { color: theme === 'light' ? colors.primary : colors.text }
-                  ]}>
-                    Light
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.themeButton,
-                    { backgroundColor: colors.backgroundSecondary, borderColor: colors.border },
-                    theme === 'dark' && { borderColor: colors.primary }
-                  ]}
-                  onPress={() => setTheme('dark')}
-                >
-                  <Ionicons 
-                    name="moon" 
-                    size={24} 
-                    color={theme === 'dark' ? colors.primary : colors.textSecondary} 
-                  />
-                  <Text style={[
-                    styles.themeButtonText,
-                    { color: theme === 'dark' ? colors.primary : colors.text }
-                  ]}>
-                    Dark
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-
           {/* Notification Settings */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -213,13 +149,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
                 <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Version</Text>
                 <Text style={[styles.infoValue, { color: colors.text }]}>1.0.0</Text>
               </View>
-              
-              <View style={styles.infoRow}>
-                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Theme</Text>
-                <Text style={[styles.infoValue, { color: colors.text }]}>
-                  {theme}
-                </Text>
-              </View>
             </View>
           </View>
 
@@ -280,41 +209,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     padding: 16,
-  },
-  themeOption: {
-    marginBottom: 16,
-  },
-  themeLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  themeDescription: {
-    fontSize: 14,
-  },
-  themeButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  themeButton: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    gap: 8,
-  },
-  themeButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  systemInfo: {
-    padding: 12,
-    borderRadius: 8,
-  },
-  systemInfoText: {
-    fontSize: 12,
   },
   testButton: {
     padding: 16,
