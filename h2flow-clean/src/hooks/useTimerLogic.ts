@@ -147,13 +147,8 @@ export const useTimerLogic = (user: User | null, setCurrentView: (view: string) 
   const loadCurrentFast = useCallback(async (userId: string) => {
     if (!initialLoading) return;
     try {
-      const result = await getCurrentFast(userId);
-      if (result.error) {
-        setError(`Failed to load data: ${result.error}`);
-        setSyncStatus('error');
-        return;
-      }
-      const { fast } = result;
+      const fast = await getCurrentFast(userId);
+      
       if (fast) {
         setCurrentFast(fast);
         if (fast.status === 'active') {
