@@ -18,7 +18,7 @@ interface TimerControlsProps {
   onResumeFast: () => void;
   onPauseFast: () => void;
   onStopConfirmation: () => void;
-  onConfirmStop: () => void; // Changed: This should trigger the celebration first
+  onConfirmStop: () => void;
   onCancelStop: () => void;
   onShowTemplateSelector: () => void;
   onSelectTemplate: (template: FastTemplate) => void;
@@ -36,7 +36,7 @@ const TimerControls: React.FC<TimerControlsProps> = ({
   onStartFast,
   onResumeFast,
   onStopConfirmation,
-  onConfirmStop, // Now this is the celebration-triggering function
+  onConfirmStop,
   onCancelStop,
   onShowTemplateSelector,
   onToggleCelebrations,
