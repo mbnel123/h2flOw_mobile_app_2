@@ -296,6 +296,18 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
         </View>
       )}
 
+      {/* Fast Completed Success Message */}
+      {currentFast?.status === 'completed' && (
+        <View style={[styles.successContainer, { 
+          backgroundColor: isDark ? 'rgba(34, 197, 94, 0.2)' : '#F0FDF4',
+          borderBottomColor: isDark ? '#16A34A' : '#BBF7D0'
+        }]}>
+          <Text style={[styles.successText, { color: isDark ? '#4ADE80' : '#15803D' }]}>
+            🎉 Fast completed! You fasted for {Math.round((currentFast.actualDuration || 0) * 10) / 10}h
+          </Text>
+        </View>
+      )}
+
       <ScrollView 
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
@@ -345,24 +357,24 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
       {/* Controls at bottom - always visible */}
       <View style={styles.controlsContainer}>
         <TimerControls
-        isActive={isActive}
-        startTime={startTime}
-        loading={loading}
-        isOnline={true}
-        targetHours={targetHours}
-        recentTemplates={recentTemplates}
-        showCelebrations={showCelebrations}
-        showStopConfirmation={showStopConfirmation}
-        onStartFast={handleStartFast}
-        onResumeFast={resumeFast}
-        onPauseFast={pauseFast}
-        onStopConfirmation={() => setShowStopConfirmation(true)}
-        onConfirmStop={handleStopFast} // Dit is de cruciale fix!
-        onCancelStop={() => setShowStopConfirmation(false)}
-        onShowTemplateSelector={() => setShowTemplateSelector(true)}
-        onSelectTemplate={handleSelectTemplate}
-        onToggleCelebrations={() => setShowCelebrations(!showCelebrations)}
-      />
+          isActive={isActive}
+          startTime={startTime}
+          loading={loading}
+          isOnline={true}
+          targetHours={targetHours}
+          recentTemplates={recentTemplates}
+          showCelebrations={showCelebrations}
+          showStopConfirmation={showStopConfirmation}
+          onStartFast={handleStartFast}
+          onResumeFast={resumeFast}
+          onPauseFast={pauseFast}
+          onStopConfirmation={() => setShowStopConfirmation(true)}
+          onConfirmStop={handleStopFast} // DIT IS DE CRUCIALE FIX!
+          onCancelStop={() => setShowStopConfirmation(false)}
+          onShowTemplateSelector={() => setShowTemplateSelector(true)}
+          onSelectTemplate={handleSelectTemplate}
+          onToggleCelebrations={() => setShowCelebrations(!showCelebrations)}
+        />
       </View>
 
       <WarningModal
@@ -408,6 +420,16 @@ const styles = StyleSheet.create({
   errorContainer: { paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1 },
   errorText: { fontSize: 14 },
   dismissText: { fontSize: 12, marginTop: 4, textDecorationLine: 'underline' },
+  successContainer: { 
+    paddingHorizontal: 16, 
+    paddingVertical: 12, 
+    borderBottomWidth: 1,
+    alignItems: 'center'
+  },
+  successText: { 
+    fontSize: 14, 
+    fontWeight: '600' 
+  },
   templateContainer: { marginTop: 20, marginBottom: 20 },
   timerContainer: { alignItems: 'center', justifyContent: 'center', minHeight: 400, marginVertical: 20 },
   phaseContainer: { 
