@@ -344,25 +344,26 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
 
       {/* Controls at bottom - always visible */}
       <View style={styles.controlsContainer}>
+        // TimerScreen.tsx - vervang het TimerControls component
         <TimerControls
-          isActive={isActive}
-          startTime={startTime}
-          loading={loading}
-          isOnline={true}
-          targetHours={targetHours}
-          recentTemplates={recentTemplates}
-          showCelebrations={showCelebrations}
-          showStopConfirmation={showStopConfirmation}
-          onStartFast={handleStartFast}
-          onResumeFast={resumeFast}
-          onPauseFast={pauseFast}
-          onStopConfirmation={() => setShowStopConfirmation(true)}
-          onConfirmStop={handleStopFast} // Use our custom stop handler
-          onCancelStop={() => setShowStopConfirmation(false)}
-          onShowTemplateSelector={() => setShowTemplateSelector(true)}
-          onSelectTemplate={handleSelectTemplate}
-          onToggleCelebrations={() => setShowCelebrations(!showCelebrations)}
-        />
+        isActive={isActive}
+        startTime={startTime}
+        loading={loading}
+        isOnline={true}
+        targetHours={targetHours}
+        recentTemplates={recentTemplates}
+        showCelebrations={showCelebrations}
+        showStopConfirmation={showStopConfirmation}
+        onStartFast={handleStartFast}
+        onResumeFast={resumeFast}
+        onPauseFast={pauseFast}
+        onStopConfirmation={() => setShowStopConfirmation(true)}
+        onConfirmStop={handleStopFast} // Dit is de cruciale fix!
+        onCancelStop={() => setShowStopConfirmation(false)}
+        onShowTemplateSelector={() => setShowTemplateSelector(true)}
+        onSelectTemplate={handleSelectTemplate}
+        onToggleCelebrations={() => setShowCelebrations(!showCelebrations)}
+      />
       </View>
 
       <WarningModal
