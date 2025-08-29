@@ -515,7 +515,7 @@ const FastingPatternsSection = ({ stats, colors }: { stats: any; colors: any }) 
   </View>
 );
 
-// Fast History List
+// Fast History List Component - Update this section
 const FastHistoryList = ({ 
   fastHistory, 
   colors, 
@@ -538,79 +538,105 @@ const FastHistoryList = ({
 
   return (
     <View style={styles.fastList}>
-      {fastHistory.slice(0, 10).map(fast => (
-        <TouchableOpacity 
-          key={fast.id} 
-          onPress={() => onFastPress(fast)}
-          activeOpacity={0.7}
-        >
-          <Card colors={colors} style={styles.fastCard}>
-            <View style={styles.fastHeader}>
-              <Text style={[styles.fastTitle, { color: colors.text }]}>
-                {Number(fast.plannedDuration).toFixed(2)}h Fast
-              </Text>
-              <View style={[
-                styles.statusBadge,
-                { 
-                  backgroundColor: fast.status === 'completed' ? 
-                    `${colors.success}20` : 
-                    fast.status === 'stopped_early' ? 
-                    `${colors.warning}20` : 
-                    `${colors.primary}20`
-                }
-              ]}>
-                <Ionicons 
-                  name={fast.status === 'completed' ? 'checkmark-circle' : 
-                         fast.status === 'stopped_early' ? 'time' : 'refresh-circle'} 
-                  size={14} 
-                  color={fast.status === 'completed' ? colors.success : 
-                         fast.status === 'stopped_early' ? colors.warning : colors.primary} 
-                />
-                <Text style={[
-                  styles.statusText,
+      {fastHistory.slice(0, 10).map(fast => {
+        const plannedDuration = Number(fast.plannedDuration);
+        const actualDuration = Number(fast.actualDuration || fast.plannedDuration);
+        const isCompleted = fast.status === 'completed';
+        const isPartiallyCompleted = !isCompleted && actualDuration > 0;
+        const completionPercentage = Math.round((actualDuration / plannedDuration) * 100);
+        
+        let statusText = '';
+        let statusColor = colors.textSecondary;
+        
+        if (isCompleted) {
+          statusText = 'Completed';
+          statusColor = colors.success;
+        } else if (isPartiallyCompleted) {
+          statusText = `${completionPercentage}% Completed`;
+          statusColor = colors.warning;
+        } else {
+          statusText = 'Stopped Early';
+          statusColor = colors.danger;
+        }
+
+        return (
+          <TouchableOpacity 
+            key={fast.id} 
+            onPress={() => onFastPress(fast)}
+            activeOpacity={0.7}
+          >
+            <Card colors={colors} style={styles.fastCard}>
+              <View style={styles.fastHeader}>
+                <View>
+                  <Text style={[styles.fastTitle, { color: colors.text }]}>
+                    {plannedDuration.toFixed(1)}h Fast
+                  </Text>
+                  <Text style={[styles.fastSubtitle, { color: colors.textSecondary }]}>
+                    {actualDuration.toFixed(1)}/{plannedDuration.toFixed(1)} hours
+                  </Text>
+                </View>
+                <View style={[
+                  styles.statusBadge,
                   { 
-                    color: fast.status === 'completed' ? colors.success : 
-                           fast.status === 'stopped_early' ? colors.warning : colors.primary
+                    backgroundColor: isCompleted ? 
+                      `${colors.success}20` : 
+                      isPartiallyCompleted ? 
+                      `${colors.warning}20` : 
+                      `${colors.danger}20`
                   }
                 ]}>
-                  {fast.status === 'completed' ? 'Completed' : 
-                   fast.status === 'stopped_early' ? 'Stopped Early' : 'Active'}
-                </Text>
-            </View>
-            </View>
-            
-            <View style={styles.fastDetails}>
-              <View style={styles.fastDetail}>
-                <Ionicons name="calendar" size={14} color={colors.textSecondary} />
-                <Text style={[styles.fastDetailValue, { color: colors.text }]}>
-                  {new Date(fast.startTime).toLocaleDateString('nl-NL')}
-                </Text>
+                  <Ionicons 
+                    name={isCompleted ? 'checkmark-circle' : 
+                           isPartiallyCompleted ? 'time' : 'close-circle'} 
+                    size={14} 
+                    color={statusColor} 
+                  />
+                  <Text style={[
+                    styles.statusText,
+                    { 
+                      color: statusColor
+                    }
+                  ]}>
+                    {statusText}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.fastDetail}>
-                <Ionicons name="time" size={14} color={colors.textSecondary} />
-                <Text style={[styles.fastDetailValue, { color: colors.text }]}>
-                  {Number(fast.actualDuration || fast.plannedDuration).toFixed(2)} hours
-                </Text>
+              
+              <View style={styles.fastDetails}>
+                <View style={styles.fastDetail}>
+                  <Ionicons name="calendar" size={14} color={colors.textSecondary} />
+                  <Text style={[styles.fastDetailValue, { color: colors.text }]}>
+                    {new Date(fast.startTime).toLocaleDateString('nl-NL')}
+                  </Text>
+                </View>
+                {isPartiallyCompleted && (
+                  <View style={styles.fastDetail}>
+                    <Ionicons name="pulse" size={14} color={colors.warning} />
+                    <Text style={[styles.fastDetailValue, { color: colors.warning }]}>
+                      {completionPercentage}% complete
+                    </Text>
+                  </View>
+                )}
               </View>
-            </View>
-            
-            <View style={styles.fastActions}>
-              <TouchableOpacity 
-                style={styles.editButton}
-                onPress={(e) => {
-                  e.stopPropagation(); // Prevent triggering the parent onPress
-                  onFastPress(fast);
-                }}
-              >
-                <Ionicons name="information-circle" size={14} color={colors.textSecondary} />
-                <Text style={[styles.editButtonText, { color: colors.textSecondary }]}>
-                  Details
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </Card>
-        </TouchableOpacity>
-      ))}
+              
+              <View style={styles.fastActions}>
+                <TouchableOpacity 
+                  style={styles.editButton}
+                  onPress={(e) => {
+                    e.stopPropagation(); // Prevent triggering the parent onPress
+                    onFastPress(fast);
+                  }}
+                >
+                  <Ionicons name="information-circle" size={14} color={colors.textSecondary} />
+                  <Text style={[styles.editButtonText, { color: colors.textSecondary }]}>
+                    Details
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Card>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 };
