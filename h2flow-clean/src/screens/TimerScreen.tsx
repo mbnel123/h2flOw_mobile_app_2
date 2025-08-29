@@ -230,7 +230,7 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
 
   // Loading state
   if (initialLoading) {
-    return <TimerLoadingSkeleton />;
+    return <TimerLoadingSkeleton theme={theme} />; // Zorg dat theme wordt doorgegeven
   }
 
   // Error state
