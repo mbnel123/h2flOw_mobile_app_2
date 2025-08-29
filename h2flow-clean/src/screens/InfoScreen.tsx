@@ -156,7 +156,6 @@ const ExpandableSection = ({
 // Timeline Section
 const TimelineSection = ({ colors, scrollToTimeline, highlightPhase }: { colors: any, scrollToTimeline?: boolean, highlightPhase?: string }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const sectionRef = useRef<View>(null);
 
   const fastingPhases = [
     { hours: 0, title: "Fast begins", description: "Using glucose from last meal", processes: ["Glucose burning", "Insulin declining"] },
@@ -172,25 +171,11 @@ const TimelineSection = ({ colors, scrollToTimeline, highlightPhase }: { colors:
   React.useEffect(() => {
     if (scrollToTimeline) {
       setIsExpanded(true);
-      
-      // Small delay to ensure the section is expanded before scrolling
-      setTimeout(() => {
-        if (sectionRef.current) {
-          sectionRef.current.measureLayout(
-            // @ts-ignore - we're using a simplified approach
-            { getBoundingClientRect: () => ({ top: 0 }) },
-            (x, y, width, height) => {
-              // This would normally be passed from parent to scroll to position
-              // For now we'll just ensure it's expanded
-            }
-          );
-        }
-      }, 300);
     }
   }, [scrollToTimeline]);
 
   return (
-    <View ref={sectionRef}>
+    <View>
       <ExpandableSection
         title="What happens during your fast"
         iconName="time-outline"
@@ -790,16 +775,11 @@ const InfoScreen: React.FC = () => {
 
   // Handle scrolling to timeline when needed
   React.useEffect(() => {
-    if (scrollToTimeline && timelineSectionRef.current) {
+    if (scrollToTimeline && scrollViewRef.current) {
       // Small delay to ensure the component is rendered
       setTimeout(() => {
-        timelineSectionRef.current?.measureLayout(
-          // @ts-ignore - simplified approach
-          { getBoundingClientRect: () => ({ top: 0 }) },
-          (x, y, width, height) => {
-            scrollViewRef.current?.scrollTo({ y: y - 100, animated: true });
-          }
-        );
+        // Scroll naar een geschatte positie (de timeline sectie)
+        scrollViewRef.current?.scrollTo({ y: 600, animated: true });
       }, 500);
     }
   }, [scrollToTimeline]);
