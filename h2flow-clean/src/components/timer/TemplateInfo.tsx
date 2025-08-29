@@ -1,9 +1,10 @@
 // src/components/timer/TemplateInfo.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 interface TemplateInfoProps {
-  template: {
+  template?: {
     icon: string;
     name: string;
     duration: number;
@@ -21,6 +22,11 @@ interface TemplateInfoProps {
 }
 
 const TemplateInfo: React.FC<TemplateInfoProps> = ({ template, onRemove, theme }) => {
+  // Return null if template is undefined
+  if (!template) {
+    return null;
+  }
+
   // Create gradient-like background colors
   const backgroundColor = theme.background === '#111827' 
     ? 'rgba(88, 28, 135, 0.2)'  // Dark mode: purple gradient
@@ -45,7 +51,12 @@ const TemplateInfo: React.FC<TemplateInfoProps> = ({ template, onRemove, theme }
     }]}>
       <View style={styles.content}>
         <View style={styles.iconContainer}>
-          <Text style={styles.icon}>{template.icon}</Text>
+          <Ionicons 
+            name={template.icon as any} 
+            size={24} 
+            color={textColor} 
+            style={styles.icon}
+          />
           <View style={styles.info}>
             <Text style={[styles.name, { color: textColor }]}>
               {template.name}
@@ -100,7 +111,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   icon: {
-    fontSize: 32,
     marginRight: 12,
   },
   info: {
