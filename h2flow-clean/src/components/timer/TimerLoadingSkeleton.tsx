@@ -58,111 +58,106 @@ const SkeletonItem: React.FC<{ width: number; height: number; style?: any; theme
 
 const TimerLoadingSkeleton: React.FC<TimerLoadingSkeletonProps> = ({ theme }) => {
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.gradient[0] }]}>
-      <LinearGradient
-        colors={theme.gradient}
-        style={styles.container}
-      >
-        {/* Header Skeleton */}
-        <View style={[styles.header, { 
-          backgroundColor: theme.background,
-          borderBottomColor: theme.border 
-        }]}>
-          <View style={styles.headerContent}>
-            <View style={styles.headerLeft}>
-              <SkeletonItem width={48} height={48} style={styles.appIcon} theme={theme} />
-              <View>
-                <SkeletonItem width={80} height={24} style={styles.titleSkeleton} theme={theme} />
-                <SkeletonItem width={120} height={16} style={styles.subtitleSkeleton} theme={theme} />
-              </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      {/* Header Skeleton */}
+      <View style={[styles.header, { 
+        backgroundColor: theme.background,
+        borderBottomColor: theme.border 
+      }]}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerLeft}>
+            <SkeletonItem width={48} height={48} style={styles.appIcon} theme={theme} />
+            <View>
+              <SkeletonItem width={80} height={24} style={styles.titleSkeleton} theme={theme} />
+              <SkeletonItem width={120} height={16} style={styles.subtitleSkeleton} theme={theme} />
             </View>
-            <View style={styles.headerRight}>
-              {[1, 2, 3, 4, 5].map(i => (
-                <SkeletonItem key={i} width={40} height={40} style={styles.headerButton} theme={theme} />
-              ))}
-            </View>
+          </View>
+          <View style={styles.headerRight}>
+            {[1, 2, 3, 4, 5].map(i => (
+              <SkeletonItem key={i} width={40} height={40} style={styles.headerButton} theme={theme} />
+            ))}
+          </View>
+        </View>
+        
+        {/* Connection status skeleton */}
+        <View style={styles.statusRow}>
+          <View style={styles.connectionStatus}>
+            <SkeletonItem width={16} height={16} theme={theme} />
+            <SkeletonItem width={48} height={12} theme={theme} />
+          </View>
+        </View>
+        
+        {/* Progress bar skeleton */}
+        <View style={[styles.progressBarContainer, { backgroundColor: theme.border }]}>
+          <SkeletonItem width={120} height={2} theme={theme} />
+        </View>
+      </View>
+
+      {/* Main Timer Area Skeleton */}
+      <View style={styles.mainContent}>
+        {/* Circular progress skeleton */}
+        <View style={styles.circularContainer}>
+          <SkeletonItem width={320} height={320} style={styles.circularProgress} theme={theme} />
+          
+          {/* Center content skeleton */}
+          <View style={[styles.centerContent, { 
+            backgroundColor: theme.background,
+            borderColor: theme.border 
+          }]}>
+            <SkeletonItem width={96} height={48} style={styles.mainTimeSkeleton} theme={theme} />
+            <SkeletonItem width={128} height={32} style={styles.subTimeSkeleton} theme={theme} />
+            <SkeletonItem width={80} height={16} style={styles.targetSkeleton} theme={theme} />
           </View>
           
-          {/* Connection status skeleton */}
-          <View style={styles.statusRow}>
-            <View style={styles.connectionStatus}>
-              <SkeletonItem width={16} height={16} theme={theme} />
-              <SkeletonItem width={48} height={12} theme={theme} />
-            </View>
-          </View>
-          
-          {/* Progress bar skeleton */}
-          <View style={[styles.progressBarContainer, { backgroundColor: theme.border }]}>
-            <SkeletonItem width={120} height={2} theme={theme} />
+          {/* Progress indicator skeleton */}
+          <View style={[styles.progressBadge, { 
+            backgroundColor: theme.background,
+            borderColor: theme.border 
+          }]}>
+            <SkeletonItem width={32} height={16} theme={theme} />
           </View>
         </View>
 
-        {/* Main Timer Area Skeleton */}
-        <View style={styles.mainContent}>
-          {/* Circular progress skeleton */}
-          <View style={styles.circularContainer}>
-            <SkeletonItem width={320} height={320} style={styles.circularProgress} theme={theme} />
+        {/* Phase info skeleton */}
+        <View style={styles.phaseSection}>
+          <View style={[styles.phaseCard, { 
+            backgroundColor: theme.background,
+            borderColor: theme.border 
+          }]}>
+            <SkeletonItem width={128} height={24} style={styles.phaseTitleSkeleton} theme={theme} />
+            <SkeletonItem width={192} height={16} style={styles.phaseDescSkeleton} theme={theme} />
             
-            {/* Center content skeleton */}
-            <View style={[styles.centerContent, { 
-              backgroundColor: theme.background,
-              borderColor: theme.border 
-            }]}>
-              <SkeletonItem width={96} height={48} style={styles.mainTimeSkeleton} theme={theme} />
-              <SkeletonItem width={128} height={32} style={styles.subTimeSkeleton} theme={theme} />
-              <SkeletonItem width={80} height={16} style={styles.targetSkeleton} theme={theme} />
-            </View>
-            
-            {/* Progress indicator skeleton */}
-            <View style={[styles.progressBadge, { 
-              backgroundColor: theme.background,
-              borderColor: theme.border 
-            }]}>
-              <SkeletonItem width={32} height={16} theme={theme} />
-            </View>
-          </View>
-
-          {/* Phase info skeleton */}
-          <View style={styles.phaseSection}>
-            <View style={[styles.phaseCard, { 
-              backgroundColor: theme.background,
-              borderColor: theme.border 
-            }]}>
-              <SkeletonItem width={128} height={24} style={styles.phaseTitleSkeleton} theme={theme} />
-              <SkeletonItem width={192} height={16} style={styles.phaseDescSkeleton} theme={theme} />
-              
-              <View style={styles.phaseStats}>
-                <View style={styles.statItem}>
-                  <SkeletonItem width={48} height={24} style={styles.statValueSkeleton} theme={theme} />
-                  <SkeletonItem width={64} height={12} style={styles.statLabelSkeleton} theme={theme} />
-                </View>
-                <View style={styles.statItem}>
-                  <SkeletonItem width={32} height={24} style={styles.statValueSkeleton} theme={theme} />
-                  <SkeletonItem width={48} height={12} style={styles.statLabelSkeleton} theme={theme} />
-                </View>
+            <View style={styles.phaseStats}>
+              <View style={styles.statItem}>
+                <SkeletonItem width={48} height={24} style={styles.statValueSkeleton} theme={theme} />
+                <SkeletonItem width={64} height={12} style={styles.statLabelSkeleton} theme={theme} />
+              </View>
+              <View style={styles.statItem}>
+                <SkeletonItem width={32} height={24} style={styles.statValueSkeleton} theme={theme} />
+                <SkeletonItem width={48} height={12} style={styles.statLabelSkeleton} theme={theme} />
               </View>
             </View>
+          </View>
 
-            {/* Next phase skeleton */}
-            <View style={[styles.nextPhaseCard, { 
-              backgroundColor: theme.backgroundSecondary,
-              borderColor: theme.border 
-            }]}>
-              <SkeletonItem width={160} height={20} style={styles.nextPhaseTitleSkeleton} theme={theme} />
-              <SkeletonItem width={128} height={24} style={styles.nextPhaseTimeSkeleton} theme={theme} />
-              <SkeletonItem width={224} height={16} style={styles.nextPhaseDescSkeleton} theme={theme} />
-            </View>
+          {/* Next phase skeleton */}
+          <View style={[styles.nextPhaseCard, { 
+            backgroundColor: theme.backgroundSecondary,
+            borderColor: theme.border 
+          }]}>
+            <SkeletonItem width={160} height={20} style={styles.nextPhaseTitleSkeleton} theme={theme} />
+            <SkeletonItem width={128} height={24} style={styles.nextPhaseTimeSkeleton} theme={theme} />
+            <SkeletonItem width={224} height={16} style={styles.nextPhaseDescSkeleton} theme={theme} />
           </View>
         </View>
+      </View>
 
-        {/* Control Buttons Skeleton */}
-        <View style={styles.controlsContainer}>
-          <View style={styles.controlRow}>
-            <SkeletonItem width={192} height={56} style={styles.controlButtonSkeleton} theme={theme} />
-            <SkeletonItem width={128} height={56} style={styles.controlButtonSkeleton} theme={theme} />
-          </View>
+      {/* Control Buttons Skeleton */}
+      <View style={styles.controlsContainer}>
+        <View style={styles.controlRow}>
+          <SkeletonItem width={192} height={56} style={styles.controlButtonSkeleton} theme={theme} />
+          <SkeletonItem width={128} height={56} style={styles.controlButtonSkeleton} theme={theme} />
         </View>
-      </LinearGradient>
+      </View>
     </SafeAreaView>
   );
 };
