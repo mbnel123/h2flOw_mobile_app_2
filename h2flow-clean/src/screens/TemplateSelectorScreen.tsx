@@ -173,7 +173,6 @@ const TemplateSelectorScreen: React.FC<TemplateSelectorScreenProps> = ({
   };
 
   const renderIcon = (icon: string, size: number = 20, color: string) => {
-    // Controleer of het icoon bestaat in Ionicons, anders gebruik een fallback
     try {
       return <Ionicons name={icon as any} size={size} color={color} />;
     } catch (error) {
