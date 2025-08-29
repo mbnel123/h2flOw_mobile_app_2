@@ -1136,12 +1136,16 @@ const styles = StyleSheet.create({
   fastHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 12,
   },
   fastTitle: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  fastSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
   },
   statusBadge: {
     flexDirection: 'row',
