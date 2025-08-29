@@ -191,287 +191,229 @@ const TimerScreen: React.FC<TimerScreenProps> = ({ setCurrentView = () => {} }) 
   useEffect(() => {
     if (isActive && elapsedTime > 0 && showCelebrations) {
       const currentHours = elapsedTime / 3600;
-      
-      // Toon waarschuwing bij 72 uur (of iets ervoor voor betere UX)
-      if (currentHours >= 71.5 && currentHours < 72.5 && !hasAcceptedExtendedFastRisk && !showExtendedFastWarning) {
-        // Alleen tonen als we nog niet geaccepteerd hebben en binnen het tijdvenster
+      if (currentHours >= 71.5 && currentHours < 72 && !hasAcceptedExtendedFastRisk) {
         setShowExtendedFastWarning(true);
       }
+    }
+  }, [isActive, elapsedTime, showCelebrations, hasAcceptedExtendedFastRisk]);
+
+  // Fast completion check
+  useEffect(() => {
+    if (isActive && showCelebrations && targetHours > 0) {
+      const currentHours = elapsedTime / 3600;
+      const targetReached = currentHours >= targetHours;
       
-      // Reset acceptatie als de fast stopt of onder 72 uur komt
-      if (!isActive || currentHours < 71) {
-        setHasAcceptedExtendedFastRisk(false);
+      if (targetReached) {
+        checkFastCompletion(targetHours);
       }
     }
-  }, [isActive, elapsedTime, showCelebrations, hasAcceptedExtendedFastRisk, showExtendedFastWarning]);
+  }, [isActive, elapsedTime, targetHours, showCelebrations]);
 
-  // Reset tracking on new fast
+  // Reset tracking when starting a new fast
   useEffect(() => {
-    const isNewFast = isActive && startTime && elapsedTime < 60;
-    if (isNewFast && !trackingInitialized.current) {
-      console.log('New fast detected - resetting milestone tracking');
+    if (isActive && !trackingInitialized.current) {
       resetTracking();
       milestonesChecked.current.clear();
       lastElapsedHour.current = -1;
       trackingInitialized.current = true;
-      // Reset extended fast warning state for new fast
-      setHasAcceptedExtendedFastRisk(false);
-      setShowExtendedFastWarning(false);
-    }
-    if (!isActive) {
+    } else if (!isActive) {
       trackingInitialized.current = false;
     }
-  }, [isActive, startTime, elapsedTime, resetTracking]);
+  }, [isActive]);
 
-  // Reset elapsed time when fast is stopped
+  // Reset elapsed time when no active fast
   useEffect(() => {
     if (!isActive && elapsedTime > 0) {
-      // We moeten de elapsedTime resetten via de useTimerLogic hook
-      // Dit zou automatisch moeten gebeuren in de hook, maar voor nu doen we het hier
-      console.log('Fast stopped, should reset elapsed time');
-      // We kunnen de elapsed time niet direct resetten hier, dus we moeten
-      // ervoor zorgen dat de hook dit goed afhandelt
+      resetElapsedTime();
     }
   }, [isActive, elapsedTime]);
 
-  // Handle fast completion - this should be called when stopFast is executed
-  const handleFastCompletion = () => {
-    const actualDuration = elapsedTime / 3600;
-    console.log(`Fast completed: ${actualDuration}h / ${targetHours}h`);
-    checkFastCompletion(actualDuration, targetHours);
-  };
+  // Loading state
+  if (initialLoading) {
+    return <TimerLoadingSkeleton />;
+  }
 
-  // Override the stopFast function to trigger completion celebration
-  const handleStopFast = () => {
-    console.log('🛑 Handle stop fast called');
-    if (showCelebrations && elapsedTime > 0) {
-      handleFastCompletion();
-      // Direct stoppen zonder delay
-      stopFast();
-    } else {
-      stopFast();
-    }
-  };
-
-  // Functions for extended fast warning modal
-  const handleAcceptExtendedFastRisk = () => {
-    setHasAcceptedExtendedFastRisk(true);
-    setShowExtendedFastWarning(false);
-  };
-
-  const handleCancelExtendedFast = () => {
-    setShowExtendedFastWarning(false);
-    // Optioneel: automatisch stoppen met fasten
-    // handleStopFast();
-  };
-
-  const currentPhase = getCurrentPhase();
-  const nextPhaseInfo = getTimeToNextPhase();
-
-  if (!user) {
+  // Error state
+  if (error) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={styles.centerContent}>
-          <Text style={styles.lockIcon}>🔒</Text>
-          <Text style={[styles.lockText, { color: theme.textSecondary }]}>
-            Please log in to use the timer
+        <View style={styles.errorContainer}>
+          <Text style={[styles.errorText, { color: theme.text }]}>Error: {error}</Text>
+          <Text style={[styles.errorSubtext, { color: theme.textSecondary }]}>
+            Please try again later
           </Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  if (initialLoading) return <TimerLoadingSkeleton theme={theme} />;
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <StatusBar 
-        barStyle={isDark ? 'light-content' : 'dark-content'} 
-        backgroundColor="transparent"
-        translucent
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      
+      {/* Success Animations */}
+      <TimerCelebrations 
+        celebrations={celebrations}
+        onRemoveCelebration={removeCelebration}
       />
 
-      {/* Success Animations */}
-      {showCelebrations && (
-        <TimerCelebrations
-          celebrations={celebrations}
-          onRemoveCelebration={removeCelebration}
-        />
-      )}
-
-      {error && (
-        <View style={[styles.errorContainer, { 
-          backgroundColor: isDark ? 'rgba(153, 27, 27, 0.2)' : '#FEF2F2',
-          borderBottomColor: isDark ? '#DC2626' : '#FECACA'
-        }]}>
-          <Text style={[styles.errorText, { color: isDark ? '#F87171' : '#DC2626' }]}>{error}</Text>
-          <Text onPress={() => setError(null)} style={[styles.dismissText, { color: isDark ? '#FCA5A5' : '#991B1B' }]}>
-            Dismiss
-          </Text>
-        </View>
-      )}
-
-      {/* Fast Completed Success Message */}
-      {currentFast?.status === 'completed' && (
-        <View style={[styles.successContainer, { 
-          backgroundColor: isDark ? 'rgba(34, 197, 94, 0.2)' : '#F0FDF4',
-          borderBottomColor: isDark ? '#16A34A' : '#BBF7D0'
-        }]}>
-          <Text style={[styles.successText, { color: isDark ? '#4ADE80' : '#15803D' }]}>
-            🎉 Fast completed! You fasted for {Math.round((currentFast.actualDuration || 0) * 10) / 10}h
-          </Text>
-        </View>
-      )}
-
       <ScrollView 
-        style={styles.scrollContainer}
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {currentTemplate && !isActive && (
-          <View style={styles.templateContainer}>
-            <TemplateInfo 
-              template={currentTemplate}
-              onRemove={() => setCurrentTemplate(null)}
-              theme={theme}
-            />
-          </View>
-        )}
+        {/* Timer Header */}
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: theme.text }]}>Fasting Timer</Text>
+        </View>
 
-        <View style={styles.timerContainer}>
-          <CircularProgress 
-            progress={getProgress()} 
-            elapsedTime={isActive ? elapsedTime : 0} // Toon 0 als niet actief
+        {/* Circular Progress */}
+        <View style={styles.progressContainer}>
+          <CircularProgress
+            progress={getProgress()}
+            elapsedTime={elapsedTime}
             targetHours={targetHours}
+            isActive={isActive}
             theme={theme}
           />
         </View>
-        
-        {isActive && ( // Toon fase-informatie alleen als de fast actief is
-          <View style={styles.phaseContainer}>
-            <PhaseInfo 
-              currentPhase={currentPhase}
-              dailyWaterIntake={dailyWaterIntake}
-              elapsedTime={elapsedTime}
-              theme={theme}
-            />
-            {nextPhaseInfo && (
-              <View style={[styles.nextPhaseContainer, { backgroundColor: theme.backgroundSecondary }]}>
-                <Text style={[styles.nextPhaseTitle, { color: theme.text }]}>
-                  Next: {nextPhaseInfo.nextPhase.title}
-                </Text>
-                <Text style={[styles.nextPhaseTime, { color: theme.textSecondary }]}>
-                  in {nextPhaseInfo.hours}h {nextPhaseInfo.minutes}m
-                </Text>
-              </View>
-            )}
+
+        {/* Timer Controls */}
+        <TimerControls
+          isActive={isActive}
+          elapsedTime={elapsedTime}
+          targetHours={targetHours}
+          onStart={handleStartFast}
+          onPause={pauseFast}
+          onResume={resumeFast}
+          onStop={() => setShowStopConfirmation(true)}
+          theme={theme}
+        />
+
+        {/* Phase Information */}
+        <PhaseInfo
+          currentPhase={getCurrentPhase()}
+          timeToNextPhase={getTimeToNextPhase()}
+          theme={theme}
+        />
+
+        {/* Template Information */}
+        <TemplateInfo
+          currentTemplate={currentTemplate}
+          recentTemplates={recentTemplates}
+          onSelectTemplate={() => setShowTemplateSelector(true)}
+          theme={theme}
+        />
+
+        {/* Water Intake */}
+        {dailyWaterIntake > 0 && (
+          <View style={[styles.waterContainer, { backgroundColor: theme.backgroundSecondary }]}>
+            <Text style={[styles.waterTitle, { color: theme.text }]}>💧 Daily Water Goal</Text>
+            <Text style={[styles.waterAmount, { color: theme.text }]}>
+              {dailyWaterIntake}ml
+            </Text>
+            <Text style={[styles.waterSubtext, { color: theme.textSecondary }]}>
+              Stay hydrated during your fast
+            </Text>
           </View>
         )}
       </ScrollView>
 
-      {/* Controls at bottom - always visible */}
-      <View style={styles.controlsContainer}>
-        <TimerControls
-          isActive={isActive}
-          startTime={startTime}
-          loading={loading}
-          isOnline={true}
-          targetHours={targetHours}
-          recentTemplates={recentTemplates}
-          showCelebrations={showCelebrations}
-          showStopConfirmation={showStopConfirmation}
-          onStartFast={handleStartFast}
-          onResumeFast={resumeFast}
-          onPauseFast={pauseFast}
-          onStopConfirmation={() => setShowStopConfirmation(true)}
-          onConfirmStop={handleStopFast} // DIT IS DE CRUCIALE FIX!
-          onCancelStop={() => setShowStopConfirmation(false)}
-          onShowTemplateSelector={() => setShowTemplateSelector(true)}
-          onSelectTemplate={handleSelectTemplate}
-          onToggleCelebrations={() => setShowCelebrations(!showCelebrations)}
-        />
-      </View>
+      {/* Template Selector Modal */}
+      <TemplateSelectorScreen
+        userId={user?.uid || ''}
+        visible={showTemplateSelector}
+        selectedDuration={elapsedTime > 0 ? Math.floor(elapsedTime / 3600) : undefined}
+        onClose={() => setShowTemplateSelector(false)}
+        onSelectTemplate={handleSelectTemplate}
+      />
 
+      {/* Stop Confirmation Modal */}
       <WarningModal
-        isOpen={showWarningModal}
-        onAccept={proceedWithFastStart}
-        onCancel={() => setShowWarningModal(false)}
-        targetHours={targetHours}
+        visible={showStopConfirmation}
+        title="Stop Fast"
+        message="Are you sure you want to stop your fast? This action cannot be undone."
+        confirmText="Stop Fast"
+        cancelText="Continue Fasting"
+        onConfirm={stopFast}
+        onCancel={() => setShowStopConfirmation(false)}
         theme={theme}
       />
 
+      {/* Extended Fast Warning Modal */}
       <ExtendedFastWarningModal
-        isOpen={showExtendedFastWarning}
-        onAccept={handleAcceptExtendedFastRisk}
-        onCancel={handleCancelExtendedFast}
-        elapsedHours={elapsedTime / 3600}
+        visible={showExtendedFastWarning}
+        onConfirm={() => {
+          setHasAcceptedExtendedFastRisk(true);
+          setShowExtendedFastWarning(false);
+        }}
+        onCancel={() => {
+          setShowExtendedFastWarning(false);
+          // Optioneel: pauzeer de fast automatisch
+          pauseFast();
+        }}
         theme={theme}
       />
-
-      {showTemplateSelector && user && (
-        <TemplateSelectorScreen
-          userId={user.uid}
-          visible={showTemplateSelector}
-          selectedDuration={targetHours}
-          onSelectTemplate={handleSelectTemplate}
-          onClose={() => setShowTemplateSelector(false)}
-        />
-      )}
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scrollContainer: { flex: 1 },
-  scrollContent: { 
-    flexGrow: 1, 
-    paddingHorizontal: 24,
-    paddingBottom: 20 
+  container: {
+    flex: 1,
   },
-  centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  lockIcon: { fontSize: 64, marginBottom: 16 },
-  lockText: { fontSize: 16 },
-  errorContainer: { paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1 },
-  errorText: { fontSize: 14 },
-  dismissText: { fontSize: 12, marginTop: 4, textDecorationLine: 'underline' },
-  successContainer: { 
-    paddingHorizontal: 16, 
-    paddingVertical: 12, 
-    borderBottomWidth: 1,
-    alignItems: 'center'
+  scrollView: {
+    flex: 1,
   },
-  successText: { 
-    fontSize: 14, 
-    fontWeight: '600' 
+  scrollContent: {
+    paddingBottom: 40,
   },
-  templateContainer: { marginTop: 20, marginBottom: 20 },
-  timerContainer: { alignItems: 'center', justifyContent: 'center', minHeight: 400, marginVertical: 20 },
-  phaseContainer: { 
-    width: '100%', 
-    maxWidth: 500, 
-    alignSelf: 'center', 
-    gap: 16,
-    marginBottom: 20
-  },
-  nextPhaseContainer: {
-    padding: 12,
-    borderRadius: 12,
+  header: {
+    padding: 20,
     alignItems: 'center',
   },
-  nextPhaseTitle: {
-    fontSize: 14,
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+  },
+  progressContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  waterContainer: {
+    margin: 20,
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  waterTitle: {
+    fontSize: 16,
     fontWeight: '600',
+    marginBottom: 8,
+  },
+  waterAmount: {
+    fontSize: 24,
+    fontWeight: 'bold',
     marginBottom: 4,
   },
-  nextPhaseTime: {
-    fontSize: 12,
+  waterSubtext: {
+    fontSize: 14,
   },
-  controlsContainer: { 
-    paddingHorizontal: 24, 
-    paddingBottom: 24, 
-    paddingTop: 16,
-    backgroundColor: 'transparent'
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorSubtext: {
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
 
